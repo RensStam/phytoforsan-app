@@ -1297,7 +1297,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.8</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.9</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3132,7 +3132,10 @@ function exitImmersive() {
   stage.style.minHeight = "";
   stage.style.borderRadius = "";
   document.body.style.overflow = "";
-  if (isMobile()) switchMobileTab('settings');
+  if (isMobile()) {
+    reset();
+    switchMobileTab('settings');
+  }
 }
 
 // Stop audio als gebruiker naar ander scherm gaat
