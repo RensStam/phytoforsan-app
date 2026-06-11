@@ -742,7 +742,7 @@ canvas {
   line-height: .96;
   font-weight: 900;
   letter-spacing: 0;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .cue-sub {
@@ -1294,7 +1294,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.5.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.5.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1979,6 +1979,18 @@ function stopBreathAmbient() {
   gain.gain.setValueAtTime(gain.gain.value, audioCtx.currentTime);
   gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.8);
   setTimeout(() => { oscs.forEach(o => { try { o.stop(); } catch {} }); gain.disconnect(); }, 2000);
+}
+
+function setCueWord(text) {
+  els.cueWord.textContent = text;
+  const len = (text || "").length;
+  let size;
+  if      (len <= 4)  size = "clamp(1.55rem, 6vw, 2.55rem)";
+  else if (len <= 6)  size = "clamp(1.3rem, 5.2vw, 2.1rem)";
+  else if (len <= 8)  size = "clamp(1.1rem, 4.4vw, 1.75rem)";
+  else if (len <= 10) size = "clamp(.95rem, 3.8vw, 1.5rem)";
+  else                size = "clamp(.78rem, 3.2vw, 1.2rem)";
+  els.cueWord.style.fontSize = size;
 }
 
 function fmt(value) {
@@ -2835,7 +2847,7 @@ function updatePhase(time) {
     const phaseKey = ph.mode === "free" ? `free_${ph.id}` : guide.phase.key;
     const phaseChanged = lastPhaseKey !== phaseKey;
     els.cue.classList.remove("hum", "sound");
-    els.cueWord.textContent = guide.phase.cue || ph.cue;
+    setCueWord(guide.phase.cue || ph.cue);
     els.cueSub.textContent  = guide.phase.sub  || ph.sub;
     els.phaseStat.textContent = guide.phase.label || ph.label;
     els.toneStat.textContent = "—";
@@ -2863,7 +2875,7 @@ function updatePhase(time) {
 
   els.cue.classList.toggle("hum", hum);
   els.cue.classList.toggle("sound", Boolean(protocol.soundSteps) && hum);
-  els.cueWord.textContent = displayPhase.cue;
+  setCueWord(displayPhase.cue);
   els.cueSub.textContent = displayPhase.sub;
   updateSoundGuide(protocol, phase, within);
   els.phaseStat.textContent = displayPhase.label;
