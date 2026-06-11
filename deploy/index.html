@@ -1297,7 +1297,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.7</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.8</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1409,9 +1409,6 @@ canvas {
               Rust na uitademing
               <div class="value-line"><input id="pauseInput" type="range" min="0" max="16" value="2" step=".5"><output id="pauseOut">2 s</output></div>
             </label>
-          </div>
-          <div style="margin-top:12px;text-align:center">
-            <button class="rhythm-btn save-btn" id="saveRhythmBtn" type="button">Opslaan als standaard</button>
           </div>
         </section>
 
@@ -1792,7 +1789,6 @@ const els = {
   droneStat: document.getElementById("droneStat"),
   startBtn: document.getElementById("startBtn"),
   resetBtn: document.getElementById("resetBtn"),
-  saveRhythmBtn: document.getElementById("saveRhythmBtn"),
   stageTitle: document.getElementById("stageTitle"),
   dotIn: document.getElementById("dotIn"),
   dotHold: document.getElementById("dotHold"),
@@ -2200,12 +2196,6 @@ function saveRhythm() {
     pause: els.pauseInput.value
   };
   localStorage.setItem(key, JSON.stringify(data));
-  els.saveRhythmBtn.textContent = "✓ Opgeslagen";
-  els.saveRhythmBtn.classList.add("saved");
-  setTimeout(() => {
-    els.saveRhythmBtn.textContent = "Opslaan als standaard";
-    els.saveRhythmBtn.classList.remove("saved");
-  }, 1800);
 }
 
 function restoreRhythm() {
@@ -2239,8 +2229,6 @@ function lockRhythm(locked) {
     el.style.opacity = locked ? "0.35" : "";
     el.style.pointerEvents = locked ? "none" : "";
   });
-  const saveBtn = document.getElementById("saveRhythmBtn");
-  if (saveBtn) saveBtn.style.display = locked ? "none" : "";
 }
 
 function applyPreset(id) {
@@ -3161,7 +3149,9 @@ els.startBtn.addEventListener("click", () => {
   }
 });
 els.resetBtn.addEventListener("click", reset);
-els.saveRhythmBtn.addEventListener("click", saveRhythm);
+[els.inhaleInput, els.holdInput, els.exhaleInput, els.pauseInput].forEach(el => {
+  el.addEventListener("input", saveRhythm);
+});
 
 // Klik/tik op de ademcirkel: start of pauzeer
 els.breathVisual.addEventListener("click", () => {
