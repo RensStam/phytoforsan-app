@@ -1255,22 +1255,16 @@ canvas {
   /* Extra ruimte onderaan zodat nav de content niet bedekt */
   .app { padding-bottom: 72px !important; }
 
-  /* "Naar ademcirkel" knop onderaan instellingen op mobiel */
-  .mobile-to-breath {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: transparent;
+  /* Gekozen preset-naam bovenaan instellingen op mobiel */
+  .mobile-preset-header {
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
     color: var(--muted);
-    border: 1.5px solid var(--deep);
-    border-radius: 999px;
-    padding: 10px 24px;
-    font-size: .82rem;
-    font-weight: 700;
-    cursor: pointer;
-    width: auto;
-    margin: 14px auto 0;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(18,55,52,.1);
   }
 }
 </style>
@@ -1297,7 +1291,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.4.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1387,6 +1381,7 @@ canvas {
     </section>
 
     <section class="surface controls-panel" aria-label="Instellingen">
+    <div class="mobile-preset-header" id="mobilePresetHeader" style="display:none"></div>
     <div class="controls-grid">
         <section class="control-group">
           <div class="section-title-row">
@@ -1490,11 +1485,6 @@ canvas {
             </label>
           </div>
         </section>
-      </div>
-      <div style="text-align:center">
-        <button class="mobile-to-breath" id="toBreathBtn" onclick="switchMobileTab('breath')" style="display:none">
-          Naar ademcirkel →
-        </button>
       </div>
   </section>
     </div>
@@ -2263,8 +2253,12 @@ function applyPreset(id) {
   els.productTitle.textContent = preset.product;
   els.productText.textContent = preset.productText;
   els.stageTitle.textContent = preset.label;
-  const toBreathLabel = document.getElementById('toBreathLabel');
-  if (toBreathLabel) toBreathLabel.textContent = preset.label;
+  // Preset-naam bovenaan instellingenpaneel op mobiel
+  const mobileHeader = document.getElementById('mobilePresetHeader');
+  if (mobileHeader) {
+    mobileHeader.textContent = preset.label;
+    mobileHeader.style.display = isMobile() ? '' : 'none';
+  }
   updateActiveCard();
   syncUI();
   reset();
@@ -3193,9 +3187,6 @@ function switchMobileTab(tab) {
   if (tab === 'settings') { controls.classList.remove('mobile-hidden'); }
   if (tab === 'breath')   { practice.classList.remove('mobile-hidden'); enterImmersive(); }
 
-  // Verberg "Naar ademscherm" knop op ademscherm-tab
-  if (toBreath) toBreath.style.display = tab === 'settings' ? '' : 'none';
-
   // Nav knoppen actief markeren
   ['library','settings','breath'].forEach(t => {
     const btn = document.getElementById('mobileNav' + {library:'Lib',settings:'Set',breath:'Breath'}[t]);
@@ -3205,18 +3196,14 @@ function switchMobileTab(tab) {
 
 function initMobileNav() {
   const nav = document.getElementById('mobileNav');
-  const toBreath = document.getElementById('toBreathBtn');
   if (isMobile()) {
     nav.style.display = 'flex';
-    if (toBreath) toBreath.style.display = 'none';
     switchMobileTab('library');
   } else {
     nav.style.display = 'none';
-    // Op desktop alles zichtbaar
     document.querySelector('.rail')?.classList.remove('mobile-hidden');
     document.querySelector('.practice')?.classList.remove('mobile-hidden');
     document.querySelector('.controls-panel')?.classList.remove('mobile-hidden');
-    if (toBreath) toBreath.style.display = 'none';
   }
 }
 
