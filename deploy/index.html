@@ -1285,6 +1285,8 @@ canvas {
       <div class="lib-list" id="protocolList"></div>
       <div class="lib-category-label" style="margin-top:10px">Klank</div>
       <div class="lib-list" id="soundList"></div>
+      <div class="lib-category-label" id="verdiepingLabel" style="margin-top:10px;display:none">Verdieping</div>
+      <div class="lib-list" id="verdiepingList" style="display:none"></div>
     </aside>
 
     <div class="workbench">
@@ -1292,7 +1294,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.4.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.5.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1509,7 +1511,26 @@ canvas {
 
 </main>
 
+<!-- Veiligheidsmelding Actieve Ademtest -->
+<div id="activeBreathWarningOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:18px;max-width:480px;width:100%;padding:28px 24px;box-shadow:0 24px 60px rgba(0,0,0,.22);max-height:90vh;overflow-y:auto">
+    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol — Experimenteel</p>
+    <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Actieve Ademtest</h2>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze oefening is intensiever dan de gewone ademhalingssessies.</p>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij:</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, of wanneer je snel paniek, flauwvallen of dissociatie ervaart.</p>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Doe deze oefening <strong>zittend of liggend</strong>. Niet tijdens autorijden, fietsen, werken met machines of in water.</p>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 18px"><strong>Stop direct</strong> bij duizeligheid, sterke tintelingen, druk op de borst, paniek, misselijkheid of een gevoel van controleverlies.</p>
+    <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is alleen bedoeld als korte interne test en is geen volledige holotropische ademhalingssessie.</p>
+    <div style="display:flex;gap:10px;flex-direction:column">
+      <button id="activeBreathConfirmBtn" style="background:#123734;color:#fff;border:none;border-radius:12px;padding:13px 20px;font-size:.9rem;font-weight:800;cursor:pointer">Ik begrijp dit en wil doorgaan</button>
+      <button id="activeBreathCancelBtn" style="background:transparent;color:#555;border:1.5px solid #ccc;border-radius:12px;padding:11px 20px;font-size:.85rem;font-weight:700;cursor:pointer">Annuleren</button>
+    </div>
+  </div>
+</div>
+
 <script>
+const SHOW_HIDDEN_PROTOCOLS = localStorage.getItem("phytoforsan_show_hidden") === "true";
+
 const presets = {
   longExhale: {
     label: "Lange Uitademing",
@@ -1738,6 +1759,41 @@ const presets = {
       { from: 0.00, cue: "AAAA", label: "OM", sub: "open de klank rustig", step: "A" },
       { from: 0.30, cue: "OOOO", label: "OM", sub: "vorm de resonantieruimte", step: "O" },
       { from: 0.60, cue: "MMMM", label: "OM", sub: "sluit zacht, laat de trilling uitklinken", step: "M" }
+    ]
+  },
+  activeBreathTest: {
+    label: "Actieve Ademtest",
+    category: "verdieping",
+    text: "Een korte, actieve ademtest met een vloeiend ademritme zonder pauzes. Alleen gebruiken als je je goed voelt en direct stoppen bij ongemak.",
+    product: "Actieve Ademtest",
+    productText: "Deze sessie is een milde testvariant van actieve verbonden ademhaling. De oefening is kort gehouden en bedoeld voor ervaren gebruikers die willen onderzoeken hoe een actiever ademritme voelt. Dit is geen volledige holotropische sessie.",
+    minutes: 5.5,
+    totalSeconds: 330,
+    inhale: 2,
+    hold: 0,
+    exhale: 2,
+    pause: 0,
+    tone: 0,
+    type: "none",
+    freeExhale: true,
+    breathingOnly: true,
+    experimental: true,
+    hidden: true,
+    requiresWarning: true,
+    exhaleCue: "UIT",
+    exhaleLabel: "Uitademen",
+    exhaleName: "actief uit",
+    exhaleSub: "laat de adem vloeiend uitstromen zonder pauze",
+    phases: [
+      { id: "preparation", label: "Voorbereiding", duration: 30,  mode: "free",
+        cue: "VOORBEREIDING", sub: "Ga zitten of liggen. Adem rustig. Stop direct bij duizeligheid, paniek, druk op de borst of sterk ongemak." },
+      { id: "activeBreathing", label: "Actieve ademhaling", duration: 180, mode: "breath",
+        inhale: 2, hold: 0, exhale: 2, pause: 0,
+        cueIn: "IN", cueOut: "UIT",
+        subIn: "Adem vloeiend en iets dieper in, zonder te forceren.",
+        subOut: "Laat de adem direct weer uitstromen, zonder pauze." },
+      { id: "integration", label: "Integratie", duration: 120, mode: "free",
+        cue: "INTEGRATIE", sub: "Laat de adem vanzelf terugkeren. Voel na en blijf rustig zitten of liggen." }
     ]
   }
 };
@@ -1980,7 +2036,24 @@ function totalDuration() {
 }
 
 function sessionDuration() {
+  const preset = presets[activePreset];
+  if (preset?.totalSeconds) return preset.totalSeconds;
   return Math.max(60, currentProtocol().minutes * 60);
+}
+
+// Meerfasige sessie: geef de actieve macro-fase terug op basis van verstreken tijd
+function getPhasedMacroPhase(elapsed) {
+  const preset = presets[activePreset];
+  if (!preset?.phases) return null;
+  let cum = 0;
+  for (const ph of preset.phases) {
+    if (elapsed < cum + ph.duration) {
+      return { ph, phaseElapsed: elapsed - cum };
+    }
+    cum += ph.duration;
+  }
+  const last = preset.phases[preset.phases.length - 1];
+  return { ph: last, phaseElapsed: last.duration };
 }
 
 function remainingSessionTime(elapsed) {
@@ -2092,7 +2165,17 @@ const cardIllustrations = {
   herstel:    `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-3-490.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="Stillness Flow">`,
   maen:       `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-2-759.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="MAEN">`,
   amen:       `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-5.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="AMEN">`,
-  om:         `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-4.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="OM">`
+  om:         `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-4.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="OM">`,
+  activeBreathTest: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="60" height="60" rx="12" fill="#1a2a3a"/>
+    <circle cx="30" cy="30" r="14" stroke="#e8c96a" stroke-width="1.8" fill="none" opacity="0.5"/>
+    <circle cx="30" cy="30" r="8" stroke="#e8c96a" stroke-width="2.2" fill="none" opacity="0.8"/>
+    <line x1="30" y1="13" x2="30" y2="17" stroke="#e8c96a" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+    <line x1="30" y1="43" x2="30" y2="47" stroke="#e8c96a" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+    <line x1="13" y1="30" x2="17" y2="30" stroke="#e8c96a" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+    <line x1="43" y1="30" x2="47" y2="30" stroke="#e8c96a" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+    <text x="30" y="34" text-anchor="middle" font-size="7" font-weight="900" fill="#e8c96a" opacity="0.9" font-family="sans-serif">TEST</text>
+  </svg>`
 };
 const presetMeta = {
   longExhale:      { duration: "5 min",  desc: "Ontspanning door langere uitademing." },
@@ -2106,19 +2189,24 @@ const presetMeta = {
   herstel:    { duration: "10 min", desc: "Minimale begeleiding, meer ruimte en stilte." },
   maen:       { duration: "8 min",  desc: "M → A → E → N, adem en resonantie." },
   amen:       { duration: "8 min",  desc: "A → M → E → N, adem en resonantie." },
-  om:         { duration: "12 min", desc: "A → O/U → M, klassieke diepe resonantie." }
+  om:              { duration: "12 min", desc: "A → O/U → M, klassieke diepe resonantie." },
+  activeBreathTest: { duration: "5:30",   desc: "Actief ademritme — testprotocol." }
 };
 
-function renderLibraryCard(id, item) {
+function renderLibraryCard(id, item, experimental = false) {
   const meta = presetMeta[id] || { duration: "", desc: "" };
   const illus = cardIllustrations[id] || "";
   const isActive = id === activePreset;
+  const badge = (experimental || item.experimental)
+    ? `<span style="font-size:.6rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#c0392b;display:block;margin-top:2px">Testprotocol</span>`
+    : "";
   return `
     <div class="protocol-card ${isActive ? "active" : ""}" data-preset="${id}">
       <span class="card-thumb">${illus}</span>
       <span class="card-info">
         <strong>${item.label}</strong>
         <span class="card-duration">${meta.duration}</span>
+        ${badge}
       </span>
       <button class="card-play" type="button" data-play="${id}" aria-label="Start ${item.label}">▶</button>
     </div>
@@ -2126,13 +2214,27 @@ function renderLibraryCard(id, item) {
 }
 
 function renderProtocols() {
-  const byCategory = (cat) => Object.entries(presets).filter(([, p]) => p.category === cat);
+  const visible = ([, p]) => !p.hidden || SHOW_HIDDEN_PROTOCOLS;
+  const byCategory = (cat) => Object.entries(presets).filter(([, p]) => p.category === cat).filter(visible);
   const breathingEl = document.getElementById("breathingList");
-  const relaxEl = document.getElementById("protocolList");
-  const klankEl = document.getElementById("soundList");
+  const relaxEl     = document.getElementById("protocolList");
+  const klankEl     = document.getElementById("soundList");
+  const verdiepingEl    = document.getElementById("verdiepingList");
+  const verdiepingLabel = document.getElementById("verdiepingLabel");
   if (breathingEl) breathingEl.innerHTML = byCategory("breathing").map(([id, p]) => renderLibraryCard(id, p)).join("");
   if (relaxEl)     relaxEl.innerHTML     = byCategory("humming").map(([id, p]) => renderLibraryCard(id, p)).join("");
   if (klankEl)     klankEl.innerHTML     = byCategory("klank").map(([id, p]) => renderLibraryCard(id, p)).join("");
+  const verdiepingItems = byCategory("verdieping");
+  if (verdiepingEl && verdiepingLabel) {
+    if (verdiepingItems.length) {
+      verdiepingEl.innerHTML = verdiepingItems.map(([id, p]) => renderLibraryCard(id, p, true)).join("");
+      verdiepingEl.style.display = "";
+      verdiepingLabel.style.display = "";
+    } else {
+      verdiepingEl.style.display = "none";
+      verdiepingLabel.style.display = "none";
+    }
+  }
 }
 
 function updateActiveCard() {
@@ -2277,6 +2379,40 @@ function getPhaseAt(time) {
 }
 
 function breathGuideAt(time) {
+  // Meerfasige preset: free fase krijgt zachte sinus-puls, breath fase normale logica
+  const macro = getPhasedMacroPhase(time);
+  if (macro) {
+    const { ph, phaseElapsed } = macro;
+    if (ph.mode === "free") {
+      const breath = 0.55 + 0.3 * Math.sin(phaseElapsed * Math.PI / 4);
+      const freePhase = { key: "free", dur: ph.duration, cue: ph.cue, label: ph.label, sub: ph.sub };
+      return { phase: freePhase, within: phaseElapsed, total: ph.duration, progress: phaseElapsed / ph.duration, breath, cycleProgress: 0 };
+    }
+    // breath mode: gebruik de fase-eigen timings
+    const cycleDur = ph.inhale + ph.hold + ph.exhale + ph.pause;
+    const cycleWithin = cycleDur ? phaseElapsed % cycleDur : 0;
+    let acc = 0;
+    const subPhases = [
+      { key: "inhale", dur: ph.inhale, cue: ph.cueIn,  label: "Inademing",  sub: ph.subIn },
+      { key: "hold",   dur: ph.hold,   cue: "RUST",    label: "Rust",       sub: "" },
+      { key: "exhale", dur: ph.exhale, cue: ph.cueOut, label: "Uitademing", sub: ph.subOut },
+      { key: "pause",  dur: ph.pause,  cue: "RUST",    label: "Rust",       sub: "" }
+    ].filter(s => s.dur > 0);
+    let activeSubPhase = subPhases[0];
+    let within = 0;
+    for (const sp of subPhases) {
+      if (cycleWithin >= acc && cycleWithin < acc + sp.dur) { activeSubPhase = sp; within = cycleWithin - acc; break; }
+      acc += sp.dur;
+    }
+    const progress = clamp(within / Math.max(0.1, activeSubPhase.dur));
+    const eased = easeInOut(progress);
+    let breath = 0.2;
+    if (activeSubPhase.key === "inhale") breath = lerp(0.2, 1, eased);
+    if (activeSubPhase.key === "hold")   breath = 1;
+    if (activeSubPhase.key === "exhale") breath = lerp(1, 0.22, eased);
+    return { phase: activeSubPhase, within, total: cycleDur, progress, breath, cycleProgress: cycleDur ? clamp(cycleWithin / cycleDur) : 0 };
+  }
+
   const { phase, within, cycleWithin, total } = getPhaseAt(time);
   const progress = clamp(within / Math.max(0.1, phase.dur));
   const eased = easeInOut(progress);
@@ -2686,6 +2822,37 @@ function updateLiveDroneFrequency(freq, glide = 0.12) {
 }
 
 function updatePhase(time) {
+  const guide = breathGuideAt(time);
+  const remaining = remainingSessionTime(time);
+  els.progressBar.style.width = `${(remaining / sessionDuration() * 100).toFixed(1)}%`;
+  els.timeStat.textContent = fmtClock(remaining);
+  els.cue.style.setProperty("--breath-scale", String(lerp(0.9, 1.08, guide.breath).toFixed(3)));
+
+  // Meerfasige preset (bijv. activeBreathTest)
+  const macro = getPhasedMacroPhase(time);
+  if (macro) {
+    const { ph } = macro;
+    const phaseKey = ph.mode === "free" ? `free_${ph.id}` : guide.phase.key;
+    const phaseChanged = lastPhaseKey !== phaseKey;
+    els.cue.classList.remove("hum", "sound");
+    els.cueWord.textContent = guide.phase.cue || ph.cue;
+    els.cueSub.textContent  = guide.phase.sub  || ph.sub;
+    els.phaseStat.textContent = guide.phase.label || ph.label;
+    els.toneStat.textContent = "—";
+    els.droneStat.textContent = "UIT";
+    els.dotIn.classList.remove("active");
+    els.dotHold.classList.remove("active");
+    els.dotOut.classList.remove("active");
+    els.dotPause.classList.remove("active");
+    if (ph.mode === "breath") {
+      els.dotIn.classList.toggle("active",  guide.phase.key === "inhale");
+      els.dotOut.classList.toggle("active", guide.phase.key === "exhale");
+      if (running && phaseChanged && (guide.phase.key === "hold" || guide.phase.key === "pause")) playRestCue();
+    }
+    lastPhaseKey = phaseKey;
+    return;
+  }
+
   const { phase, within, total } = getPhaseAt(time);
   const protocol = currentProtocol();
   const exhale = phase.key === "exhale";
@@ -2693,22 +2860,16 @@ function updatePhase(time) {
   const tone = liveToneFor(protocol, phase, within);
   const displayPhase = livePhaseFor(protocol, phase, within);
   const phaseChanged = lastPhaseKey !== phase.key;
-  const guide = breathGuideAt(time);
 
   els.cue.classList.toggle("hum", hum);
   els.cue.classList.toggle("sound", Boolean(protocol.soundSteps) && hum);
-  els.cue.style.setProperty("--breath-scale", String(lerp(0.9, 1.08, guide.breath).toFixed(3)));
   els.cueWord.textContent = displayPhase.cue;
   els.cueSub.textContent = displayPhase.sub;
   updateSoundGuide(protocol, phase, within);
   els.phaseStat.textContent = displayPhase.label;
   els.toneStat.textContent = hum ? `${tone} Hz` : toneLabel(protocol);
-  const remaining = remainingSessionTime(time);
-  els.timeStat.textContent = fmtClock(remaining);
   if (!toneOn) els.droneStat.textContent = protocol.freeExhale ? "RUST" : protocol.droneEnabled ? "SYNC" : "UIT";
-  els.progressBar.style.width = `${(remaining / sessionDuration() * 100).toFixed(1)}%`;
 
-  // Fase bolletjes updaten
   els.dotIn.classList.toggle("active", phase.key === "inhale");
   els.dotHold.classList.toggle("active", phase.key === "hold");
   els.dotOut.classList.toggle("active", phase.key === "exhale");
@@ -2716,7 +2877,6 @@ function updatePhase(time) {
 
   if (running && hum && phaseChanged) startDroneEngine(protocol.tone, phase.dur);
   if (running && hum && phaseChanged && activePreset in bgAudioFiles) startBgAudio();
-
   if ((!hum || !running) && lastPhaseKey === "exhale") stopDroneEngine();
   if ((!hum || !running) && lastPhaseKey === "exhale" && activePreset in bgAudioFiles) stopBgAudio();
   if (running && phaseChanged && (phase.key === "hold" || phase.key === "pause")) playRestCue();
@@ -2994,6 +3154,7 @@ function handleLibraryClick(event) {
 document.getElementById("breathingList").addEventListener("click", handleLibraryClick);
 els.protocolList.addEventListener("click", handleLibraryClick);
 document.getElementById("soundList").addEventListener("click", handleLibraryClick);
+document.getElementById("verdiepingList").addEventListener("click", handleLibraryClick);
 
 for (const input of [els.inhaleInput, els.holdInput, els.exhaleInput, els.pauseInput, els.volumeInput]) {
   input.addEventListener("input", syncUI);
@@ -3105,12 +3266,28 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopBgAudio();
 });
 
+function showActiveBreathWarning(onConfirm) {
+  const overlay = document.getElementById("activeBreathWarningOverlay");
+  overlay.style.display = "flex";
+  document.getElementById("activeBreathConfirmBtn").onclick = () => {
+    overlay.style.display = "none";
+    onConfirm();
+  };
+  document.getElementById("activeBreathCancelBtn").onclick = () => {
+    overlay.style.display = "none";
+  };
+}
+
 els.startBtn.addEventListener("click", () => {
   if (running) {
     pause();
   } else {
-    start();
-    if (window.innerWidth <= 640) enterImmersive();
+    const doStart = () => { start(); if (window.innerWidth <= 640) enterImmersive(); };
+    if (presets[activePreset]?.requiresWarning) {
+      showActiveBreathWarning(doStart);
+    } else {
+      doStart();
+    }
   }
 });
 els.resetBtn.addEventListener("click", reset);
