@@ -1262,14 +1262,14 @@ canvas {
     gap: 6px;
     background: transparent;
     color: var(--muted);
-    border: 1.5px solid rgba(18,55,52,.18);
-    border-radius: 14px;
-    padding: 11px 18px;
+    border: 1.5px solid var(--deep);
+    border-radius: 999px;
+    padding: 10px 24px;
     font-size: .82rem;
     font-weight: 700;
     cursor: pointer;
-    width: 100%;
-    margin-top: 14px;
+    width: auto;
+    margin: 14px auto 0;
   }
 }
 </style>
@@ -1296,7 +1296,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.4</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1409,7 +1409,7 @@ canvas {
               <div class="value-line"><input id="pauseInput" type="range" min="0" max="16" value="2" step=".5"><output id="pauseOut">2 s</output></div>
             </label>
           </div>
-          <div style="margin-top:12px">
+          <div style="margin-top:12px;text-align:center">
             <button class="rhythm-btn save-btn" id="saveRhythmBtn" type="button">Opslaan als standaard</button>
           </div>
         </section>
@@ -1493,9 +1493,11 @@ canvas {
           </div>
         </section>
       </div>
-      <button class="mobile-to-breath" id="toBreathBtn" onclick="switchMobileTab('breath')" style="display:none">
-        <span>Naar ademcirkel →</span>
-      </button>
+      <div style="text-align:center">
+        <button class="mobile-to-breath" id="toBreathBtn" onclick="switchMobileTab('breath')" style="display:none">
+          Naar ademcirkel →
+        </button>
+      </div>
   </section>
     </div>
   </div>
@@ -2200,7 +2202,7 @@ function saveRhythm() {
   els.saveRhythmBtn.textContent = "✓ Opgeslagen";
   els.saveRhythmBtn.classList.add("saved");
   setTimeout(() => {
-    els.saveRhythmBtn.textContent = "Opslaan";
+    els.saveRhythmBtn.textContent = "Opslaan als standaard";
     els.saveRhythmBtn.classList.remove("saved");
   }, 1800);
 }
