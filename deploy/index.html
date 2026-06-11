@@ -283,6 +283,31 @@ button { cursor: pointer; }
   border-color: var(--green);
 }
 
+.meditation-duration-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.med-dur-btn {
+  border: 1.5px solid rgba(18,55,52,.22);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--deep);
+  font-size: .78rem;
+  font-weight: 800;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+
+.med-dur-btn.med-dur-active {
+  background: var(--deep);
+  color: #fff;
+  border-color: var(--deep);
+}
+
 .protocol-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1285,6 +1310,8 @@ canvas {
       <div class="lib-list" id="protocolList"></div>
       <div class="lib-category-label" style="margin-top:10px">Klank</div>
       <div class="lib-list" id="soundList"></div>
+      <div class="lib-category-label" style="margin-top:10px">Meditatie</div>
+      <div class="lib-list" id="meditationList"></div>
       <div class="lib-category-label" id="verdiepingLabel" style="margin-top:10px;display:none">Verdieping</div>
       <div class="lib-list" id="verdiepingList" style="display:none"></div>
     </aside>
@@ -1294,7 +1321,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.5.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.6.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1386,7 +1413,19 @@ canvas {
     <section class="surface controls-panel" aria-label="Instellingen">
     <div class="mobile-preset-header" id="mobilePresetHeader" style="display:none"></div>
     <div class="controls-grid">
-        <section class="control-group">
+        <!-- Duurkeuze: alleen zichtbaar bij meditationMode -->
+        <section class="control-group" id="meditationDurationSection" style="display:none">
+          <p class="section-title">Sessieduur</p>
+          <div class="meditation-duration-btns" id="meditationDurationBtns">
+            <button class="med-dur-btn" data-min="2">2 min</button>
+            <button class="med-dur-btn" data-min="5">5 min</button>
+            <button class="med-dur-btn med-dur-active" data-min="10">10 min</button>
+            <button class="med-dur-btn" data-min="15">15 min</button>
+            <button class="med-dur-btn" data-min="20">20 min</button>
+            <button class="med-dur-btn" data-min="30">30 min</button>
+          </div>
+        </section>
+        <section class="control-group" id="rhythmSection">
           <div class="section-title-row">
             <p class="section-title">Ademritme</p>
           </div>
@@ -1761,6 +1800,19 @@ const presets = {
       { from: 0.60, cue: "MMMM", label: "OM", sub: "sluit zacht, laat de trilling uitklinken", step: "M" }
     ]
   },
+  meditationTimer: {
+    label: "Meditatietimer",
+    category: "meditatie",
+    text: "Een vrije meditatie zonder ademsturing of klank. Alleen tijd, ruimte en aandacht.",
+    product: "Meditatietimer",
+    productText: "Gebruik de meditatietimer voor een stille sessie op je eigen manier. De app stuurt je ademhaling niet en gebruikt geen humming of klankprotocol. De cirkel toont alleen het verloop van de sessie.",
+    minutes: 10,
+    durationOptions: [2, 5, 10, 15, 20, 30],
+    inhale: 0, hold: 0, exhale: 0, pause: 0,
+    tone: 0, type: "none",
+    breathingOnly: false,
+    meditationMode: true
+  },
   activeBreathTest: {
     label: "Actieve Ademtest",
     category: "verdieping",
@@ -1853,6 +1905,7 @@ const els = {
 };
 
 let activePreset = "longExhale";
+let meditationDuration = 10;
 let running = false;
 let startTime = 0;
 let elapsedBefore = 0;
@@ -2050,6 +2103,7 @@ function totalDuration() {
 function sessionDuration() {
   const preset = presets[activePreset];
   if (preset?.totalSeconds) return preset.totalSeconds;
+  if (preset?.meditationMode) return meditationDuration * 60;
   return Math.max(60, currentProtocol().minutes * 60);
 }
 
@@ -2178,6 +2232,16 @@ const cardIllustrations = {
   maen:       `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-2-759.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="MAEN">`,
   amen:       `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-5.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="AMEN">`,
   om:         `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-4.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="OM">`,
+  meditationTimer: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="60" height="60" rx="12" fill="#0d1f1e"/>
+    <circle cx="30" cy="30" r="18" stroke="#5fa89a" stroke-width="1.2" fill="none" opacity="0.35"/>
+    <circle cx="30" cy="30" r="11" stroke="#5fa89a" stroke-width="1.8" fill="none" opacity="0.6"/>
+    <circle cx="30" cy="30" r="4.5" fill="#5fa89a" opacity="0.85"/>
+    <line x1="30" y1="9" x2="30" y2="13" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="30" y1="47" x2="30" y2="51" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="9" y1="30" x2="13" y2="30" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="47" y1="30" x2="51" y2="30" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  </svg>`,
   activeBreathTest: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
     <rect width="60" height="60" rx="12" fill="#1a2a3a"/>
     <circle cx="30" cy="30" r="14" stroke="#e8c96a" stroke-width="1.8" fill="none" opacity="0.5"/>
@@ -2202,6 +2266,7 @@ const presetMeta = {
   maen:       { duration: "8 min",  desc: "M → A → E → N, adem en resonantie." },
   amen:       { duration: "8 min",  desc: "A → M → E → N, adem en resonantie." },
   om:              { duration: "12 min", desc: "A → O/U → M, klassieke diepe resonantie." },
+  meditationTimer:   { duration: "vrij",   desc: "Stille meditatie op jouw eigen tempo." },
   activeBreathTest: { duration: "5:30",   desc: "Actief ademritme — testprotocol." }
 };
 
@@ -2228,14 +2293,16 @@ function renderLibraryCard(id, item, experimental = false) {
 function renderProtocols() {
   const visible = ([, p]) => !p.hidden || SHOW_HIDDEN_PROTOCOLS;
   const byCategory = (cat) => Object.entries(presets).filter(([, p]) => p.category === cat).filter(visible);
-  const breathingEl = document.getElementById("breathingList");
-  const relaxEl     = document.getElementById("protocolList");
-  const klankEl     = document.getElementById("soundList");
+  const breathingEl    = document.getElementById("breathingList");
+  const relaxEl        = document.getElementById("protocolList");
+  const klankEl        = document.getElementById("soundList");
+  const meditationEl   = document.getElementById("meditationList");
   const verdiepingEl    = document.getElementById("verdiepingList");
   const verdiepingLabel = document.getElementById("verdiepingLabel");
-  if (breathingEl) breathingEl.innerHTML = byCategory("breathing").map(([id, p]) => renderLibraryCard(id, p)).join("");
-  if (relaxEl)     relaxEl.innerHTML     = byCategory("humming").map(([id, p]) => renderLibraryCard(id, p)).join("");
-  if (klankEl)     klankEl.innerHTML     = byCategory("klank").map(([id, p]) => renderLibraryCard(id, p)).join("");
+  if (breathingEl)  breathingEl.innerHTML  = byCategory("breathing").map(([id, p]) => renderLibraryCard(id, p)).join("");
+  if (relaxEl)      relaxEl.innerHTML      = byCategory("humming").map(([id, p]) => renderLibraryCard(id, p)).join("");
+  if (klankEl)      klankEl.innerHTML      = byCategory("klank").map(([id, p]) => renderLibraryCard(id, p)).join("");
+  if (meditationEl) meditationEl.innerHTML = byCategory("meditatie").map(([id, p]) => renderLibraryCard(id, p)).join("");
   const verdiepingItems = byCategory("verdieping");
   if (verdiepingEl && verdiepingLabel) {
     if (verdiepingItems.length) {
@@ -2341,6 +2408,12 @@ function applyPreset(id) {
     mobileHeader.textContent = preset.label;
     mobileHeader.style.display = isMobile() ? '' : 'none';
   }
+  // Meditatiemodus: toon duurknoppen, verberg ademritme-sliders
+  const isMeditation = Boolean(preset.meditationMode);
+  const meditationDurationSection = document.getElementById("meditationDurationSection");
+  const rhythmSectionEl = document.getElementById("rhythmSection");
+  if (meditationDurationSection) meditationDurationSection.style.display = isMeditation ? "" : "none";
+  if (rhythmSectionEl) rhythmSectionEl.style.display = isMeditation ? "none" : "";
   updateActiveCard();
   syncUI();
   reset();
@@ -2391,6 +2464,14 @@ function getPhaseAt(time) {
 }
 
 function breathGuideAt(time) {
+  // Meditatiemodus: langzame sinus-puls op basis van totale sessieduur
+  if (presets[activePreset]?.meditationMode) {
+    const total = sessionDuration();
+    const progress = total > 0 ? Math.min(time / total, 1) : 0;
+    const breath = 0.5 + 0.35 * Math.sin(time * Math.PI / 8);
+    const medPhase = { key: "meditation", dur: total, cue: "MEDITATIE", label: "Meditatie", sub: "" };
+    return { phase: medPhase, within: time, total, progress, breath, cycleProgress: 0 };
+  }
   // Meerfasige preset: free fase krijgt zachte sinus-puls, breath fase normale logica
   const macro = getPhasedMacroPhase(time);
   if (macro) {
@@ -2840,6 +2921,21 @@ function updatePhase(time) {
   els.timeStat.textContent = fmtClock(remaining);
   els.cue.style.setProperty("--breath-scale", String(lerp(0.9, 1.08, guide.breath).toFixed(3)));
 
+  // Meditatiemodus: geen fase-cycling, enkel voortgang en stilte
+  if (presets[activePreset]?.meditationMode) {
+    els.cue.classList.remove("hum", "sound");
+    setCueWord("MEDITATIE");
+    els.cueSub.textContent = "Adem vrij";
+    els.phaseStat.textContent = "Meditatie";
+    els.toneStat.textContent  = "—";
+    els.droneStat.textContent = "UIT";
+    els.dotIn.classList.remove("active");
+    els.dotHold.classList.remove("active");
+    els.dotOut.classList.remove("active");
+    els.dotPause.classList.remove("active");
+    return;
+  }
+
   // Meerfasige preset (bijv. activeBreathTest)
   const macro = getPhasedMacroPhase(time);
   if (macro) {
@@ -2909,6 +3005,11 @@ function tick() {
     cancelAnimationFrame(raf);
     updatePhase(elapsedBefore);
     draw(elapsedBefore);
+    if (presets[activePreset]?.meditationMode) {
+      setCueWord("KLAAR");
+      els.cueSub.textContent = "Sessie voltooid";
+      els.phaseStat.textContent = "Voltooid";
+    }
     return;
   }
   updatePhase(elapsed);
@@ -3167,6 +3268,15 @@ function handleLibraryClick(event) {
 document.getElementById("breathingList").addEventListener("click", handleLibraryClick);
 els.protocolList.addEventListener("click", handleLibraryClick);
 document.getElementById("soundList").addEventListener("click", handleLibraryClick);
+document.getElementById("meditationList").addEventListener("click", handleLibraryClick);
+
+document.getElementById("meditationDurationBtns").addEventListener("click", e => {
+  const btn = e.target.closest(".med-dur-btn");
+  if (!btn) return;
+  meditationDuration = parseInt(btn.dataset.min, 10);
+  document.querySelectorAll(".med-dur-btn").forEach(b => b.classList.toggle("med-dur-active", b === btn));
+  reset();
+});
 document.getElementById("verdiepingList").addEventListener("click", handleLibraryClick);
 
 for (const input of [els.inhaleInput, els.holdInput, els.exhaleInput, els.pauseInput, els.volumeInput]) {
