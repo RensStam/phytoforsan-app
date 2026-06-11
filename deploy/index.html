@@ -1292,7 +1292,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.4.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.4.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3208,7 +3208,19 @@ function initMobileNav() {
   }
 }
 
-window.addEventListener('resize', initMobileNav);
+function updateNavVisibility() {
+  const nav = document.getElementById('mobileNav');
+  if (!isMobile()) {
+    nav.style.display = 'none';
+    document.querySelector('.rail')?.classList.remove('mobile-hidden');
+    document.querySelector('.practice')?.classList.remove('mobile-hidden');
+    document.querySelector('.controls-panel')?.classList.remove('mobile-hidden');
+  } else {
+    nav.style.display = 'flex';
+  }
+}
+
+window.addEventListener('resize', updateNavVisibility);
 
 renderProtocols();
 applyPreset(activePreset);
