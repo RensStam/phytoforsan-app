@@ -1296,7 +1296,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2677,41 +2677,43 @@ function stopDroneEngine() {
 }
 
 function playRestCue() {
-  // Trillen (werkt op Android, stil op iOS)
+  if (audioCtx && els.restCueToggle.checked) {
+    const now = audioCtx.currentTime;
+    const level = Math.max(0.008, Math.min(0.026, targetGain() * 0.55));
+
+    [0, 0.18].forEach(offset => {
+      const start = now + offset;
+      const osc = audioCtx.createOscillator();
+      const cueFilter = audioCtx.createBiquadFilter();
+      const cueGain = audioCtx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(660, start);
+      cueFilter.type = "lowpass";
+      cueFilter.frequency.setValueAtTime(1250, start);
+      cueFilter.Q.setValueAtTime(0.35, start);
+      cueGain.gain.setValueAtTime(0.0001, start);
+      cueGain.gain.linearRampToValueAtTime(level, start + 0.012);
+      cueGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.095);
+
+      osc.connect(cueFilter);
+      cueFilter.connect(cueGain);
+      cueGain.connect(audioCtx.destination);
+      osc.start(start);
+      osc.stop(start + 0.11);
+
+      window.setTimeout(() => {
+        try {
+          osc.disconnect();
+          cueFilter.disconnect();
+          cueGain.disconnect();
+        } catch {}
+      }, (offset + 0.2) * 1000);
+    });
+  }
+
+  // Trillen ná audio schedulen zodat vibrate() de AudioContext niet suspendeert
   if (els.vibrateToggle?.checked && navigator.vibrate) navigator.vibrate([80, 120, 80]);
-  if (!audioCtx || !els.restCueToggle.checked) return;
-  const now = audioCtx.currentTime;
-  const level = Math.max(0.008, Math.min(0.026, targetGain() * 0.55));
-
-  [0, 0.18].forEach(offset => {
-    const start = now + offset;
-    const osc = audioCtx.createOscillator();
-    const cueFilter = audioCtx.createBiquadFilter();
-    const cueGain = audioCtx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(660, start);
-    cueFilter.type = "lowpass";
-    cueFilter.frequency.setValueAtTime(1250, start);
-    cueFilter.Q.setValueAtTime(0.35, start);
-    cueGain.gain.setValueAtTime(0.0001, start);
-    cueGain.gain.linearRampToValueAtTime(level, start + 0.012);
-    cueGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.095);
-
-    osc.connect(cueFilter);
-    cueFilter.connect(cueGain);
-    cueGain.connect(audioCtx.destination);
-    osc.start(start);
-    osc.stop(start + 0.11);
-
-    window.setTimeout(() => {
-      try {
-        osc.disconnect();
-        cueFilter.disconnect();
-        cueGain.disconnect();
-      } catch {}
-    }, (offset + 0.2) * 1000);
-  });
 }
 
 function updateLiveVolume() {
