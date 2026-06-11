@@ -1296,7 +1296,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="exitImmersive()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.3.1</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1450,6 +1450,10 @@ canvas {
               <span class="switch"><input id="restCueToggleBreath" type="checkbox" checked=""><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
+              <span>Trillen bij rust</span>
+              <span class="switch"><input id="vibrateToggleBreath" type="checkbox"><span class="switch-track"></span></span>
+            </label>
+            <label class="switch-label">
               <span>Achtergrondgeluid</span>
               <span class="switch"><input id="breathSoundToggle" type="checkbox"><span class="switch-track"></span></span>
             </label>
@@ -1477,6 +1481,10 @@ canvas {
             <label class="switch-label">
               <span>Piep-piep bij rust</span>
               <span class="switch"><input id="restCueToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
+            </label>
+            <label class="switch-label">
+              <span>Trillen bij rust</span>
+              <span class="switch"><input id="vibrateToggle" type="checkbox"><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
               <span>Levende toon</span>
@@ -1792,6 +1800,8 @@ const els = {
   restCueToggle: document.getElementById("restCueToggle"),
   restCueToggleBreath: document.getElementById("restCueToggleBreath"),
   breathSoundToggle: document.getElementById("breathSoundToggle"),
+  vibrateToggle: document.getElementById("vibrateToggle"),
+  vibrateToggleBreath: document.getElementById("vibrateToggleBreath"),
   productTitle: document.getElementById("productTitle"),
   productText: document.getElementById("productText"),
   inhaleInput: document.getElementById("inhaleInput"),
@@ -2657,6 +2667,8 @@ function stopDroneEngine() {
 }
 
 function playRestCue() {
+  // Trillen (werkt op Android, stil op iOS)
+  if (els.vibrateToggle?.checked && navigator.vibrate) navigator.vibrate([80, 120, 80]);
   if (!audioCtx || !els.restCueToggle.checked) return;
   const now = audioCtx.currentTime;
   const level = Math.max(0.008, Math.min(0.026, targetGain() * 0.55));
@@ -3053,6 +3065,12 @@ els.restCueToggleBreath.addEventListener("change", () => {
 });
 els.restCueToggle.addEventListener("change", () => {
   els.restCueToggleBreath.checked = els.restCueToggle.checked;
+});
+els.vibrateToggle.addEventListener("change", () => {
+  els.vibrateToggleBreath.checked = els.vibrateToggle.checked;
+});
+els.vibrateToggleBreath.addEventListener("change", () => {
+  els.vibrateToggle.checked = els.vibrateToggleBreath.checked;
 });
 
 // Achtergrondgeluid toggle
