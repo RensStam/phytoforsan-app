@@ -1321,7 +1321,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.7.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.7.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1401,7 +1401,7 @@ canvas {
         </div>
       </div>
 
-      <div class="phase-strip">
+      <div class="phase-strip" id="phaseStrip">
         <div class="phase-card"><strong id="phaseIn">4,5 s</strong><span>neus in</span></div>
         <div class="phase-card"><strong id="phaseHold">2 s</strong><span>rust</span></div>
         <div class="phase-card"><strong id="phaseOut">8 s</strong><span id="phaseOutLabel">MAEN uit</span></div>
@@ -2461,10 +2461,13 @@ function applyPreset(id) {
     mobileHeader.textContent = preset.label;
     mobileHeader.style.display = isMobile() ? '' : 'none';
   }
+  // Sliders + stats-balk verbergen bij phased presets en meditationMode
+  const isPhasedOrMeditation = Boolean(preset.phases) || Boolean(preset.meditationMode);
+  const phaseStrip = document.getElementById("phaseStrip");
+  if (phaseStrip) phaseStrip.style.display = isPhasedOrMeditation ? "none" : "";
   // Fase-bolletjes: alleen IN/UIT tonen bij presets met vaste phases of meditationMode
-  const twoDotsMode = Boolean(preset.phases) || Boolean(preset.meditationMode);
-  els.dotHold.style.display  = twoDotsMode ? "none" : "";
-  els.dotPause.style.display = twoDotsMode ? "none" : "";
+  els.dotHold.style.display  = isPhasedOrMeditation ? "none" : "";
+  els.dotPause.style.display = isPhasedOrMeditation ? "none" : "";
   // Meditatiemodus: toon duurknoppen, verberg ademritme-sliders
   const isMeditation = Boolean(preset.meditationMode);
   const meditationDurationSection = document.getElementById("meditationDurationSection");
