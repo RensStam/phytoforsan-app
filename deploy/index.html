@@ -1321,7 +1321,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.7.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.7.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3256,8 +3256,10 @@ function draw(time) {
   ctx.stroke();
 
   if (!restPhase) {
+    const isFreePhase = guide.phase.key === "free";
+    const arcProgress = isFreePhase ? (1 - guide.progress) : guide.progress;
     ctx.beginPath();
-    ctx.arc(cx, cy, progressRadius, -Math.PI / 2, -Math.PI / 2 + guide.progress * Math.PI * 2);
+    ctx.arc(cx, cy, progressRadius, -Math.PI / 2, -Math.PI / 2 + arcProgress * Math.PI * 2);
     ctx.strokeStyle = `rgba(${phaseColor},.68)`;
     ctx.lineWidth = 18;
     ctx.lineCap = "round";
