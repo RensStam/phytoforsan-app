@@ -1254,21 +1254,22 @@ canvas {
   /* Extra ruimte onderaan zodat nav de content niet bedekt */
   .app { padding-bottom: 72px !important; }
 
-  /* "Naar ademscherm" knop bovenaan instellingen op mobiel */
+  /* "Naar ademcirkel" knop onderaan instellingen op mobiel */
   .mobile-to-breath {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    background: var(--deep);
-    color: #fff;
-    border: none;
+    justify-content: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid rgba(18,55,52,.18);
     border-radius: 14px;
-    padding: 13px 18px;
-    font-size: .92rem;
-    font-weight: 800;
+    padding: 11px 18px;
+    font-size: .82rem;
+    font-weight: 700;
     cursor: pointer;
     width: 100%;
-    margin-bottom: 14px;
+    margin-top: 14px;
   }
 }
 </style>
@@ -1485,7 +1486,6 @@ canvas {
         </section>
       </div>
       <button class="mobile-to-breath" id="toBreathBtn" onclick="switchMobileTab('breath')" style="display:none">
-        <span id="toBreathLabel">Lange Uitademing</span>
         <span>Naar ademcirkel →</span>
       </button>
   </section>
@@ -1504,7 +1504,7 @@ canvas {
     </button>
     <button class="mobile-nav-btn" id="mobileNavBreath" onclick="switchMobileTab('breath')">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
-      Ademscherm
+      Ademcirkel
     </button>
   </nav>
 
@@ -3107,6 +3107,7 @@ function exitImmersive() {
   stage.style.minHeight = "";
   stage.style.borderRadius = "";
   document.body.style.overflow = "";
+  if (isMobile()) switchMobileTab('settings');
 }
 
 // Stop audio als gebruiker naar ander scherm gaat
@@ -3160,7 +3161,7 @@ function switchMobileTab(tab) {
 
   if (tab === 'library')  { rail.classList.remove('mobile-hidden'); }
   if (tab === 'settings') { controls.classList.remove('mobile-hidden'); }
-  if (tab === 'breath')   { practice.classList.remove('mobile-hidden'); }
+  if (tab === 'breath')   { practice.classList.remove('mobile-hidden'); enterImmersive(); }
 
   // Verberg "Naar ademscherm" knop op ademscherm-tab
   if (toBreath) toBreath.style.display = tab === 'settings' ? '' : 'none';
