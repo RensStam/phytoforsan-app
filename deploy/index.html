@@ -1321,7 +1321,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.6.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.7.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1550,16 +1550,10 @@ canvas {
 
 </main>
 
-<!-- Veiligheidsmelding Actieve Ademtest -->
+<!-- Veiligheidsmelding (gedeeld, dynamisch gevuld per preset) -->
 <div id="activeBreathWarningOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:99999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:#fff;border-radius:18px;max-width:480px;width:100%;padding:28px 24px;box-shadow:0 24px 60px rgba(0,0,0,.22);margin-top:16px">
-    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol — Experimenteel</p>
-    <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Actieve Ademtest</h2>
-    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze oefening is intensiever dan de gewone ademhalingssessies.</p>
-    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij:</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, of wanneer je snel paniek, flauwvallen of dissociatie ervaart.</p>
-    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Doe deze oefening <strong>zittend of liggend</strong>. Niet tijdens autorijden, fietsen, werken met machines of in water.</p>
-    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 18px"><strong>Stop direct</strong> bij duizeligheid, sterke tintelingen, druk op de borst, paniek, misselijkheid of een gevoel van controleverlies.</p>
-    <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is alleen bedoeld als korte interne test en is geen volledige holotropische ademhalingssessie.</p>
+    <div id="warningModalBody"></div>
     <div style="display:flex;gap:10px;flex-direction:column">
       <button id="activeBreathConfirmBtn" style="background:#123734;color:#fff;border:none;border-radius:12px;padding:13px 20px;font-size:.9rem;font-weight:800;cursor:pointer">Ik begrijp dit en wil doorgaan</button>
       <button id="activeBreathCancelBtn" style="background:transparent;color:#555;border:1.5px solid #ccc;border-radius:12px;padding:11px 20px;font-size:.85rem;font-weight:700;cursor:pointer">Annuleren</button>
@@ -1568,7 +1562,26 @@ canvas {
 </div>
 
 <script>
-const SHOW_HIDDEN_PROTOCOLS = localStorage.getItem("phytoforsan_show_hidden") !== "false";
+const SHOW_HIDDEN_PROTOCOLS = localStorage.getItem("phytoforsan_show_hidden") === "true";
+
+const warningContent = {
+  activeBreathTest: `
+    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol — Experimenteel</p>
+    <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Actieve Ademtest</h2>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze oefening is intensiever dan de gewone ademhalingssessies.</p>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij:</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, of wanneer je snel paniek, flauwvallen of dissociatie ervaart.</p>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Doe deze oefening <strong>zittend of liggend</strong>. Niet tijdens autorijden, fietsen, werken met machines of in water.</p>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 18px"><strong>Stop direct</strong> bij duizeligheid, sterke tintelingen, druk op de borst, paniek, misselijkheid of een gevoel van controleverlies.</p>
+    <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is alleen bedoeld als korte interne test en is geen volledige holotropische ademhalingssessie.</p>`,
+  holotropicBreathTest: `
+    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol — Experimenteel</p>
+    <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Holotropische Ademtest</h2>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze sessie is intensiever dan de gewone ademhalingssessies.</p>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, psychosegevoeligheid, ernstige paniekklachten of wanneer je snel flauwvalt of dissocieert.</p>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Doe deze oefening alleen <strong>liggend of zittend</strong> op een veilige plek. Niet tijdens autorijden, fietsen, werken met machines, zwemmen of baden.</p>
+    <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 18px"><strong>Stop direct</strong> bij druk op de borst, sterke duizeligheid, paniek, misselijkheid, hevige tintelingen, kramp, verwarring of een gevoel van controleverlies.</p>
+    <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is geïnspireerd op holotropische ademhaling, maar is geen officiële Holotropic Breathwork®-sessie en vervangt geen begeleiding door een getrainde facilitator.</p>`
+};
 
 const presets = {
   longExhale: {
@@ -1812,6 +1825,34 @@ const presets = {
     tone: 0, type: "none",
     breathingOnly: false,
     meditationMode: true
+  },
+  holotropicBreathTest: {
+    label: "Holotropische Ademtest",
+    category: "verdieping",
+    text: "Een verborgen testprotocol met actieve verbonden ademhaling, geïnspireerd op holotropische ademhaling. Alleen gebruiken als je je goed voelt en voldoende ervaring hebt met ademwerk.",
+    product: "Holotropische Ademtest",
+    productText: "Deze sessie is geïnspireerd op holotropische ademhaling, maar is geen officiële Holotropic Breathwork®-sessie. Het protocol is bedoeld als intern testprotocol voor actieve verbonden ademhaling.",
+    minutes: 25,
+    totalSeconds: 1500,
+    inhale: 0, hold: 0, exhale: 0, pause: 0,
+    tone: 0, type: "none",
+    breathingOnly: true, freeExhale: true,
+    hidden: true, experimental: true, requiresWarning: true,
+    phases: [
+      { id: "preparation",    label: "Voorbereiding",    duration: 180, mode: "free",
+        cue: "VOORBEREIDING", sub: "Adem vrij. Kom rustig aan." },
+      { id: "buildUp",        label: "Opbouwfase",       duration: 300, mode: "breath",
+        inhale: 3, hold: 0, exhale: 3, pause: 0,
+        cueIn: "IN", cueOut: "UIT", subIn: "Adem rustig en ruim in.", subOut: "Laat de adem direct weer uitstromen." },
+      { id: "activeBreathing",label: "Actieve ademfase", duration: 600, mode: "breath",
+        inhale: 2, hold: 0, exhale: 2, pause: 0,
+        cueIn: "IN", cueOut: "UIT", subIn: "Adem actief en ruim in, zonder te forceren.", subOut: "Laat los. Geen pauze." },
+      { id: "downshift",      label: "Vertraging",       duration: 120, mode: "breath",
+        inhale: 4, hold: 0, exhale: 6, pause: 0,
+        cueIn: "IN", cueOut: "UIT", subIn: "Adem rustig in.", subOut: "Adem langzaam uit." },
+      { id: "integration",    label: "Integratie",       duration: 300, mode: "free",
+        cue: "INTEGRATIE", sub: "Adem vrij. Voel na." }
+    ]
   },
   activeBreathTest: {
     label: "Actieve Ademtest",
@@ -2242,6 +2283,17 @@ const cardIllustrations = {
     <line x1="9" y1="30" x2="13" y2="30" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
     <line x1="47" y1="30" x2="51" y2="30" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
   </svg>`,
+  holotropicBreathTest: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="60" height="60" rx="12" fill="#0e1c2a"/>
+    <circle cx="30" cy="30" r="20" stroke="#7ec8d4" stroke-width="1" fill="none" opacity="0.25"/>
+    <circle cx="30" cy="30" r="14" stroke="#7ec8d4" stroke-width="1.4" fill="none" opacity="0.5"/>
+    <circle cx="30" cy="30" r="8"  stroke="#7ec8d4" stroke-width="2"   fill="none" opacity="0.8"/>
+    <circle cx="30" cy="30" r="3"  fill="#7ec8d4" opacity="0.9"/>
+    <line x1="30" y1="7"  x2="30" y2="11" stroke="#7ec8d4" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+    <line x1="30" y1="49" x2="30" y2="53" stroke="#7ec8d4" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+    <line x1="7"  y1="30" x2="11" y2="30" stroke="#7ec8d4" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+    <line x1="49" y1="30" x2="53" y2="30" stroke="#7ec8d4" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  </svg>`,
   activeBreathTest: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
     <rect width="60" height="60" rx="12" fill="#1a2a3a"/>
     <circle cx="30" cy="30" r="14" stroke="#e8c96a" stroke-width="1.8" fill="none" opacity="0.5"/>
@@ -2266,7 +2318,8 @@ const presetMeta = {
   maen:       { duration: "8 min",  desc: "M → A → E → N, adem en resonantie." },
   amen:       { duration: "8 min",  desc: "A → M → E → N, adem en resonantie." },
   om:              { duration: "12 min", desc: "A → O/U → M, klassieke diepe resonantie." },
-  meditationTimer:   { duration: "vrij",   desc: "Stille meditatie op jouw eigen tempo." },
+  meditationTimer:      { duration: "vrij",   desc: "Stille meditatie op jouw eigen tempo." },
+  holotropicBreathTest: { duration: "25 min", desc: "Actieve verbonden ademhaling — intern testprotocol." },
   activeBreathTest: { duration: "5:30",   desc: "Actief ademritme — testprotocol." }
 };
 
@@ -3395,6 +3448,8 @@ document.addEventListener("visibilitychange", () => {
 
 function showActiveBreathWarning(onConfirm) {
   const overlay = document.getElementById("activeBreathWarningOverlay");
+  const body = document.getElementById("warningModalBody");
+  if (body) body.innerHTML = warningContent[activePreset] || warningContent["activeBreathTest"];
   overlay.style.display = "flex";
   document.getElementById("activeBreathConfirmBtn").onclick = () => {
     overlay.style.display = "none";
