@@ -1449,7 +1449,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3265,7 +3265,9 @@ function updatePhase(time) {
   if (running && hum && phaseChanged && activePreset in bgAudioFiles) startBgAudio();
   if ((!hum || !running) && lastPhaseKey === "exhale") stopDroneEngine();
   if ((!hum || !running) && lastPhaseKey === "exhale" && activePreset in bgAudioFiles) stopBgAudio();
-  if (running && phaseChanged && (phase.key === "hold" || phase.key === "pause")) playRestCue();
+  // Geluid bij rust; bij ritmes zonder rustfases klinkt het bij elke in/uit-overgang
+  const noRestPhases = protocol.hold === 0 && protocol.pause === 0;
+  if (running && phaseChanged && (phase.key === "hold" || phase.key === "pause" || (noRestPhases && Boolean(presets[activePreset]?.breathingOnly)))) playRestCue();
   lastPhaseKey = phase.key;
 }
 
