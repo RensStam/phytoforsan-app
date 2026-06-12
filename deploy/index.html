@@ -302,6 +302,27 @@ button { cursor: pointer; }
   transition: background 120ms, color 120ms, border-color 120ms;
 }
 
+/* ── Voortgang ── */
+.progress-panel { padding: 22px; margin-top: 18px; }
+.progress-title { font-size: 1.05rem; font-weight: 900; color: var(--deep); margin: 0 0 14px; }
+.progress-week-card { background: var(--deep); border-radius: 16px; padding: 18px 20px; color: #fff; }
+.progress-week-label { font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .75; margin: 0 0 12px; }
+.progress-week-stats { display: flex; gap: 26px; }
+.progress-stat { display: flex; flex-direction: column; }
+.progress-stat strong { font-size: 1.5rem; font-weight: 900; line-height: 1.1; }
+.progress-stat span { font-size: .72rem; opacity: .75; }
+.progress-encourage { font-size: .78rem; margin: 12px 0 0; opacity: .85; }
+.progress-bars { display: flex; align-items: flex-end; gap: 10px; height: 90px; margin-top: 8px; }
+.progress-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
+.progress-bar-fill { width: 100%; max-width: 26px; border-radius: 6px; background: rgba(18,55,52,.78); min-height: 3px; }
+.progress-bar-col span { font-size: .68rem; font-weight: 700; color: rgba(18,55,52,.6); }
+.progress-streak { display: flex; align-items: center; gap: 10px; background: rgba(212,155,63,.12); border-radius: 12px; padding: 12px 16px; margin-top: 16px; font-size: .85rem; font-weight: 800; color: var(--deep); }
+.progress-streak-flame { font-size: 1.1rem; }
+.progress-favs { display: grid; gap: 8px; margin-top: 6px; }
+.progress-fav { display: flex; justify-content: space-between; align-items: center; background: rgba(18,55,52,.05); border-radius: 12px; padding: 11px 16px; font-size: .83rem; font-weight: 700; color: var(--deep); }
+.progress-fav span:last-child { font-size: .73rem; opacity: .6; font-weight: 600; }
+.progress-empty { font-size: .85rem; color: rgba(18,55,52,.55); margin-top: 14px; }
+
 .med-dur-btn.med-dur-active {
   background: var(--deep);
   color: #fff;
@@ -1532,6 +1553,31 @@ canvas {
         </section>
       </div>
   </section>
+
+  <!-- Voortgang -->
+  <section class="surface progress-panel" id="progressPanel" aria-label="Voortgang">
+    <h2 class="progress-title">Voortgang</h2>
+    <div class="progress-week-card">
+      <p class="progress-week-label">Deze week</p>
+      <div class="progress-week-stats">
+        <div class="progress-stat"><strong id="progSessions">0</strong><span>sessies</span></div>
+        <div class="progress-stat"><strong id="progMinutes">0</strong><span>minuten</span></div>
+        <div class="progress-stat"><strong id="progDays">0</strong><span>dagen</span></div>
+      </div>
+      <p class="progress-encourage" id="progEncourage"></p>
+    </div>
+    <p class="section-title" style="margin-top:18px">Sessie overzicht</p>
+    <div class="progress-bars" id="progBars"></div>
+    <div class="progress-streak" id="progStreak" style="display:none">
+      <span class="progress-streak-flame">&#128293;</span>
+      <span id="progStreakText"></span>
+    </div>
+    <div id="progFavWrap" style="display:none">
+      <p class="section-title" style="margin-top:18px">Favoriete sessies</p>
+      <div class="progress-favs" id="progFavs"></div>
+    </div>
+    <p class="progress-empty" id="progEmpty" style="display:none">Nog geen sessies gedaan. Start je eerste sessie via de bibliotheek!</p>
+  </section>
     </div>
   </div>
 
@@ -1548,6 +1594,10 @@ canvas {
     <button class="mobile-nav-btn" id="mobileNavBreath" onclick="switchMobileTab('breath')">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
       Ademcirkel
+    </button>
+    <button class="mobile-nav-btn" id="mobileNavProg" onclick="switchMobileTab('progress')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="4"/></svg>
+      Voortgang
     </button>
   </nav>
 
@@ -1950,6 +2000,25 @@ const els = {
 
 let activePreset = "longExhale";
 let meditationDuration = 10;
+let sessionLogged = false;
+
+// ── Sessieregistratie ──
+const SESSION_LOG_KEY = "phytoforsan_sessions";
+
+function getSessionLog() {
+  try { return JSON.parse(localStorage.getItem(SESSION_LOG_KEY)) || []; }
+  catch { return []; }
+}
+
+function logSession(seconds, completed) {
+  const log = getSessionLog();
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  log.push({ p: activePreset, s: Math.round(seconds), d: dateStr, c: completed ? 1 : 0 });
+  // Bewaar maximaal 1000 sessies
+  while (log.length > 1000) log.shift();
+  localStorage.setItem(SESSION_LOG_KEY, JSON.stringify(log));
+}
 let running = false;
 let startTime = 0;
 let elapsedBefore = 0;
@@ -3070,6 +3139,7 @@ function tick() {
     cancelAnimationFrame(raf);
     updatePhase(elapsedBefore);
     draw(elapsedBefore);
+    if (!sessionLogged) { logSession(sessionDuration(), true); sessionLogged = true; }
     if (presets[activePreset]?.meditationMode) {
       setCueWord("KLAAR");
       els.cueSub.textContent = "Sessie voltooid";
@@ -3105,6 +3175,7 @@ async function start() {
     lastPhaseKey = "ready";
   }
   running = true;
+  if (elapsedBefore === 0) sessionLogged = false;
   startTime = performance.now();
   els.startBtn.textContent = "II";
   els.breathVisual.classList.add("running");
@@ -3129,6 +3200,10 @@ function pause() {
 }
 
 function reset() {
+  // Afgebroken sessie van minimaal 1 minuut alsnog registreren
+  const elapsedAtReset = elapsedBefore + (running ? (performance.now() - startTime) / 1000 : 0);
+  if (!sessionLogged && elapsedAtReset >= 60) { logSession(elapsedAtReset, false); }
+  sessionLogged = true;
   running = false;
   releaseWakeLock();
   elapsedBefore = 0;
@@ -3505,6 +3580,76 @@ for (const input of document.querySelectorAll("input[type='range']")) {
   input.addEventListener("input", () => updateSliderFill(input));
 }
 
+// ── Voortgang ──
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function renderProgress() {
+  const log = getSessionLog();
+  const empty = document.getElementById("progEmpty");
+  empty.style.display = log.length ? "none" : "";
+
+  // Maandag van deze week bepalen
+  const today = new Date();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  const mondayKey = dateKey(monday);
+
+  const week = log.filter(e => e.d >= mondayKey);
+  const weekMinutes = Math.round(week.reduce((sum, e) => sum + e.s, 0) / 60);
+  const weekDays = new Set(week.map(e => e.d)).size;
+  document.getElementById("progSessions").textContent = week.length;
+  document.getElementById("progMinutes").textContent = weekMinutes;
+  document.getElementById("progDays").textContent = weekDays;
+
+  const enc = document.getElementById("progEncourage");
+  if (!week.length)        enc.textContent = "Begin de week met een rustige sessie.";
+  else if (weekDays >= 5)  enc.textContent = "Geweldig volgehouden deze week! \u{1F331}";
+  else if (weekDays >= 3)  enc.textContent = "Je bent op de goede weg! \u{1F331}";
+  else                     enc.textContent = "Goed begin, blijf erbij.";
+
+  // Staafdiagram ma t/m zo (minuten per dag)
+  const dayLabels = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+  const perDay = dayLabels.map((_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const key = dateKey(d);
+    return week.filter(e => e.d === key).reduce((sum, e) => sum + e.s, 0) / 60;
+  });
+  const maxDay = Math.max(1, ...perDay);
+  document.getElementById("progBars").innerHTML = perDay.map((min, i) => {
+    const pct = Math.round(min / maxDay * 100);
+    return `<div class="progress-bar-col"><div class="progress-bar-fill" style="height:${Math.max(4, pct)}%;opacity:${min > 0 ? 1 : 0.18}"></div><span>${dayLabels[i]}</span></div>`;
+  }).join("");
+
+  // Streak: aaneengesloten dagen met een sessie, eindigend vandaag of gisteren
+  const daySet = new Set(log.map(e => e.d));
+  let streak = 0;
+  const cursor = new Date(today);
+  if (!daySet.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+  while (daySet.has(dateKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  const streakEl = document.getElementById("progStreak");
+  streakEl.style.display = streak >= 2 ? "" : "none";
+  document.getElementById("progStreakText").textContent = `${streak} dagen op rij`;
+
+  // Favoriete sessies (top 3, alle tijd)
+  const counts = {};
+  for (const e of log) counts[e.p] = (counts[e.p] || 0) + 1;
+  const favs = Object.entries(counts)
+    .filter(([id]) => presets[id])
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+  const favWrap = document.getElementById("progFavWrap");
+  favWrap.style.display = favs.length ? "" : "none";
+  document.getElementById("progFavs").innerHTML = favs.map(([id, n]) =>
+    `<div class="progress-fav"><span>${presets[id].label}</span><span>${n}&times;</span></div>`
+  ).join("");
+}
+
 // ── Mobiele tab-navigatie ──
 const isMobile = () => window.innerWidth <= 640;
 let currentMobileTab = 'library';
@@ -3516,17 +3661,18 @@ function switchMobileTab(tab) {
   const rail     = document.querySelector('.rail');
   const practice = document.querySelector('.practice');
   const controls = document.querySelector('.controls-panel');
-  const toBreath = document.getElementById('toBreathBtn');
+  const progress = document.getElementById('progressPanel');
 
-  [rail, practice, controls].forEach(el => el?.classList.add('mobile-hidden'));
+  [rail, practice, controls, progress].forEach(el => el?.classList.add('mobile-hidden'));
 
   if (tab === 'library')  { rail.classList.remove('mobile-hidden'); }
   if (tab === 'settings') { controls.classList.remove('mobile-hidden'); }
   if (tab === 'breath')   { practice.classList.remove('mobile-hidden'); enterImmersive(); }
+  if (tab === 'progress') { progress?.classList.remove('mobile-hidden'); renderProgress(); }
 
   // Nav knoppen actief markeren
-  ['library','settings','breath'].forEach(t => {
-    const btn = document.getElementById('mobileNav' + {library:'Lib',settings:'Set',breath:'Breath'}[t]);
+  ['library','settings','breath','progress'].forEach(t => {
+    const btn = document.getElementById('mobileNav' + {library:'Lib',settings:'Set',breath:'Breath',progress:'Prog'}[t]);
     btn?.classList.toggle('active', t === tab);
   });
 }
@@ -3541,6 +3687,8 @@ function initMobileNav() {
     document.querySelector('.rail')?.classList.remove('mobile-hidden');
     document.querySelector('.practice')?.classList.remove('mobile-hidden');
     document.querySelector('.controls-panel')?.classList.remove('mobile-hidden');
+    document.getElementById('progressPanel')?.classList.remove('mobile-hidden');
+    renderProgress();
   }
 }
 
@@ -3551,6 +3699,7 @@ function updateNavVisibility() {
     document.querySelector('.rail')?.classList.remove('mobile-hidden');
     document.querySelector('.practice')?.classList.remove('mobile-hidden');
     document.querySelector('.controls-panel')?.classList.remove('mobile-hidden');
+    document.getElementById('progressPanel')?.classList.remove('mobile-hidden');
   } else {
     nav.style.display = 'flex';
   }
