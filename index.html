@@ -316,6 +316,27 @@ button { cursor: pointer; }
 .home-reco-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .home-all-btn { background: none; border: none; color: var(--deep); font-size: .78rem; font-weight: 800; cursor: pointer; text-decoration: underline; padding: 4px; }
 
+/* Profiel */
+.home-panel { position: relative; }
+.home-gear { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--deep); cursor: pointer; padding: 6px; opacity: .75; }
+.profile-card { display: flex; align-items: center; gap: 16px; background: rgba(18,55,52,.05); border-radius: 16px; padding: 18px; margin-top: 34px; }
+.profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(18,55,52,.12); flex-shrink: 0; }
+.profile-info { display: flex; flex-direction: column; gap: 2px; }
+.profile-info strong { font-size: 1.1rem; font-weight: 900; color: var(--deep); }
+.profile-info span { font-size: .78rem; color: rgba(18,55,52,.6); }
+.profile-edit-btn { display: block; margin: 12px auto 0; background: #fff; border: 1.5px solid rgba(18,55,52,.22); border-radius: 999px; padding: 8px 22px; font-size: .82rem; font-weight: 800; color: var(--deep); cursor: pointer; }
+.profile-list { display: grid; gap: 8px; }
+.profile-item { display: flex; align-items: center; gap: 12px; background: rgba(18,55,52,.04); border: none; border-radius: 12px; padding: 13px 16px; font-size: .86rem; font-weight: 700; color: var(--deep); cursor: pointer; text-decoration: none; text-align: left; width: 100%; box-sizing: border-box; font-family: inherit; }
+.profile-item-icon { font-size: 1rem; width: 24px; text-align: center; }
+.profile-item-arrow { margin-left: auto; font-size: 1.1rem; opacity: .45; }
+.profile-item-value { margin-left: auto; font-size: .8rem; opacity: .6; font-weight: 600; }
+.profile-item-static { cursor: default; }
+.profile-item-details { display: block; padding: 0; }
+.profile-item-details summary { display: flex; align-items: center; gap: 12px; padding: 13px 16px; cursor: pointer; list-style: none; }
+.profile-item-details summary::-webkit-details-marker { display: none; }
+.profile-item-body { padding: 0 16px 14px; font-size: .8rem; font-weight: 500; line-height: 1.55; color: rgba(18,55,52,.8); margin: 0; }
+.profile-item-body p { margin: 0 0 10px; }
+
 .progress-panel { padding: 22px; margin-top: 18px; }
 .progress-title { font-size: 1.05rem; font-weight: 900; color: var(--deep); margin: 0 0 14px; }
 .progress-week-card { background: var(--deep); border-radius: 16px; padding: 18px 20px; color: #fff; }
@@ -1340,6 +1361,9 @@ canvas {
 
     <!-- Home (alleen mobiel) -->
     <section class="surface home-panel mobile-hidden" id="homePanel" aria-label="Home">
+      <button class="home-gear" onclick="switchMobileTab('profile')" aria-label="Profiel">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
       <h2 class="home-greeting" id="homeGreeting">Goedemorgen <span class="home-leaf">&#127807;</span></h2>
       <p class="home-question">Hoe voel je je vandaag?</p>
       <div class="mood-grid" id="moodGrid">
@@ -1354,6 +1378,54 @@ canvas {
         <button class="home-all-btn" onclick="switchMobileTab('library')">Bekijk alle</button>
       </div>
       <div class="lib-list" id="homeRecoList"></div>
+    </section>
+
+    <!-- Profiel (alleen mobiel, via tandwiel op Home) -->
+    <section class="surface home-panel mobile-hidden" id="profilePanel" aria-label="Profiel">
+      <button class="home-gear" onclick="switchMobileTab('home')" aria-label="Terug">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="profile-card">
+        <div class="profile-avatar"><img src="logo.svg" alt="" style="width:60%;height:60%;object-fit:contain"></div>
+        <div class="profile-info">
+          <strong id="profileName">Welkom</strong>
+          <span id="profileSince"></span>
+        </div>
+      </div>
+      <button class="profile-edit-btn" id="profileEditBtn">Profiel bewerken</button>
+
+      <p class="section-title" style="margin-top:24px">Instellingen</p>
+      <div class="profile-list">
+        <button class="profile-item" onclick="switchMobileTab('settings')">
+          <span class="profile-item-icon">&#128266;</span><span>Geluid &amp; trillingen</span><span class="profile-item-arrow">&#8250;</span>
+        </button>
+        <details class="profile-item profile-item-details">
+          <summary><span class="profile-item-icon">&#128274;</span><span>Privacy</span><span class="profile-item-arrow">&#8250;</span></summary>
+          <p class="profile-item-body">Al je gegevens (sessies, voortgang, voorkeuren) worden uitsluitend lokaal op je eigen apparaat opgeslagen. Er wordt niets naar een server verstuurd en er worden geen accounts of trackers gebruikt.</p>
+        </details>
+        <div class="profile-item profile-item-static">
+          <span class="profile-item-icon">&#127760;</span><span>Taal</span><span class="profile-item-value">Nederlands</span>
+        </div>
+      </div>
+
+      <p class="section-title" style="margin-top:24px">Over PhytoForsan</p>
+      <div class="profile-list">
+        <a class="profile-item" href="https://www.phytoforsan.nl" target="_blank" rel="noopener">
+          <span class="profile-item-icon">&#8505;&#65039;</span><span>Over ons</span><span class="profile-item-arrow">&#8250;</span>
+        </a>
+        <a class="profile-item" href="https://www.phytoforsan.nl/contact" target="_blank" rel="noopener">
+          <span class="profile-item-icon">&#9993;&#65039;</span><span>Contact</span><span class="profile-item-arrow">&#8250;</span>
+        </a>
+        <details class="profile-item profile-item-details">
+          <summary><span class="profile-item-icon">&#10067;</span><span>Veelgestelde vragen</span><span class="profile-item-arrow">&#8250;</span></summary>
+          <div class="profile-item-body">
+            <p><strong>Hoe installeer ik de app?</strong><br>Open het menu (&#8942;) in je browser en kies "App installeren" of "Toevoegen aan startscherm".</p>
+            <p><strong>Waar worden mijn gegevens opgeslagen?</strong><br>Alles blijft lokaal op je apparaat. Niets wordt gedeeld.</p>
+            <p><strong>Wat is humming?</strong><br>Zacht neuri&euml;n tijdens de uitademing. De trilling werkt ontspannend en stimuleert de aanmaak van stikstofmonoxide in de neusholtes.</p>
+            <p><strong>Hoe vaak kan ik oefenen?</strong><br>Dagelijks. Begin met &eacute;&eacute;n korte sessie per dag en bouw rustig op.</p>
+          </div>
+        </details>
+      </div>
     </section>
 
     <aside class="surface rail">
@@ -1377,7 +1449,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.7.11</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3705,7 +3777,10 @@ function defaultRecommendations() {
 function updateGreeting() {
   const h = new Date().getHours();
   const word = h < 6 ? "Goedenacht" : h < 12 ? "Goedemorgen" : h < 18 ? "Goedemiddag" : "Goedenavond";
-  document.getElementById("homeGreeting").innerHTML = `${word} <span class="home-leaf">&#127807;</span>`;
+  let name = "";
+  try { name = (JSON.parse(localStorage.getItem("phytoforsan_profile")) || {}).name || ""; } catch {}
+  const safeName = name ? ", " + name.replace(/[<>&]/g, "") : "";
+  document.getElementById("homeGreeting").innerHTML = `${word}${safeName} <span class="home-leaf">&#127807;</span>`;
 }
 
 function renderHomeRecommendations(mood) {
@@ -3740,6 +3815,35 @@ document.getElementById("moodGrid").addEventListener("click", e => {
 
 document.getElementById("homeRecoList").addEventListener("click", handleLibraryClick);
 
+// ── Profiel ──
+function getProfile() {
+  let prof = null;
+  try { prof = JSON.parse(localStorage.getItem("phytoforsan_profile")); } catch {}
+  if (!prof) {
+    prof = { name: "", since: dateKey(new Date()) };
+    localStorage.setItem("phytoforsan_profile", JSON.stringify(prof));
+  }
+  return prof;
+}
+
+function renderProfile() {
+  const prof = getProfile();
+  document.getElementById("profileName").textContent = prof.name || "Welkom";
+  const months = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+  const [y, m] = prof.since.split("-");
+  document.getElementById("profileSince").textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}`;
+}
+
+document.getElementById("profileEditBtn").addEventListener("click", () => {
+  const prof = getProfile();
+  const name = prompt("Hoe mogen we je noemen?", prof.name || "");
+  if (name === null) return;
+  prof.name = name.trim().slice(0, 30);
+  localStorage.setItem("phytoforsan_profile", JSON.stringify(prof));
+  renderProfile();
+  updateGreeting();
+});
+
 // ── Mobiele tab-navigatie ──
 const isMobile = () => window.innerWidth <= 640;
 let currentMobileTab = 'library';
@@ -3749,14 +3853,16 @@ function switchMobileTab(tab) {
   currentMobileTab = tab;
 
   const home     = document.getElementById('homePanel');
+  const profile  = document.getElementById('profilePanel');
   const rail     = document.querySelector('.rail');
   const practice = document.querySelector('.practice');
   const controls = document.querySelector('.controls-panel');
   const progress = document.getElementById('progressPanel');
 
-  [home, rail, practice, controls, progress].forEach(el => el?.classList.add('mobile-hidden'));
+  [home, profile, rail, practice, controls, progress].forEach(el => el?.classList.add('mobile-hidden'));
 
   if (tab === 'home')     { home?.classList.remove('mobile-hidden'); initHome(); }
+  if (tab === 'profile')  { profile?.classList.remove('mobile-hidden'); renderProfile(); }
   if (tab === 'library')  { rail.classList.remove('mobile-hidden'); }
   if (tab === 'settings') { controls.classList.remove('mobile-hidden'); }
   if (tab === 'breath')   { practice.classList.remove('mobile-hidden'); enterImmersive(); }
@@ -3765,7 +3871,7 @@ function switchMobileTab(tab) {
   // Nav knoppen actief markeren
   ['home','library','settings','breath','progress'].forEach(t => {
     const btn = document.getElementById('mobileNav' + {home:'Home',library:'Lib',settings:'Set',breath:'Breath',progress:'Prog'}[t]);
-    btn?.classList.toggle('active', t === tab);
+    btn?.classList.toggle('active', t === tab || (tab === 'profile' && t === 'home'));
   });
 }
 
