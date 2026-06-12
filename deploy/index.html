@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -90,7 +90,7 @@ button { cursor: pointer; }
   overflow: visible;
 }
 
-/* â”€â”€ Bibliotheek header â”€â”€ */
+/* ── Bibliotheek header ── */
 .lib-header {
   display: flex;
   align-items: center;
@@ -129,7 +129,7 @@ button { cursor: pointer; }
   margin: 0 0 8px 2px;
 }
 
-/* â”€â”€ Bibliotheek lijst â”€â”€ */
+/* ── Bibliotheek lijst ── */
 .lib-list {
   display: grid;
   gap: 10px;
@@ -302,7 +302,20 @@ button { cursor: pointer; }
   transition: background 120ms, color 120ms, border-color 120ms;
 }
 
-/* â”€â”€ Voortgang â”€â”€ */
+/* ── Voortgang ── */
+/* Home */
+.home-panel { padding: 22px; }
+@media (min-width: 641px) { .home-panel { display: none; } }
+.home-greeting { font-size: 1.35rem; font-weight: 900; color: var(--deep); margin: 0 0 4px; }
+.home-leaf { font-size: 1.1rem; }
+.home-question { font-size: .92rem; font-weight: 700; color: rgba(18,55,52,.75); margin: 14px 0 10px; }
+.mood-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.mood-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1 1 28%; min-width: 92px; background: #fff; border: 1.5px solid rgba(18,55,52,.12); border-radius: 14px; padding: 12px 8px; font-size: .78rem; font-weight: 800; color: var(--deep); cursor: pointer; transition: border-color 120ms, background 120ms; }
+.mood-btn .mood-icon { font-size: 1.35rem; }
+.mood-btn.mood-active { border-color: var(--deep); background: rgba(18,55,52,.06); }
+.home-reco-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.home-all-btn { background: none; border: none; color: var(--deep); font-size: .78rem; font-weight: 800; cursor: pointer; text-decoration: underline; padding: 4px; }
+
 .progress-panel { padding: 22px; margin-top: 18px; }
 .progress-title { font-size: 1.05rem; font-weight: 900; color: var(--deep); margin: 0 0 14px; }
 .progress-week-card { background: var(--deep); border-radius: 16px; padding: 18px 20px; color: #fff; }
@@ -372,7 +385,7 @@ label {
   letter-spacing: .02em;
 }
 
-/* â”€â”€ App-stijl sliders zoals mockup â”€â”€ */
+/* ── App-stijl sliders zoals mockup ── */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -562,7 +575,7 @@ select:focus, input[type="number"]:focus {
     linear-gradient(180deg, #eef4e9, #f8faf3 58%, #fff);
 }
 
-/* â”€â”€ Sessie stage elementen â”€â”€ */
+/* ── Sessie stage elementen ── */
 .stage-header {
   position: absolute;
   top: 22px;
@@ -740,7 +753,7 @@ select:focus, input[type="number"]:focus {
   filter: brightness(1.04);
 }
 
-/* Start-hint ring â€” zichtbaar als sessie niet loopt */
+/* Start-hint ring — zichtbaar als sessie niet loopt */
 .breath-visual::before {
   content: "";
   display: none;
@@ -1266,7 +1279,7 @@ canvas {
     border-radius: 12px;
   }
 
-  /* â”€â”€ Mobiele tabnavigatie â”€â”€ */
+  /* ── Mobiele tabnavigatie ── */
   .mobile-nav {
     display: flex;
     position: fixed;
@@ -1324,6 +1337,25 @@ canvas {
 
   <div id="installBtn" style="display:none"></div>
   <div class="layout">
+
+    <!-- Home (alleen mobiel) -->
+    <section class="surface home-panel mobile-hidden" id="homePanel" aria-label="Home">
+      <h2 class="home-greeting" id="homeGreeting">Goedemorgen <span class="home-leaf">&#127807;</span></h2>
+      <p class="home-question">Hoe voel je je vandaag?</p>
+      <div class="mood-grid" id="moodGrid">
+        <button class="mood-btn" data-mood="rustig"><span class="mood-icon">&#128522;</span>Rustig</button>
+        <button class="mood-btn" data-mood="gespannen"><span class="mood-icon">&#128547;</span>Gespannen</button>
+        <button class="mood-btn" data-mood="vermoeid"><span class="mood-icon">&#128564;</span>Vermoeid</button>
+        <button class="mood-btn" data-mood="onrustig"><span class="mood-icon">&#127744;</span>Onrustig</button>
+        <button class="mood-btn" data-mood="focus"><span class="mood-icon">&#127919;</span>Focus nodig</button>
+      </div>
+      <div class="home-reco-head">
+        <p class="section-title" id="homeRecoTitle" style="margin:0">Vandaag aanbevolen</p>
+        <button class="home-all-btn" onclick="switchMobileTab('library')">Bekijk alle</button>
+      </div>
+      <div class="lib-list" id="homeRecoList"></div>
+    </section>
+
     <aside class="surface rail">
       <div class="lib-header">
         <span class="lib-title">Bibliotheek</span>
@@ -1345,7 +1377,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.7.10</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.7.11</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1380,7 +1412,7 @@ canvas {
           <button class="stage-btn" type="button" aria-label="Deel" title="Deel">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           </button>
-          <button class="stage-btn primary-round" id="startBtn" type="button">â–¶</button>
+          <button class="stage-btn primary-round" id="startBtn" type="button">▶</button>
           <button class="stage-btn" id="resetBtn" type="button" aria-label="Reset" title="Reset">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5V2L8 6l4 4V7a7 7 0 1 1-7 7H3a9 9 0 1 0 9-9z"/></svg>
           </button>
@@ -1401,7 +1433,7 @@ canvas {
 
       <div class="session-controls" style="display:none">
         <div class="actions">
-          <button class="btn primary" id="startBtnHidden" type="button">â–¶</button>
+          <button class="btn primary" id="startBtnHidden" type="button">▶</button>
           <button class="btn warn" id="resetBtnHidden" type="button">Reset</button>
         </div>
       </div>
@@ -1583,7 +1615,11 @@ canvas {
 
   <!-- Mobiele navigatiebalk -->
   <nav class="mobile-nav" id="mobileNav" style="display:none">
-    <button class="mobile-nav-btn active" id="mobileNavLib" onclick="switchMobileTab('library')">
+    <button class="mobile-nav-btn" id="mobileNavHome" onclick="switchMobileTab('home')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </button>
+    <button class="mobile-nav-btn" id="mobileNavLib" onclick="switchMobileTab('library')">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Bibliotheek
     </button>
@@ -1619,7 +1655,7 @@ const SHOW_HIDDEN_PROTOCOLS = localStorage.getItem("phytoforsan_show_hidden") !=
 
 const warningContent = {
   activeBreathTest: `
-    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol â€” Experimenteel</p>
+    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol — Experimenteel</p>
     <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Actieve Ademtest</h2>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze oefening is intensiever dan de gewone ademhalingssessies.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij:</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, of wanneer je snel paniek, flauwvallen of dissociatie ervaart.</p>
@@ -1627,13 +1663,13 @@ const warningContent = {
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 18px"><strong>Stop direct</strong> bij duizeligheid, sterke tintelingen, druk op de borst, paniek, misselijkheid of een gevoel van controleverlies.</p>
     <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is alleen bedoeld als korte interne test en is geen volledige holotropische ademhalingssessie.</p>`,
   holotropicBreathTest: `
-    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol â€” Experimenteel</p>
+    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol — Experimenteel</p>
     <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Holotropische Ademtest</h2>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze sessie is intensiever dan de gewone ademhalingssessies.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, psychosegevoeligheid, ernstige paniekklachten of wanneer je snel flauwvalt of dissocieert.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Doe deze oefening alleen <strong>liggend of zittend</strong> op een veilige plek. Niet tijdens autorijden, fietsen, werken met machines, zwemmen of baden.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 18px"><strong>Stop direct</strong> bij druk op de borst, sterke duizeligheid, paniek, misselijkheid, hevige tintelingen, kramp, verwarring of een gevoel van controleverlies.</p>
-    <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is geÃ¯nspireerd op holotropische ademhaling, maar is geen officiÃ«le Holotropic BreathworkÂ®-sessie en vervangt geen begeleiding door een getrainde facilitator.</p>`
+    <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is geïnspireerd op holotropische ademhaling, maar is geen officiële Holotropic Breathwork®-sessie en vervangt geen begeleiding door een getrainde facilitator.</p>`
 };
 
 const presets = {
@@ -1845,7 +1881,7 @@ const presets = {
   om: {
     label: "OM",
     category: "klank",
-    text: "Een klassieke klankmethode met A â†’ O/U â†’ M.",
+    text: "Een klassieke klankmethode met A → O/U → M.",
     product: "Diepe resonantie",
     productText: "De oerklankoefening: A opent de keel, O/U vormt de resonantieruimte, M sluit zacht en laat de trilling uitklinken. Gebruik 136 Hz als aardingstoon.",
     minutes: 12,
@@ -1858,7 +1894,7 @@ const presets = {
     exhaleCue: "OM",
     exhaleLabel: "OM",
     exhaleName: "OM uit",
-    exhaleSub: "laat de klank vloeiend verlopen: A â†’ O/U â†’ M",
+    exhaleSub: "laat de klank vloeiend verlopen: A → O/U → M",
     soundSteps: ["A", "O", "M"],
     exhaleFlow: [
       { from: 0.00, cue: "AAAA", label: "OM", sub: "open de klank rustig", step: "A" },
@@ -1882,9 +1918,9 @@ const presets = {
   holotropicBreathTest: {
     label: "Holotropische Ademtest",
     category: "verdieping",
-    text: "Een verborgen testprotocol met actieve verbonden ademhaling, geÃ¯nspireerd op holotropische ademhaling. Alleen gebruiken als je je goed voelt en voldoende ervaring hebt met ademwerk.",
+    text: "Een verborgen testprotocol met actieve verbonden ademhaling, geïnspireerd op holotropische ademhaling. Alleen gebruiken als je je goed voelt en voldoende ervaring hebt met ademwerk.",
     product: "Holotropische Ademtest",
-    productText: "Deze sessie is geÃ¯nspireerd op holotropische ademhaling, maar is geen officiÃ«le Holotropic BreathworkÂ®-sessie. Het protocol is bedoeld als intern testprotocol voor actieve verbonden ademhaling.",
+    productText: "Deze sessie is geïnspireerd op holotropische ademhaling, maar is geen officiële Holotropic Breathwork®-sessie. Het protocol is bedoeld als intern testprotocol voor actieve verbonden ademhaling.",
     minutes: 25,
     totalSeconds: 1500,
     inhale: 0, hold: 0, exhale: 0, pause: 0,
@@ -2002,7 +2038,7 @@ let activePreset = "longExhale";
 let meditationDuration = 10;
 let sessionLogged = false;
 
-// â”€â”€ Sessieregistratie â”€â”€
+// ── Sessieregistratie ──
 const SESSION_LOG_KEY = "phytoforsan_sessions";
 
 function getSessionLog() {
@@ -2041,7 +2077,7 @@ const bgAudioGain = {
   "audio/Amen.mp3":  1.15
 };
 
-// EÃ©n herbruikbaar audio element, aangemaakt bij eerste gebruikersgebaar
+// Eén herbruikbaar audio element, aangemaakt bij eerste gebruikersgebaar
 const bgAudio = new Audio();
 bgAudio.loop = true;
 let bgFadeTimer = null;
@@ -2107,7 +2143,7 @@ let droneLfoGain = null;
 let droneHumanTimer = null;
 let dronePulseTimer = null;
 
-// â”€â”€ Ademhaling achtergrondgeluid (zacht ambient pad) â”€â”€
+// ── Ademhaling achtergrondgeluid (zacht ambient pad) ──
 let breathAmbientOscs = null;
 let breathAmbientGain = null;
 
@@ -2387,12 +2423,12 @@ const presetMeta = {
   focus:      { duration: "4 min",  desc: "Snelle reset tijdens werk of drukte." },
   focusReset: { duration: "4 min",  desc: "Rustige alertheid zonder opjagen." },
   herstel:    { duration: "10 min", desc: "Minimale begeleiding, meer ruimte en stilte." },
-  maen:       { duration: "8 min",  desc: "M â†’ A â†’ E â†’ N, adem en resonantie." },
-  amen:       { duration: "8 min",  desc: "A â†’ M â†’ E â†’ N, adem en resonantie." },
-  om:              { duration: "12 min", desc: "A â†’ O/U â†’ M, klassieke diepe resonantie." },
+  maen:       { duration: "8 min",  desc: "M → A → E → N, adem en resonantie." },
+  amen:       { duration: "8 min",  desc: "A → M → E → N, adem en resonantie." },
+  om:              { duration: "12 min", desc: "A → O/U → M, klassieke diepe resonantie." },
   meditationTimer:      { duration: "vrij",   desc: "Stille meditatie op jouw eigen tempo." },
-  holotropicBreathTest: { duration: "25 min", desc: "Actieve verbonden ademhaling â€” intern testprotocol." },
-  activeBreathTest: { duration: "5:30",   desc: "Actief ademritme â€” testprotocol." }
+  holotropicBreathTest: { duration: "25 min", desc: "Actieve verbonden ademhaling — intern testprotocol." },
+  activeBreathTest: { duration: "5:30",   desc: "Actief ademritme — testprotocol." }
 };
 
 function renderLibraryCard(id, item, experimental = false) {
@@ -2410,7 +2446,7 @@ function renderLibraryCard(id, item, experimental = false) {
         <span class="card-duration">${meta.duration}</span>
         ${badge}
       </span>
-      <button class="card-play" type="button" data-play="${id}" aria-label="Start ${item.label}">â–¶</button>
+      <button class="card-play" type="button" data-play="${id}" aria-label="Start ${item.label}">▶</button>
     </div>
   `;
 }
@@ -3026,7 +3062,7 @@ function playRestCue() {
     });
   }
 
-  // Trillen nÃ¡ audio schedulen zodat vibrate() de AudioContext niet suspendeert
+  // Trillen ná audio schedulen zodat vibrate() de AudioContext niet suspendeert
   if (els.vibrateToggle?.checked && navigator.vibrate) navigator.vibrate([80, 120, 80]);
 }
 
@@ -3061,7 +3097,7 @@ function updatePhase(time) {
     setCueWord("MEDITATIE");
     els.cueSub.textContent = "Adem vrij";
     els.phaseStat.textContent = "Meditatie";
-    els.toneStat.textContent  = "â€”";
+    els.toneStat.textContent  = "—";
     els.droneStat.textContent = "UIT";
     els.dotIn.classList.remove("active");
     els.dotHold.classList.remove("active");
@@ -3080,7 +3116,7 @@ function updatePhase(time) {
     setCueWord(guide.phase.cue || ph.cue);
     els.cueSub.textContent  = guide.phase.sub  || ph.sub;
     els.phaseStat.textContent = guide.phase.label || ph.label;
-    els.toneStat.textContent = "â€”";
+    els.toneStat.textContent = "—";
     els.droneStat.textContent = "UIT";
     els.dotIn.classList.remove("active");
     els.dotHold.classList.remove("active");
@@ -3089,7 +3125,7 @@ function updatePhase(time) {
     if (ph.mode === "breath") {
       els.dotIn.classList.toggle("active",  guide.phase.key === "inhale");
       els.dotOut.classList.toggle("active", guide.phase.key === "exhale");
-      // Bij actieve ademtest: geluid bij elke overgang (inâ†’uit en uitâ†’in)
+      // Bij actieve ademtest: geluid bij elke overgang (in→uit en uit→in)
       if (running && phaseChanged) playRestCue();
     }
     lastPhaseKey = phaseKey;
@@ -3132,7 +3168,7 @@ function tick() {
   if (elapsed >= sessionDuration()) {
     elapsedBefore = sessionDuration();
     running = false;
-    els.startBtn.textContent = "â–¶";
+    els.startBtn.textContent = "▶";
     els.breathVisual.classList.remove("running");
     stopDroneEngine();
     stopBreathAmbient();
@@ -3190,7 +3226,7 @@ function pause() {
   running = false;
   releaseWakeLock();
   elapsedBefore += (performance.now() - startTime) / 1000;
-  els.startBtn.textContent = "â–¶";
+  els.startBtn.textContent = "▶";
   els.breathVisual.classList.remove("running");
   stopDroneEngine();
   stopBgAudio();
@@ -3208,7 +3244,7 @@ function reset() {
   releaseWakeLock();
   elapsedBefore = 0;
   lastPhaseKey = "ready";
-  els.startBtn.textContent = "â–¶";
+  els.startBtn.textContent = "▶";
   els.breathVisual.classList.remove("running");
   stopDroneEngine();
   stopBgAudio();
@@ -3392,7 +3428,7 @@ function draw(time) {
   ctx.fill();
 }
 
-// Bibliotheek klikken â€” kaart selecteren of play knop starten
+// Bibliotheek klikken — kaart selecteren of play knop starten
 function handleLibraryClick(event) {
   const playBtn = event.target.closest("[data-play]");
   if (playBtn) {
@@ -3440,7 +3476,7 @@ els.guideToggle.addEventListener("change", () => {
   syncUI();
 });
 els.droneToggle.addEventListener("change", () => {
-  // Stopt drift als uitgeschakeld â€” drone blijft spelen
+  // Stopt drift als uitgeschakeld — drone blijft spelen
   if (!els.droneToggle.checked && droneHumanTimer) {
     clearTimeout(droneHumanTimer);
     droneHumanTimer = null;
@@ -3580,7 +3616,7 @@ for (const input of document.querySelectorAll("input[type='range']")) {
   input.addEventListener("input", () => updateSliderFill(input));
 }
 
-// â”€â”€ Voortgang â”€â”€
+// ── Voortgang ──
 function dateKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -3650,7 +3686,61 @@ function renderProgress() {
   ).join("");
 }
 
-// â”€â”€ Mobiele tab-navigatie â”€â”€
+// ── Home: begroeting, stemming en aanbevelingen ──
+const moodRecommendations = {
+  rustig:    ["meditationTimer", "resonanceBreath", "om"],
+  gespannen: ["longExhale", "relax", "herstel"],
+  vermoeid:  ["focusReset", "focus", "maen"],
+  onrustig:  ["longExhale", "sleepBreath", "herstel"],
+  focus:     ["focus", "focusReset", "flowingBreath"]
+};
+
+function defaultRecommendations() {
+  const h = new Date().getHours();
+  if (h < 12) return ["resonanceBreath", "focusReset", "relax"];
+  if (h < 18) return ["focus", "longExhale", "relax"];
+  return ["sleepBreath", "longExhale", "lang"];
+}
+
+function updateGreeting() {
+  const h = new Date().getHours();
+  const word = h < 6 ? "Goedenacht" : h < 12 ? "Goedemorgen" : h < 18 ? "Goedemiddag" : "Goedenavond";
+  document.getElementById("homeGreeting").innerHTML = `${word} <span class="home-leaf">&#127807;</span>`;
+}
+
+function renderHomeRecommendations(mood) {
+  const ids = (mood && moodRecommendations[mood]) || defaultRecommendations();
+  const list = document.getElementById("homeRecoList");
+  list.innerHTML = ids.filter(id => presets[id] && !presets[id].hidden).map(id => renderLibraryCard(id, presets[id])).join("");
+  document.getElementById("homeRecoTitle").textContent = mood ? "Aanbevolen voor jou" : "Vandaag aanbevolen";
+}
+
+function initHome() {
+  updateGreeting();
+  // Stemming van vandaag onthouden
+  let savedMood = null;
+  try {
+    const stored = JSON.parse(localStorage.getItem("phytoforsan_mood"));
+    if (stored && stored.d === dateKey(new Date())) savedMood = stored.m;
+  } catch {}
+  document.querySelectorAll(".mood-btn").forEach(btn => {
+    btn.classList.toggle("mood-active", btn.dataset.mood === savedMood);
+  });
+  renderHomeRecommendations(savedMood);
+}
+
+document.getElementById("moodGrid").addEventListener("click", e => {
+  const btn = e.target.closest(".mood-btn");
+  if (!btn) return;
+  const mood = btn.dataset.mood;
+  document.querySelectorAll(".mood-btn").forEach(b => b.classList.toggle("mood-active", b === btn));
+  localStorage.setItem("phytoforsan_mood", JSON.stringify({ m: mood, d: dateKey(new Date()) }));
+  renderHomeRecommendations(mood);
+});
+
+document.getElementById("homeRecoList").addEventListener("click", handleLibraryClick);
+
+// ── Mobiele tab-navigatie ──
 const isMobile = () => window.innerWidth <= 640;
 let currentMobileTab = 'library';
 
@@ -3658,21 +3748,23 @@ function switchMobileTab(tab) {
   if (!isMobile()) return;
   currentMobileTab = tab;
 
+  const home     = document.getElementById('homePanel');
   const rail     = document.querySelector('.rail');
   const practice = document.querySelector('.practice');
   const controls = document.querySelector('.controls-panel');
   const progress = document.getElementById('progressPanel');
 
-  [rail, practice, controls, progress].forEach(el => el?.classList.add('mobile-hidden'));
+  [home, rail, practice, controls, progress].forEach(el => el?.classList.add('mobile-hidden'));
 
+  if (tab === 'home')     { home?.classList.remove('mobile-hidden'); initHome(); }
   if (tab === 'library')  { rail.classList.remove('mobile-hidden'); }
   if (tab === 'settings') { controls.classList.remove('mobile-hidden'); }
   if (tab === 'breath')   { practice.classList.remove('mobile-hidden'); enterImmersive(); }
   if (tab === 'progress') { progress?.classList.remove('mobile-hidden'); renderProgress(); }
 
   // Nav knoppen actief markeren
-  ['library','settings','breath','progress'].forEach(t => {
-    const btn = document.getElementById('mobileNav' + {library:'Lib',settings:'Set',breath:'Breath',progress:'Prog'}[t]);
+  ['home','library','settings','breath','progress'].forEach(t => {
+    const btn = document.getElementById('mobileNav' + {home:'Home',library:'Lib',settings:'Set',breath:'Breath',progress:'Prog'}[t]);
     btn?.classList.toggle('active', t === tab);
   });
 }
@@ -3681,7 +3773,7 @@ function initMobileNav() {
   const nav = document.getElementById('mobileNav');
   if (isMobile()) {
     nav.style.display = 'flex';
-    switchMobileTab('library');
+    switchMobileTab('home');
   } else {
     nav.style.display = 'none';
     document.querySelector('.rail')?.classList.remove('mobile-hidden');
@@ -3714,7 +3806,7 @@ initMobileNav();
 
 
 <script>
-// â”€â”€ PWA Manifest dynamisch aanmaken â”€â”€
+// ── PWA Manifest dynamisch aanmaken ──
 const manifest = {
   name: "Relax, Breathing & Humming App",
   short_name: "Relax",
@@ -3738,12 +3830,12 @@ const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
 const manifestUrl = URL.createObjectURL(blob);
 document.getElementById("pwa-manifest").setAttribute("href", manifestUrl);
 
-// â”€â”€ Service Worker â”€â”€
+// ── Service Worker ──
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(err => console.log("SW fout:", err));
 }
 
-// â”€â”€ Installatie knop â”€â”€
+// ── Installatie knop ──
 let deferredPrompt = null;
 
 window.addEventListener("beforeinstallprompt", e => {
