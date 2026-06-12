@@ -1449,7 +1449,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.1</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1824,6 +1824,33 @@ const presets = {
     exhaleLabel: "Uitademen",
     exhaleName: "uitademen",
     exhaleSub: "laat de adem vloeiend uitstromen"
+  },
+  bellyRegulationBreath: {
+    label: "Buikregulatie Adem",
+    category: "breathing",
+    text: "Een rustige ademroutine gericht op buik, middenrif en ontspanning.",
+    product: "Buikregulatie Adem",
+    productText: "Deze sessie combineert buikademhaling, langzame ademhaling en verlengde uitademing. De oefening helpt je om met aandacht naar buik en middenrif te ademen en het lichaam geleidelijk tot rust te laten komen.",
+    minutes: 8,
+    totalSeconds: 480,
+    inhale: 0, hold: 0, exhale: 0, pause: 0,
+    tone: 0, type: "none",
+    breathingOnly: true, freeExhale: true,
+    phases: [
+      { id: "relaxation",  label: "Ontspannen",       duration: 60,  mode: "free",
+        cue: "ONTSPANNEN", sub: "Adem vrij en voel je buik." },
+      { id: "bellyBreath", label: "Buikadem",         duration: 120, mode: "breath",
+        inhale: 4, hold: 0, exhale: 6, pause: 0,
+        cueIn: "IN", cueOut: "UIT", subIn: "Laat de buik zacht meebewegen.", subOut: "Laat buik en middenrif ontspannen." },
+      { id: "resonance",   label: "Resonantie",       duration: 180, mode: "breath",
+        inhale: 5, hold: 0, exhale: 5, pause: 0,
+        cueIn: "IN", cueOut: "UIT", subIn: "Adem rustig en gelijkmatig in.", subOut: "Laat de adem vloeiend uitstromen." },
+      { id: "longExhale",  label: "Lange uitademing", duration: 60,  mode: "breath",
+        inhale: 4, hold: 0, exhale: 8, pause: 0,
+        cueIn: "IN", cueOut: "UIT", subIn: "Adem rustig in.", subOut: "Laat de spanning uit je buik wegzakken." },
+      { id: "integration", label: "Integratie",       duration: 60,  mode: "free",
+        cue: "INTEGRATIE", sub: "Adem vrij en voel na." }
+    ]
   },
   relax: {
     label: "Relax Moment",
@@ -2445,6 +2472,13 @@ const cardIllustrations = {
     <path d="M8 30 C14 22,20 22,26 30 C32 38,38 38,44 30 C47 26,50 26,52 30" stroke="#1a6b5c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
     <path d="M8 30 C14 38,20 38,26 30 C32 22,38 22,44 30 C47 34,50 34,52 30" stroke="#1a6b5c" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.35"/>
   </svg>`,
+  bellyRegulationBreath: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="60" height="60" rx="12" fill="#e8f0df"/>
+    <ellipse cx="30" cy="34" rx="15" ry="11" stroke="#4a7c43" stroke-width="2.2" fill="none"/>
+    <ellipse cx="30" cy="34" rx="9" ry="6.5" stroke="#4a7c43" stroke-width="1.4" fill="none" opacity="0.45"/>
+    <path d="M30 12 C30 16,30 19,30 23" stroke="#4a7c43" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <path d="M26 16 C28 19,30 21,30 23 M34 16 C32 19,30 21,30 23" stroke="#4a7c43" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.4"/>
+  </svg>`,
   relax:      `<img src="https://www.phytoforsan.nl/Uploads/2021/07/phytoforsan-webbeeld-over-phytoforsan-2-239.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="Relax Moment">`,
   lang:       `<img src="https://www.phytoforsan.nl/Uploads/2022/09/phytoforsan-webbeeld-wellness-332.jpg" style="width:100%;height:100%;object-fit:cover;object-position:left center;border-radius:12px" alt="Deep Relax">`,
   focus:      `<img src="https://www.phytoforsan.nl/Uploads/2021/07/phytoforsan-webbeeld-over-phytoforsan-1-6.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="Korte Reset">`,
@@ -2490,6 +2524,7 @@ const presetMeta = {
   resonanceBreath: { duration: "5 min",  desc: "Gelijkmatig ademritme voor balans." },
   sleepBreath:     { duration: "10 min", desc: "Langzame ademhaling voor slaap." },
   flowingBreath:   { duration: "5 min",  desc: "Vloeiende golf, zonder pauzes." },
+  bellyRegulationBreath: { duration: "8 min", desc: "Buik, middenrif en ontspanning in vijf fases." },
   relax:      { duration: "8 min",  desc: "Een rustige basisroutine voor dagelijks gebruik." },
   lang:       { duration: "12 min", desc: "Voor diepe ontspanning en vertraging." },
   focus:      { duration: "4 min",  desc: "Snelle reset tijdens werk of drukte." },
