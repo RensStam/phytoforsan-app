@@ -1449,7 +1449,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2165,6 +2165,7 @@ function logSession(seconds, completed) {
   localStorage.setItem(SESSION_LOG_KEY, JSON.stringify(log));
 }
 let running = false;
+let sessionState = "idle"; // idle | running | paused | completed
 let startTime = 0;
 let elapsedBefore = 0;
 let raf = 0;
@@ -2358,11 +2359,31 @@ function totalDuration() {
   return p.inhale + p.hold + p.exhale + p.pause;
 }
 
+// Centrale bron voor de totale sessieduur van een preset.
+// Volgorde: som van fases (leidend) → totalSeconds → minutes*60.
+function getSessionTotalSeconds(preset) {
+  if (!preset) return 0;
+  if (Array.isArray(preset.phases) && preset.phases.length > 0) {
+    return preset.phases.reduce((sum, ph) => sum + Number(ph.duration || 0), 0);
+  }
+  if (typeof preset.totalSeconds === "number" && preset.totalSeconds > 0) return preset.totalSeconds;
+  if (typeof preset.minutes === "number" && preset.minutes > 0) return Math.round(preset.minutes * 60);
+  return 0;
+}
+
+// Nette duurweergave: 300→"5 min", 330→"5:30 min", 1500→"25 min"
+function formatDuration(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s === 0 ? `${m} min` : `${m}:${String(s).padStart(2, "0")} min`;
+}
+
 function sessionDuration() {
   const preset = presets[activePreset];
-  if (preset?.totalSeconds) return preset.totalSeconds;
+  // Meditatietimer gebruikt de live gekozen duur
   if (preset?.meditationMode) return meditationDuration * 60;
-  return Math.max(60, currentProtocol().minutes * 60);
+  const total = getSessionTotalSeconds(preset);
+  return total > 0 ? total : Math.max(60, currentProtocol().minutes * 60);
 }
 
 // Meerfasige sessie: geef de actieve macro-fase terug op basis van verstreken tijd
@@ -2551,6 +2572,9 @@ const presetMeta = {
 function renderLibraryCard(id, item, experimental = false) {
   const meta = presetMeta[id] || { duration: "", desc: "" };
   const illus = cardIllustrations[id] || "";
+  // Duur afleiden uit de centrale functie; meditatie houdt vrije duur
+  const totalSec = getSessionTotalSeconds(item);
+  const durationText = item.meditationMode ? "vrij" : (totalSec > 0 ? formatDuration(totalSec) : meta.duration);
   const isActive = id === activePreset;
   const badge = (experimental || item.experimental)
     ? `<span style="font-size:.6rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#c0392b;display:block;margin-top:2px">Testprotocol</span>`
@@ -2560,7 +2584,7 @@ function renderLibraryCard(id, item, experimental = false) {
       <span class="card-thumb">${illus}</span>
       <span class="card-info">
         <strong>${item.label}</strong>
-        <span class="card-duration">${meta.duration}</span>
+        <span class="card-duration">${durationText}</span>
         ${badge}
       </span>
       <button class="card-play" type="button" data-play="${id}" aria-label="Start ${item.label}">▶</button>
@@ -3329,25 +3353,43 @@ function updatePhase(time) {
   lastPhaseKey = phase.key;
 }
 
+// Centrale afronding: stopt timer, audio en sturing, toont rustige eindstatus.
+function completeSession() {
+  running = false;
+  sessionState = "completed";
+  elapsedBefore = sessionDuration();
+  releaseWakeLock();
+  cancelAnimationFrame(raf);
+  // Stop alle sessie-audio
+  stopDroneEngine();
+  stopBgAudio();
+  stopBreathAmbient();
+  // Eenmalig registreren
+  if (!sessionLogged) { logSession(sessionDuration(), true); sessionLogged = true; }
+  // Rustige eindstand tekenen (geen ademsturing meer)
+  els.startBtn.textContent = "▶";
+  els.breathVisual.classList.remove("running");
+  draw(elapsedBefore);
+  // Visuele eindstatus
+  els.cue.classList.remove("hum", "sound");
+  els.dotIn.classList.remove("active");
+  els.dotHold.classList.remove("active");
+  els.dotOut.classList.remove("active");
+  els.dotPause.classList.remove("active");
+  els.progressBar.style.width = "0%";
+  els.timeStat.textContent = fmtClock(0);
+  els.phaseStat.textContent = "Afgerond";
+  els.toneStat.textContent = "—";
+  els.droneStat.textContent = "UIT";
+  setCueWord("AFGEROND");
+  els.cueSub.textContent = "Neem even de tijd om na te voelen.";
+}
+
 function tick() {
-  if (!running) return;
+  if (sessionState !== "running") return;
   const elapsed = elapsedBefore + (performance.now() - startTime) / 1000;
   if (elapsed >= sessionDuration()) {
-    elapsedBefore = sessionDuration();
-    running = false;
-    els.startBtn.textContent = "▶";
-    els.breathVisual.classList.remove("running");
-    stopDroneEngine();
-    stopBreathAmbient();
-    cancelAnimationFrame(raf);
-    updatePhase(elapsedBefore);
-    draw(elapsedBefore);
-    if (!sessionLogged) { logSession(sessionDuration(), true); sessionLogged = true; }
-    if (presets[activePreset]?.meditationMode) {
-      setCueWord("KLAAR");
-      els.cueSub.textContent = "Sessie voltooid";
-      els.phaseStat.textContent = "Voltooid";
-    }
+    completeSession();
     return;
   }
   updatePhase(elapsed);
@@ -3373,11 +3415,13 @@ async function start() {
   requestWakeLock();
   if (activePreset in bgAudioFiles) loadBgAudio();
   if (running) return;
-  if (elapsedBefore >= sessionDuration()) {
+  // Na een afgeronde sessie (of voorbij het einde) opnieuw vanaf 0 starten
+  if (sessionState === "completed" || elapsedBefore >= sessionDuration()) {
     elapsedBefore = 0;
     lastPhaseKey = "ready";
   }
   running = true;
+  sessionState = "running";
   if (elapsedBefore === 0) sessionLogged = false;
   startTime = performance.now();
   els.startBtn.textContent = "II";
@@ -3391,6 +3435,7 @@ async function start() {
 function pause() {
   if (!running) return;
   running = false;
+  sessionState = "paused";
   releaseWakeLock();
   elapsedBefore += (performance.now() - startTime) / 1000;
   els.startBtn.textContent = "▶";
@@ -3408,6 +3453,7 @@ function reset() {
   if (!sessionLogged && elapsedAtReset >= 60) { logSession(elapsedAtReset, false); }
   sessionLogged = true;
   running = false;
+  sessionState = "idle";
   releaseWakeLock();
   elapsedBefore = 0;
   lastPhaseKey = "ready";
