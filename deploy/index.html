@@ -1477,7 +1477,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.7</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.8</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1870,7 +1870,7 @@ const presets = {
     tone: 0, type: "none",
     breathingOnly: true, freeExhale: true,
     phases: [
-      { id: "relaxation",  label: "Ontspannen",       duration: 60,  mode: "free",
+      { id: "relaxation",  label: "Ontspannen",       duration: 60,  mode: "free", visualMode: "slowBreath",
         cue: "ONTSPANNEN", sub: "Adem vrij en voel je buik." },
       { id: "bellyBreath", label: "Buikadem",         duration: 120, mode: "breath",
         inhale: 4, hold: 0, exhale: 6, pause: 0,
@@ -1881,7 +1881,7 @@ const presets = {
       { id: "longExhale",  label: "Lange uitademing", duration: 60,  mode: "breath",
         inhale: 4, hold: 0, exhale: 8, pause: 0,
         cueIn: "IN", cueOut: "UIT", subIn: "Adem rustig in.", subOut: "Laat de spanning uit je buik wegzakken." },
-      { id: "integration", label: "Integratie",       duration: 60,  mode: "free",
+      { id: "integration", label: "Integratie",       duration: 60,  mode: "free", visualMode: "slowBreath",
         cue: "INTEGRATIE", sub: "Adem vrij en voel na." }
     ]
   },
@@ -2060,7 +2060,7 @@ const presets = {
     breathingOnly: true, freeExhale: true,
     hidden: true, experimental: true, requiresWarning: true,
     phases: [
-      { id: "preparation",    label: "Voorbereiding",    duration: 180, mode: "free",
+      { id: "preparation",    label: "Voorbereiding",    duration: 180, mode: "free", visualMode: "slowBreath",
         cue: "VOORBEREIDING", sub: "Adem vrij en laat je lichaam ontspannen." },
       { id: "buildUp",        label: "Opbouwfase",       duration: 300, mode: "breath",
         inhale: 3, hold: 0, exhale: 3, pause: 0,
@@ -2071,7 +2071,7 @@ const presets = {
       { id: "downshift",      label: "Vertraging",       duration: 120, mode: "breath",
         inhale: 4, hold: 0, exhale: 6, pause: 0,
         cueIn: "IN", cueOut: "UIT", subIn: "Adem rustig in.", subOut: "Adem langzaam uit." },
-      { id: "integration",    label: "Integratie",       duration: 300, mode: "free",
+      { id: "integration",    label: "Integratie",       duration: 300, mode: "free", visualMode: "slowBreath",
         cue: "INTEGRATIE", sub: "Adem vrij. Voel na." }
     ]
   },
@@ -2099,14 +2099,14 @@ const presets = {
     exhaleName: "actief uit",
     exhaleSub: "laat de adem vloeiend uitstromen zonder pauze",
     phases: [
-      { id: "preparation", label: "Voorbereiding", duration: 30,  mode: "free",
+      { id: "preparation", label: "Voorbereiding", duration: 30,  mode: "free", visualMode: "slowBreath",
         cue: "VOORBEREIDING", sub: "Ga zitten of liggen. Adem rustig. Stop direct bij duizeligheid, paniek, druk op de borst of sterk ongemak." },
       { id: "activeBreathing", label: "Actieve ademhaling", duration: 180, mode: "breath",
         inhale: 2, hold: 0, exhale: 2, pause: 0,
         cueIn: "IN", cueOut: "UIT",
         subIn: "Adem vloeiend en iets dieper in, zonder te forceren.",
         subOut: "Laat de adem direct weer uitstromen, zonder pauze." },
-      { id: "integration", label: "Integratie", duration: 120, mode: "free",
+      { id: "integration", label: "Integratie", duration: 120, mode: "free", visualMode: "slowBreath",
         cue: "INTEGRATIE", sub: "Laat de adem vanzelf terugkeren. Voel na en blijf rustig zitten of liggen." }
     ]
   }
@@ -2428,6 +2428,19 @@ function getPhasedMacroPhase(elapsed) {
 
 function remainingSessionTime(elapsed) {
   return Math.max(0, sessionDuration() - Math.max(0, elapsed || 0));
+}
+
+// Rustige ademanimatie (slowBreath) synchroon met de faseduur.
+// Basis 4s groeien / 6s krimpen (10s cyclus), aantal cycli passend binnen de fase.
+function getSyncedSlowBreathTiming(phase) {
+  const baseCycle = 10;
+  const duration = Number(phase?.duration || 0);
+  if (!duration || duration <= 0) {
+    return { cycles: 1, cycleDuration: baseCycle, inhale: 4, exhale: 6 };
+  }
+  const cycles = Math.max(1, Math.round(duration / baseCycle));
+  const cycleDuration = duration / cycles;
+  return { cycles, cycleDuration, inhale: cycleDuration * 0.4, exhale: cycleDuration * 0.6 };
 }
 
 function toneLabel(protocol) {
@@ -2822,7 +2835,19 @@ function breathGuideAt(time) {
   if (macro) {
     const { ph, phaseElapsed } = macro;
     if (ph.mode === "free") {
-      const breath = 0.55 + 0.3 * Math.sin(phaseElapsed * Math.PI / 4);
+      let breath;
+      if (ph.visualMode === "slowBreath") {
+        // Rustige adembeweging, gesynchroniseerd met de faseduur (4/6-verhouding)
+        const t = getSyncedSlowBreathTiming(ph);
+        const cyclePos = t.cycleDuration > 0 ? (phaseElapsed % t.cycleDuration) : 0;
+        if (cyclePos < t.inhale) {
+          breath = lerp(0.25, 0.9, easeInOut(cyclePos / t.inhale));
+        } else {
+          breath = lerp(0.9, 0.25, easeInOut((cyclePos - t.inhale) / t.exhale));
+        }
+      } else {
+        breath = 0.55 + 0.3 * Math.sin(phaseElapsed * Math.PI / 4);
+      }
       const freePhase = { key: "free", dur: ph.duration, cue: ph.cue, label: ph.label, sub: ph.sub };
       return { phase: freePhase, within: phaseElapsed, total: ph.duration, progress: phaseElapsed / ph.duration, breath, cycleProgress: 0 };
     }
