@@ -1449,7 +1449,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1609,11 +1609,19 @@ canvas {
           <p class="section-title">Geluid</p>
           <div class="switch-row">
             <label class="switch-label">
-              <span>Geluid bij overgang</span>
+              <span>Geluid bij inademing</span>
+              <span class="switch"><input id="inhaleCueToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
+            </label>
+            <label class="switch-label">
+              <span>Geluid bij rust</span>
               <span class="switch"><input id="restCueToggleBreath" type="checkbox" checked=""><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
-              <span>Trillen bij overgang</span>
+              <span>Trillen bij inademing</span>
+              <span class="switch"><input id="inhaleVibrateToggle" type="checkbox"><span class="switch-track"></span></span>
+            </label>
+            <label class="switch-label">
+              <span>Trillen bij rust</span>
               <span class="switch"><input id="vibrateToggleBreath" type="checkbox"><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
@@ -2105,6 +2113,8 @@ const els = {
   droneToggle: document.getElementById("droneToggle"),
   restCueToggle: document.getElementById("restCueToggle"),
   restCueToggleBreath: document.getElementById("restCueToggleBreath"),
+  inhaleCueToggle: document.getElementById("inhaleCueToggle"),
+  inhaleVibrateToggle: document.getElementById("inhaleVibrateToggle"),
   breathSoundToggle: document.getElementById("breathSoundToggle"),
   vibrateToggle: document.getElementById("vibrateToggle"),
   vibrateToggleBreath: document.getElementById("vibrateToggleBreath"),
@@ -3173,6 +3183,47 @@ function playRestCue() {
   if (els.vibrateToggle?.checked && navigator.vibrate) navigator.vibrate([80, 120, 80]);
 }
 
+// Positieve, stijgende cue voor de inademing (laag → hoog)
+function playInhaleCue() {
+  if (audioCtx && els.inhaleCueToggle?.checked) {
+    const now = audioCtx.currentTime;
+    const level = Math.max(0.008, Math.min(0.026, targetGain() * 0.55));
+
+    [[0, 520], [0.16, 700]].forEach(([offset, freq]) => {
+      const start = now + offset;
+      const osc = audioCtx.createOscillator();
+      const cueFilter = audioCtx.createBiquadFilter();
+      const cueGain = audioCtx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, start);
+      cueFilter.type = "lowpass";
+      cueFilter.frequency.setValueAtTime(1250, start);
+      cueFilter.Q.setValueAtTime(0.35, start);
+      cueGain.gain.setValueAtTime(0.0001, start);
+      cueGain.gain.linearRampToValueAtTime(level, start + 0.012);
+      cueGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.095);
+
+      osc.connect(cueFilter);
+      cueFilter.connect(cueGain);
+      cueGain.connect(audioCtx.destination);
+      osc.start(start);
+      osc.stop(start + 0.11);
+
+      window.setTimeout(() => {
+        try {
+          osc.disconnect();
+          cueFilter.disconnect();
+          cueGain.disconnect();
+        } catch {}
+      }, (offset + 0.2) * 1000);
+    });
+  }
+
+  // Lange dubbele trilling bij inademing
+  if (els.inhaleVibrateToggle?.checked && navigator.vibrate) navigator.vibrate([300, 150, 300]);
+}
+
 function updateLiveVolume() {
   if (bgAudio && !bgAudio.paused) bgAudio.volume = bgAudioVolume();
   if (!audioCtx || !toneOn) return;
@@ -3232,8 +3283,11 @@ function updatePhase(time) {
     if (ph.mode === "breath") {
       els.dotIn.classList.toggle("active",  guide.phase.key === "inhale");
       els.dotOut.classList.toggle("active", guide.phase.key === "exhale");
-      // Bij actieve ademtest: geluid bij elke overgang (in→uit en uit→in)
-      if (running && phaseChanged) playRestCue();
+      // Geluid bij elke overgang: stijgend bij inademing, piepje bij uitademing
+      if (running && phaseChanged) {
+        if (guide.phase.key === "inhale") playInhaleCue();
+        else playRestCue();
+      }
     }
     lastPhaseKey = phaseKey;
     return;
@@ -3265,9 +3319,13 @@ function updatePhase(time) {
   if (running && hum && phaseChanged && activePreset in bgAudioFiles) startBgAudio();
   if ((!hum || !running) && lastPhaseKey === "exhale") stopDroneEngine();
   if ((!hum || !running) && lastPhaseKey === "exhale" && activePreset in bgAudioFiles) stopBgAudio();
-  // Geluid bij rust; bij ritmes zonder rustfases klinkt het bij elke in/uit-overgang
+  // Cues bij overgangen: inademing krijgt een stijgend geluid, rust/uitademing het bekende piepje
   const noRestPhases = protocol.hold === 0 && protocol.pause === 0;
-  if (running && phaseChanged && (phase.key === "hold" || phase.key === "pause" || (noRestPhases && Boolean(presets[activePreset]?.breathingOnly)))) playRestCue();
+  const isBreathingPreset = Boolean(presets[activePreset]?.breathingOnly);
+  if (running && phaseChanged) {
+    if (phase.key === "inhale" && isBreathingPreset) playInhaleCue();
+    else if (phase.key === "hold" || phase.key === "pause" || (noRestPhases && isBreathingPreset && phase.key === "exhale")) playRestCue();
+  }
   lastPhaseKey = phase.key;
 }
 
