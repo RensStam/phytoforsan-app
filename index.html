@@ -1341,15 +1341,43 @@ canvas {
 
   /* Gekozen preset-naam bovenaan instellingen op mobiel */
   .mobile-preset-header {
-    font-size: .78rem;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 14px;
-    padding-bottom: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
     border-bottom: 1px solid rgba(18,55,52,.1);
   }
+  .mobile-preset-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--deep);
+    margin: 0 0 4px;
+  }
+  .mobile-preset-meta {
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  .mobile-preset-desc {
+    font-size: .85rem;
+    line-height: 1.5;
+    color: rgba(18,55,52,.8);
+    margin: 0;
+  }
+}
+/* Start sessie-knop: zichtbaarheid wordt via JS gestuurd (alleen mobiel) */
+.start-session-btn {
+  width: 100%;
+  background: var(--deep);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 15px 20px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin-bottom: 18px;
 }
 </style>
 </head>
@@ -1449,7 +1477,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1540,6 +1568,7 @@ canvas {
 
     <section class="surface controls-panel" aria-label="Instellingen">
     <div class="mobile-preset-header" id="mobilePresetHeader" style="display:none"></div>
+    <button class="start-session-btn" id="startSessionBtn" type="button" style="display:none">Start sessie</button>
     <div class="controls-grid">
         <!-- Duurkeuze: alleen zichtbaar bij meditationMode -->
         <section class="control-group" id="meditationDurationSection" style="display:none">
@@ -1702,10 +1731,6 @@ canvas {
     <button class="mobile-nav-btn" id="mobileNavLib" onclick="switchMobileTab('library')">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Bibliotheek
-    </button>
-    <button class="mobile-nav-btn" id="mobileNavSet" onclick="switchMobileTab('settings')">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Instellingen
     </button>
     <button class="mobile-nav-btn" id="mobileNavBreath" onclick="switchMobileTab('breath')">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
@@ -2704,12 +2729,21 @@ function applyPreset(id) {
   els.productTitle.textContent = preset.product;
   els.productText.textContent = preset.productText;
   els.stageTitle.textContent = preset.label;
-  // Preset-naam bovenaan instellingenpaneel op mobiel
+  // Protocol-info bovenaan instellingenpaneel op mobiel (titel, duur, omschrijving)
   const mobileHeader = document.getElementById('mobilePresetHeader');
   if (mobileHeader) {
-    mobileHeader.textContent = preset.label;
+    const catLabels = { breathing: "Ademhaling", humming: "Humming", klank: "Klank", meditatie: "Meditatie", verdieping: "Verdieping" };
+    const durText = preset.meditationMode ? "Vrije duur" : formatDuration(getSessionTotalSeconds(preset));
+    const cat = catLabels[preset.category] || "";
+    mobileHeader.innerHTML = `
+      <div class="mobile-preset-title">${preset.label}</div>
+      <div class="mobile-preset-meta">${durText}${cat ? " · " + cat : ""}</div>
+      <div class="mobile-preset-desc">${preset.text || ""}</div>`;
     mobileHeader.style.display = isMobile() ? '' : 'none';
   }
+  // "Start sessie"-knop alleen tonen op mobiel (tussenstap voor de sessiecirkel)
+  const startSessionBtn = document.getElementById('startSessionBtn');
+  if (startSessionBtn) startSessionBtn.style.display = isMobile() ? 'block' : 'none';
   // Sliders + stats-balk verbergen bij phased presets en meditationMode
   const isPhasedOrMeditation = Boolean(preset.phases) || Boolean(preset.meditationMode);
   const phaseStrip = document.getElementById("phaseStrip");
@@ -3807,6 +3841,16 @@ els.startBtn.addEventListener("click", () => {
   }
 });
 els.resetBtn.addEventListener("click", reset);
+
+// "Start sessie" vanaf het protocolinstellingen-scherm: naar sessiecirkel en starten
+document.getElementById("startSessionBtn")?.addEventListener("click", () => {
+  const go = () => { switchMobileTab('breath'); start(); };
+  if (presets[activePreset]?.requiresWarning) {
+    showActiveBreathWarning(go);
+  } else {
+    go();
+  }
+});
 [els.inhaleInput, els.holdInput, els.exhaleInput, els.pauseInput].forEach(el => {
   el.addEventListener("input", saveRhythm);
 });
@@ -4009,10 +4053,11 @@ function switchMobileTab(tab) {
   if (tab === 'breath')   { practice.classList.remove('mobile-hidden'); enterImmersive(); }
   if (tab === 'progress') { progress?.classList.remove('mobile-hidden'); renderProgress(); }
 
-  // Nav knoppen actief markeren
-  ['home','library','settings','breath','progress'].forEach(t => {
-    const btn = document.getElementById('mobileNav' + {home:'Home',library:'Lib',settings:'Set',breath:'Breath',progress:'Prog'}[t]);
-    btn?.classList.toggle('active', t === tab || (tab === 'profile' && t === 'home'));
+  // Nav knoppen actief markeren. Settings en profiel zijn tussenstappen zonder
+  // eigen knop: settings hoort bij de bibliotheekflow, profiel bij home.
+  ['home','library','breath','progress'].forEach(t => {
+    const btn = document.getElementById('mobileNav' + {home:'Home',library:'Lib',breath:'Breath',progress:'Prog'}[t]);
+    btn?.classList.toggle('active', t === tab || (tab === 'profile' && t === 'home') || (tab === 'settings' && t === 'library'));
   });
 }
 
@@ -4033,14 +4078,17 @@ function initMobileNav() {
 
 function updateNavVisibility() {
   const nav = document.getElementById('mobileNav');
+  const startSessionBtn = document.getElementById('startSessionBtn');
   if (!isMobile()) {
     nav.style.display = 'none';
     document.querySelector('.rail')?.classList.remove('mobile-hidden');
     document.querySelector('.practice')?.classList.remove('mobile-hidden');
     document.querySelector('.controls-panel')?.classList.remove('mobile-hidden');
     document.getElementById('progressPanel')?.classList.remove('mobile-hidden');
+    if (startSessionBtn) startSessionBtn.style.display = 'none';
   } else {
     nav.style.display = 'flex';
+    if (startSessionBtn) startSessionBtn.style.display = 'block';
   }
 }
 
