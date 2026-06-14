@@ -1283,6 +1283,7 @@ canvas {
   }
   .controls-panel {
     padding: 14px;
+    padding-bottom: 110px;
     border-radius: 0;
     border-left: none;
     border-right: none;
@@ -1366,18 +1367,29 @@ canvas {
     margin: 0;
   }
 }
-/* Start sessie-knop: zichtbaarheid wordt via JS gestuurd (alleen mobiel) */
-.start-session-btn {
+/* Start sessie-knop onderaan het protocolinstellingen-scherm.
+   Zichtbaarheid wordt via JS gestuurd (alleen mobiel). */
+.protocol-start-actions {
+  margin-top: 28px;
+  padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+}
+.primary-session-button {
   width: 100%;
+  min-height: 56px;
+  border: none;
+  border-radius: 999px;
   background: var(--deep);
   color: #fff;
-  border: none;
-  border-radius: 14px;
-  padding: 15px 20px;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 800;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  margin-bottom: 18px;
+  box-shadow: 0 10px 24px rgba(0, 63, 58, 0.18);
+  transition: transform 120ms, box-shadow 120ms;
+}
+.primary-session-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 6px 16px rgba(0, 63, 58, 0.16);
 }
 </style>
 </head>
@@ -1477,7 +1489,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1568,7 +1580,6 @@ canvas {
 
     <section class="surface controls-panel" aria-label="Instellingen">
     <div class="mobile-preset-header" id="mobilePresetHeader" style="display:none"></div>
-    <button class="start-session-btn" id="startSessionBtn" type="button" style="display:none">Start sessie</button>
     <div class="controls-grid">
         <!-- Duurkeuze: alleen zichtbaar bij meditationMode -->
         <section class="control-group" id="meditationDurationSection" style="display:none">
@@ -1692,6 +1703,9 @@ canvas {
             </label>
           </div>
         </section>
+      </div>
+      <div class="protocol-start-actions" id="protocolStartActions" style="display:none">
+        <button class="primary-session-button" id="startSessionBtn" type="button">Start sessie</button>
       </div>
   </section>
 
@@ -2753,9 +2767,9 @@ function applyPreset(id) {
       <div class="mobile-preset-desc">${preset.text || ""}</div>`;
     mobileHeader.style.display = isMobile() ? '' : 'none';
   }
-  // "Start sessie"-knop alleen tonen op mobiel (tussenstap voor de sessiecirkel)
-  const startSessionBtn = document.getElementById('startSessionBtn');
-  if (startSessionBtn) startSessionBtn.style.display = isMobile() ? 'block' : 'none';
+  // "Start sessie"-actie alleen tonen op mobiel (tussenstap voor de sessiecirkel)
+  const startActions = document.getElementById('protocolStartActions');
+  if (startActions) startActions.style.display = isMobile() ? 'block' : 'none';
   // Sliders + stats-balk verbergen bij phased presets en meditationMode
   const isPhasedOrMeditation = Boolean(preset.phases) || Boolean(preset.meditationMode);
   const phaseStrip = document.getElementById("phaseStrip");
@@ -4102,17 +4116,17 @@ function initMobileNav() {
 
 function updateNavVisibility() {
   const nav = document.getElementById('mobileNav');
-  const startSessionBtn = document.getElementById('startSessionBtn');
+  const startActions = document.getElementById('protocolStartActions');
   if (!isMobile()) {
     nav.style.display = 'none';
     document.querySelector('.rail')?.classList.remove('mobile-hidden');
     document.querySelector('.practice')?.classList.remove('mobile-hidden');
     document.querySelector('.controls-panel')?.classList.remove('mobile-hidden');
     document.getElementById('progressPanel')?.classList.remove('mobile-hidden');
-    if (startSessionBtn) startSessionBtn.style.display = 'none';
+    if (startActions) startActions.style.display = 'none';
   } else {
     nav.style.display = 'flex';
-    if (startSessionBtn) startSessionBtn.style.display = 'block';
+    if (startActions) startActions.style.display = 'block';
   }
 }
 
