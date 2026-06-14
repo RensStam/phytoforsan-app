@@ -1505,7 +1505,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1785,7 +1785,6 @@ canvas {
       </details>
       <input class="deep-gate-input" id="deepReqName" type="text" placeholder="Naam">
       <input class="deep-gate-input" id="deepReqEmail" type="email" placeholder="E-mailadres">
-      <textarea class="deep-gate-input" id="deepReqNote" rows="2" placeholder="Korte toelichting (optioneel)"></textarea>
       <label class="deep-gate-check"><input type="checkbox" id="deepReqSafety"><span>Ik heb de veiligheidsinformatie gelezen en begrijp dat Verdieping intensievere sessies bevat.</span></label>
       <label class="deep-gate-check"><input type="checkbox" id="deepReqFeedback"><span>Ik wil feedback geven over mijn ervaring met de app.</span></label>
       <button class="primary-session-button" id="deepReqSubmit" type="button" style="margin-top:6px">Aanvraag indienen</button>
@@ -4283,7 +4282,6 @@ document.getElementById("deepReqSubmit")?.addEventListener("click", () => {
   requestDeepAccess({
     name: document.getElementById("deepReqName").value,
     email,
-    note: document.getElementById("deepReqNote").value,
     feedbackConsent: document.getElementById("deepReqFeedback").checked
   });
   setGateMsg("deepReqMsg", "Aanvraag ontvangen in testmodus. Let op: deze aanvraag is alleen lokaal opgeslagen. Er is nog geen echte serververbinding actief.", "warn");
