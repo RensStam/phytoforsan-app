@@ -1388,6 +1388,26 @@ canvas {
   transform: translateY(1px);
   box-shadow: 0 6px 16px rgba(0, 63, 58, 0.16);
 }
+/* Verdieping-slotje + toegangsscherm */
+.protocol-card.locked { opacity: .82; }
+.card-lock { font-size: 1.1rem; opacity: .55; align-self: center; padding: 0 6px; }
+.deep-gate-card { background: #fff; border-radius: 18px; max-width: 480px; width: 100%; padding: 26px 22px; box-shadow: 0 24px 60px rgba(0,0,0,.22); margin: 16px 0; }
+.deep-gate-eyebrow { font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--deep); margin: 0 0 12px; }
+.deep-gate-intro { font-size: .85rem; line-height: 1.55; color: #333; margin: 0 0 12px; }
+.deep-gate-block { border-top: 1px solid rgba(18,55,52,.1); padding-top: 16px; margin-top: 16px; }
+.deep-gate-h { font-size: .92rem; font-weight: 900; color: var(--deep); margin: 0 0 10px; }
+.deep-gate-note { font-size: .76rem; color: rgba(18,55,52,.6); margin: 0 0 10px; }
+.deep-gate-safety { margin: 0 0 12px; font-size: .8rem; }
+.deep-gate-safety summary { cursor: pointer; font-weight: 800; color: var(--deep); }
+.deep-gate-safety p { font-size: .8rem; line-height: 1.5; color: #444; margin: 8px 0 0; }
+.deep-gate-input { width: 100%; box-sizing: border-box; border: 1.5px solid rgba(18,55,52,.22); border-radius: 12px; padding: 11px 14px; font-size: .9rem; font-family: inherit; margin-bottom: 10px; }
+.deep-gate-check { display: flex; gap: 10px; align-items: flex-start; font-size: .82rem; line-height: 1.45; color: #333; margin-bottom: 10px; cursor: pointer; }
+.deep-gate-check input { margin-top: 3px; flex-shrink: 0; }
+.deep-gate-secondary { width: 100%; background: transparent; color: #555; border: 1.5px solid #ccc; border-radius: 12px; padding: 11px 20px; font-size: .85rem; font-weight: 700; cursor: pointer; }
+.deep-gate-msg { font-size: .82rem; line-height: 1.5; border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; }
+.deep-gate-msg.ok { background: rgba(18,55,52,.08); color: var(--deep); }
+.deep-gate-msg.warn { background: rgba(212,155,63,.14); color: #8a5a00; }
+.deep-gate-msg.err { background: rgba(192,57,43,.1); color: #c0392b; }
 </style>
 </head>
 <body>
@@ -1485,7 +1505,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.4</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1745,6 +1765,53 @@ canvas {
 
 </main>
 
+<!-- Toegangsscherm Verdieping (fase 1: lokale testtoegang) -->
+<div id="deepAccessOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:99999;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div class="deep-gate-card">
+    <p class="deep-gate-eyebrow">Toegang tot Verdieping</p>
+    <p class="deep-gate-intro">Verdieping bevat intensievere sessies dan de gewone ontspanningssessies. Deze sessies zijn bedoeld voor bewuste toepassing en vragen aandacht voor je eigen grenzen.</p>
+    <p class="deep-gate-intro">Omdat de app nog in ontwikkeling is, is Verdieping op dit moment alleen beschikbaar voor testgebruikers.</p>
+    <p class="deep-gate-intro">Vraag hieronder toegang aan. In deze testfase wordt de aanvraag lokaal opgeslagen. Er wordt nog geen echte aanvraag naar de beheerder verstuurd.</p>
+    <p class="deep-gate-intro">Heb je een testcode ontvangen? Dan kun je Verdieping tijdelijk op dit apparaat ontgrendelen.</p>
+
+    <!-- Blok 1: Toegang aanvragen -->
+    <div class="deep-gate-block">
+      <h3 class="deep-gate-h">1. Toegang aanvragen</h3>
+      <details class="deep-gate-safety">
+        <summary>Veiligheidsinformatie</summary>
+        <p>Gebruik deze sessies niet tijdens autorijden, fietsen, zwemmen, baden of het bedienen van machines.</p>
+        <p>Gebruik deze sessies niet bij zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, psychosegevoeligheid, ernstige paniekklachten of wanneer je snel flauwvalt of dissocieert.</p>
+        <p>Stop direct bij druk op de borst, sterke duizeligheid, paniek, misselijkheid, hevige tintelingen, kramp, verwarring of een gevoel van controleverlies.</p>
+      </details>
+      <input class="deep-gate-input" id="deepReqName" type="text" placeholder="Naam">
+      <input class="deep-gate-input" id="deepReqEmail" type="email" placeholder="E-mailadres">
+      <textarea class="deep-gate-input" id="deepReqNote" rows="2" placeholder="Korte toelichting (optioneel)"></textarea>
+      <label class="deep-gate-check"><input type="checkbox" id="deepReqSafety"><span>Ik heb de veiligheidsinformatie gelezen en begrijp dat Verdieping intensievere sessies bevat.</span></label>
+      <label class="deep-gate-check"><input type="checkbox" id="deepReqFeedback"><span>Ik wil feedback geven over mijn ervaring met de app.</span></label>
+      <button class="primary-session-button" id="deepReqSubmit" type="button" style="margin-top:6px">Aanvraag indienen</button>
+      <p class="deep-gate-msg" id="deepReqMsg" style="display:none"></p>
+    </div>
+
+    <!-- Blok 2: Testcode invoeren -->
+    <div class="deep-gate-block" id="deepInviteBlock">
+      <h3 class="deep-gate-h">2. Testcode invoeren</h3>
+      <p class="deep-gate-note">Tijdelijke testtoegang op dit apparaat. Dit is geen echte beveiliging.</p>
+      <input class="deep-gate-input" id="deepInviteCode" type="text" placeholder="Bijv. PHYTO-TEST-2026" autocapitalize="characters">
+      <button class="primary-session-button" id="deepInviteSubmit" type="button" style="margin-top:6px">Ontgrendel met testcode</button>
+      <p class="deep-gate-msg" id="deepInviteMsg" style="display:none"></p>
+    </div>
+
+    <!-- Blok 3: Toegang controleren -->
+    <div class="deep-gate-block">
+      <h3 class="deep-gate-h">3. Toegang controleren</h3>
+      <button class="deep-gate-secondary" id="deepCheckBtn" type="button">Controleer toegang</button>
+      <p class="deep-gate-msg" id="deepCheckMsg" style="display:none"></p>
+    </div>
+
+    <button class="deep-gate-secondary" id="deepGateClose" type="button" style="margin-top:8px">Sluiten</button>
+  </div>
+</div>
+
 <!-- Veiligheidsmelding (gedeeld, dynamisch gevuld per preset) -->
 <div id="activeBreathWarningOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:99999;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:#fff;border-radius:18px;max-width:480px;width:100%;padding:28px 24px;box-shadow:0 24px 60px rgba(0,0,0,.22);margin-top:16px">
@@ -1757,7 +1824,146 @@ canvas {
 </div>
 
 <script>
+// =====================================================
+// 1. CONFIGURATIE EN CONSTANTEN
+// =====================================================
+const APP_MODE = "local_test";        // local_test | backend
+const SHOW_DEV_UNLOCK = false;         // true alleen lokaal tijdens ontwikkeling
+const ENABLE_TEST_INVITE = true;       // tijdelijke testcode/invite-link voor testers
+const API_BASE_URL = "";               // FASE 2: later voor Supabase/backend
+
+// TEMPORARY LOCAL TEST INVITE
+// Alleen bedoeld voor fase 1 via GitHub Pages/local_test.
+// Dit is geen echte beveiliging. Niet gebruiken voor betaalde toegang.
+// Later vervangen door backendstatus "granted".
+const LOCAL_TEST_INVITE_CODES = ["PHYTO-TEST-2026"];
+
 const SHOW_HIDDEN_PROTOCOLS = localStorage.getItem("phytoforsan_show_hidden") !== "false";
+
+// =====================================================
+// 1b. USERPROFILE / TOEGANG (fase 1: alleen lokaal)
+// =====================================================
+const USER_PROFILE_KEY = "phytoforsan_user_profile";
+const DEFAULT_USER_PROFILE = {
+  email: null,
+  name: null,
+  userType: "guest",            // guest | registered | deep
+  accessLevel: "free",          // free | deep
+  deepAccess: false,
+  deepAccessStatus: "none",     // none | requested_local_test | granted_local_test | granted
+  acceptedDeepSafetyNotice: false,
+  deepAccessRequestedAt: null,
+  deepAccessGrantedAt: null,
+  feedbackConsent: false,
+  // Voor later (fase 2):
+  paymentStatus: "none",
+  paymentProvider: null,
+  paymentReference: null,
+  paidAt: null
+};
+
+function getUserProfile() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(USER_PROFILE_KEY));
+    if (stored && typeof stored === "object") return { ...DEFAULT_USER_PROFILE, ...stored };
+  } catch {}
+  return { ...DEFAULT_USER_PROFILE };
+}
+function saveUserProfile(profile) {
+  localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
+}
+function updateUserProfile(partial) {
+  const next = { ...getUserProfile(), ...partial };
+  saveUserProfile(next);
+  return next;
+}
+function hasDeepAccess() {
+  if (SHOW_DEV_UNLOCK) return true;
+  return getUserProfile().deepAccess === true;
+}
+function hasAcceptedDeepSafetyNotice() {
+  return getUserProfile().acceptedDeepSafetyNotice === true;
+}
+
+// Geldigheid van een tijdelijke lokale testcode (geen echte beveiliging).
+function validateLocalTestInvite(code) {
+  if (APP_MODE !== "local_test") return false;
+  if (!ENABLE_TEST_INVITE) return false;
+  const normalized = String(code || "").trim().toUpperCase();
+  return LOCAL_TEST_INVITE_CODES.includes(normalized);
+}
+
+// Ontgrendel Verdieping lokaal op dit apparaat (tijdelijke testtoegang).
+function unlockDeepAccessLocalTest(email = null) {
+  updateUserProfile({
+    email: email ? String(email).trim().toLowerCase() : getUserProfile().email,
+    userType: "deep",
+    accessLevel: "deep",
+    deepAccess: true,
+    deepAccessStatus: "granted_local_test",
+    deepAccessGrantedAt: new Date().toISOString()
+  });
+  localStorage.setItem("phytoforsan_deep_access_source", "local_test_invite");
+}
+
+// Invite-link ?deepInvite=CODE — handig voor testers, geen echte beveiliging.
+function checkLocalTestInviteFromUrl() {
+  if (APP_MODE !== "local_test" || !ENABLE_TEST_INVITE) return;
+  const params = new URLSearchParams(window.location.search);
+  const inviteCode = params.get("deepInvite");
+  if (!inviteCode) return;
+  if (validateLocalTestInvite(inviteCode)) {
+    unlockDeepAccessLocalTest();
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
+// Toegangsstatus. In local_test puur lokaal; fase 2 koppelt aan backend.
+async function checkDeepAccessStatus(email) {
+  if (APP_MODE === "local_test") {
+    const profile = getUserProfile();
+    return {
+      success: true,
+      deepAccess: profile.deepAccess === true,
+      status: profile.deepAccess ? "granted_local_test" : "not_connected"
+    };
+  }
+  // FASE 2: koppelen aan Supabase Edge Function "check-deep-access".
+  const response = await fetch(`${API_BASE_URL}/check-deep-access`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+  return response.json();
+}
+
+// FASE 2 TODO: echte aanvraag naar backend ("request-deep-access").
+// In local_test wordt de aanvraag alleen lokaal opgeslagen en geeft GEEN toegang.
+function requestDeepAccess({ name, email, note, feedbackConsent }) {
+  updateUserProfile({
+    name: name ? String(name).trim() : null,
+    email: email ? String(email).trim().toLowerCase() : null,
+    feedbackConsent: !!feedbackConsent,
+    deepAccessStatus: "requested_local_test",
+    deepAccessRequestedAt: new Date().toISOString()
+  });
+  // APP_MODE === "backend": hier later fetch naar API_BASE_URL/request-deep-access.
+  return { success: true, local: true };
+}
+
+// Guard: vóór het openen/starten van een Verdieping-protocol.
+// Geeft true als toegang is toegestaan; opent anders het toegangsscherm.
+function requireDeepAccess(preset) {
+  if (!preset) return false;
+  const isDeepProtocol =
+    preset.category === "verdieping" ||
+    preset.requiresDeepAccess === true ||
+    preset.sessionType === "test";
+  if (!isDeepProtocol) return true;
+  if (hasDeepAccess()) return true;
+  openDeepAccessGate(preset);
+  return false;
+}
 
 const warningContent = {
   activeBreathTest: `
@@ -2084,6 +2290,7 @@ const presets = {
   holotropicBreathTest: {
     id: "holotropicBreathTest",
     sessionType: "test",
+    requiresDeepAccess: true,
     label: "Holotropische Ademtest",
     category: "verdieping",
     text: "Een verborgen testprotocol met actieve verbonden ademhaling, geïnspireerd op holotropische ademhaling. Alleen gebruiken als je je goed voelt en voldoende ervaring hebt met ademwerk.",
@@ -2114,6 +2321,7 @@ const presets = {
   activeBreathTest: {
     id: "activeBreathTest",
     sessionType: "test",
+    requiresDeepAccess: true,
     label: "Actieve Ademtest",
     category: "verdieping",
     text: "Een korte, actieve ademtest met een vloeiend ademritme zonder pauzes. Alleen gebruiken als je je goed voelt en direct stoppen bij ongemak.",
@@ -2735,7 +2943,7 @@ const presetMeta = {
   activeBreathTest: { duration: "5:30",   desc: "Actief ademritme — testprotocol." }
 };
 
-function renderLibraryCard(id, item, experimental = false) {
+function renderLibraryCard(id, item, experimental = false, locked = false) {
   const meta = presetMeta[id] || { duration: "", desc: "" };
   const illus = cardIllustrations[id] || "";
   // Duur afleiden uit de centrale functie; meditatie houdt vrije duur
@@ -2745,15 +2953,19 @@ function renderLibraryCard(id, item, experimental = false) {
   const badge = (experimental || item.experimental)
     ? `<span style="font-size:.6rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#c0392b;display:block;margin-top:2px">Testprotocol</span>`
     : "";
+  // Verdieping zonder toegang: zichtbaar maar vergrendeld (slotje i.p.v. play)
+  const action = locked
+    ? `<span class="card-lock" aria-label="Vergrendeld" title="Toegang tot Verdieping vereist">&#128274;</span>`
+    : `<button class="card-play" type="button" data-play="${id}" aria-label="Start ${item.label}">▶</button>`;
   return `
-    <div class="protocol-card ${isActive ? "active" : ""}" data-preset="${id}">
+    <div class="protocol-card ${isActive ? "active" : ""} ${locked ? "locked" : ""}" data-preset="${id}">
       <span class="card-thumb">${illus}</span>
       <span class="card-info">
         <strong>${item.label}</strong>
         <span class="card-duration">${durationText}</span>
         ${badge}
       </span>
-      <button class="card-play" type="button" data-play="${id}" aria-label="Start ${item.label}">▶</button>
+      ${action}
     </div>
   `;
 }
@@ -2771,10 +2983,12 @@ function renderProtocols() {
   if (relaxEl)      relaxEl.innerHTML      = byCategory("humming").map(([id, p]) => renderLibraryCard(id, p)).join("");
   if (klankEl)      klankEl.innerHTML      = byCategory("klank").map(([id, p]) => renderLibraryCard(id, p)).join("");
   if (meditationEl) meditationEl.innerHTML = byCategory("meditatie").map(([id, p]) => renderLibraryCard(id, p)).join("");
-  const verdiepingItems = byCategory("verdieping");
+  // Verdieping is altijd zichtbaar, maar vergrendeld zonder deep access
+  const verdiepingItems = Object.entries(presets).filter(([, p]) => p.category === "verdieping");
+  const deepUnlocked = hasDeepAccess();
   if (verdiepingEl && verdiepingLabel) {
     if (verdiepingItems.length) {
-      verdiepingEl.innerHTML = verdiepingItems.map(([id, p]) => renderLibraryCard(id, p, true)).join("");
+      verdiepingEl.innerHTML = verdiepingItems.map(([id, p]) => renderLibraryCard(id, p, true, !deepUnlocked)).join("");
       verdiepingEl.style.display = "";
       verdiepingLabel.style.display = "";
     } else {
@@ -3838,15 +4052,18 @@ function draw(time) {
 // Bibliotheek klikken — kaart selecteren of play knop starten
 function handleLibraryClick(event) {
   const playBtn = event.target.closest("[data-play]");
+  const card = event.target.closest("[data-preset]");
+  const id = playBtn?.dataset.play || card?.dataset.preset;
+  if (!id) return;
+  // Verdieping-slotje: opent toegangsscherm i.p.v. de sessie
+  if (!requireDeepAccess(presets[id])) return;
   if (playBtn) {
-    const id = playBtn.dataset.play;
     applyPreset(id);
     start();
     return;
   }
-  const card = event.target.closest("[data-preset]");
   if (card) {
-    applyPreset(card.dataset.preset);
+    applyPreset(id);
   }
 }
 
@@ -4020,6 +4237,82 @@ function showActiveBreathWarning(onConfirm) {
     overlay.style.display = "none";
   };
 }
+
+// ── Toegangsscherm Verdieping ──
+function setGateMsg(id, text, kind) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = "deep-gate-msg " + (kind || "");
+  el.style.display = text ? "" : "none";
+}
+
+function openDeepAccessGate(preset) {
+  const overlay = document.getElementById("deepAccessOverlay");
+  if (!overlay) return;
+  // Reset meldingen; prefill bekende gegevens
+  ["deepReqMsg", "deepInviteMsg", "deepCheckMsg"].forEach(id => setGateMsg(id, "", ""));
+  const profile = getUserProfile();
+  const nameEl = document.getElementById("deepReqName");
+  const emailEl = document.getElementById("deepReqEmail");
+  if (nameEl && profile.name) nameEl.value = profile.name;
+  if (emailEl && profile.email) emailEl.value = profile.email;
+  // Testcode-blok alleen tonen als invites aanstaan
+  document.getElementById("deepInviteBlock").style.display = ENABLE_TEST_INVITE ? "" : "none";
+  overlay.style.display = "flex";
+}
+
+function closeDeepAccessGate() {
+  const overlay = document.getElementById("deepAccessOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+// Na het verlenen van toegang: bibliotheek opnieuw tekenen zodat sloten weg zijn.
+function refreshAfterDeepUnlock() {
+  renderProtocols();
+}
+
+document.getElementById("deepGateClose")?.addEventListener("click", closeDeepAccessGate);
+
+document.getElementById("deepReqSubmit")?.addEventListener("click", () => {
+  const safety = document.getElementById("deepReqSafety").checked;
+  if (!safety) { setGateMsg("deepReqMsg", "Lees en bevestig eerst de veiligheidsinformatie.", "err"); return; }
+  const email = document.getElementById("deepReqEmail").value.trim();
+  if (!email) { setGateMsg("deepReqMsg", "Vul een e-mailadres in.", "err"); return; }
+  updateUserProfile({ acceptedDeepSafetyNotice: true });
+  requestDeepAccess({
+    name: document.getElementById("deepReqName").value,
+    email,
+    note: document.getElementById("deepReqNote").value,
+    feedbackConsent: document.getElementById("deepReqFeedback").checked
+  });
+  setGateMsg("deepReqMsg", "Aanvraag ontvangen in testmodus. Let op: deze aanvraag is alleen lokaal opgeslagen. Er is nog geen echte serververbinding actief.", "warn");
+});
+
+document.getElementById("deepInviteSubmit")?.addEventListener("click", () => {
+  const code = document.getElementById("deepInviteCode").value;
+  if (validateLocalTestInvite(code)) {
+    unlockDeepAccessLocalTest(document.getElementById("deepReqEmail").value.trim() || null);
+    setGateMsg("deepInviteMsg", "Testtoegang geactiveerd. Verdieping is nu op dit apparaat ontgrendeld. Let op: dit is tijdelijke testtoegang zonder servercontrole.", "ok");
+    refreshAfterDeepUnlock();
+    setTimeout(closeDeepAccessGate, 1600);
+  } else {
+    setGateMsg("deepInviteMsg", "Deze testcode is niet geldig.", "err");
+  }
+});
+
+document.getElementById("deepCheckBtn")?.addEventListener("click", async () => {
+  const profile = getUserProfile();
+  const result = await checkDeepAccessStatus(profile.email);
+  if (result.deepAccess) {
+    setGateMsg("deepCheckMsg", "Verdieping is op dit apparaat ontgrendeld (testtoegang).", "ok");
+    refreshAfterDeepUnlock();
+  } else if (profile.deepAccessStatus === "requested_local_test") {
+    setGateMsg("deepCheckMsg", "Je aanvraag is lokaal opgeslagen, maar geeft nog geen toegang. Er is nog geen serververbinding actief.", "warn");
+  } else {
+    setGateMsg("deepCheckMsg", "Nog geen toegang op dit apparaat. Vraag toegang aan of voer een testcode in.", "warn");
+  }
+});
 
 els.startBtn.addEventListener("click", () => {
   if (running) {
@@ -4287,6 +4580,8 @@ function updateNavVisibility() {
 
 window.addEventListener('resize', updateNavVisibility);
 
+// Tijdelijke testtoegang via invite-link (?deepInvite=...) vóór het renderen
+checkLocalTestInviteFromUrl();
 renderProtocols();
 applyPreset(activePreset);
 initMobileNav();
