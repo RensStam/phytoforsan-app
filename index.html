@@ -1505,7 +1505,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.6</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.7</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1665,7 +1665,7 @@ canvas {
           <p class="section-title">Geluid</p>
           <div class="switch-row">
             <label class="switch-label">
-              <span>Geluid bij inademing</span>
+              <span>Geluid bij ademfase</span>
               <span class="switch"><input id="inhaleCueToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
@@ -1673,7 +1673,7 @@ canvas {
               <span class="switch"><input id="restCueToggleBreath" type="checkbox" checked=""><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
-              <span>Trillen bij inademing</span>
+              <span>Trillen bij ademfase</span>
               <span class="switch"><input id="inhaleVibrateToggle" type="checkbox"><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
@@ -1795,7 +1795,7 @@ canvas {
     <div class="deep-gate-block" id="deepInviteBlock">
       <h3 class="deep-gate-h">2. Testcode invoeren</h3>
       <p class="deep-gate-note">Tijdelijke testtoegang op dit apparaat. Dit is geen echte beveiliging.</p>
-      <input class="deep-gate-input" id="deepInviteCode" type="text" placeholder="Bijv. PHYTO-TEST-2026" autocapitalize="characters">
+      <input class="deep-gate-input" id="deepInviteCode" type="text" placeholder="PHYTO-TEST-2026" autocapitalize="characters">
       <button class="primary-session-button" id="deepInviteSubmit" type="button" style="margin-top:6px">Ontgrendel met testcode</button>
       <p class="deep-gate-msg" id="deepInviteMsg" style="display:none"></p>
     </div>
@@ -1971,7 +1971,7 @@ const warningContent = {
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, psychosegevoeligheid, ernstige paniekklachten of wanneer je snel flauwvalt of dissocieert.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Doe deze oefening alleen <strong>liggend of zittend</strong> op een veilige plek. Niet tijdens autorijden, fietsen, werken met machines, zwemmen of baden.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 18px"><strong>Stop direct</strong> bij druk op de borst, sterke duizeligheid, paniek, misselijkheid, hevige tintelingen, kramp, verwarring of een gevoel van controleverlies.</p>
-    <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is geïnspireerd op holotropische ademhaling, maar is geen officiële Holotropic Breathwork®-sessie en vervangt geen begeleiding door een getrainde facilitator.</p>`
+    <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is geïnspireerd op holotropische ademhaling en vervangt geen begeleiding door een getrainde facilitator.</p>`
 };
 
 // =====================================================
@@ -2285,7 +2285,7 @@ const presets = {
     category: "verdieping",
     text: "Een verborgen testprotocol met actieve verbonden ademhaling, geïnspireerd op holotropische ademhaling. Alleen gebruiken als je je goed voelt en voldoende ervaring hebt met ademwerk.",
     product: "Holotropische Ademtest",
-    productText: "Deze sessie is geïnspireerd op holotropische ademhaling, maar is geen officiële Holotropic Breathwork®-sessie. Het protocol is bedoeld als intern testprotocol voor actieve verbonden ademhaling.",
+    productText: "Deze sessie is geïnspireerd op holotropische ademhaling. Het protocol is bedoeld als intern testprotocol voor actieve verbonden ademhaling.",
     minutes: 25,
     totalSeconds: 1500,
     inhale: 0, hold: 0, exhale: 0, pause: 0,
@@ -3639,8 +3639,25 @@ function playInhaleCue() {
     });
   }
 
-  // Lange dubbele trilling bij inademing
+  // Lange dubbele trilling bij ademfase
   if (els.inhaleVibrateToggle?.checked && navigator.vibrate) navigator.vibrate([300, 150, 300]);
+}
+
+// ── Fasetype-helpers voor geluid/trilling ──
+// Rust telt alleen mee als de fase daadwerkelijk langer dan 0s duurt.
+function isRealRestPhase(phase) {
+  return !!phase && (phase.key === "hold" || phase.key === "pause") && Number(phase.dur || 0) > 0;
+}
+function isBreathPhase(phase) {
+  return !!phase && (phase.key === "inhale" || phase.key === "exhale");
+}
+// Cue/trilling bij een echte fasewisseling.
+// playInhaleCue() = ademfasecue (geldt voor IN én UIT).
+// playRestCue()   = rustcue, alleen bij een echte rustfase (>0s).
+function triggerPhaseCues(phase) {
+  if (!phase || Number(phase.dur || 0) <= 0) return;
+  if (isBreathPhase(phase)) playInhaleCue();
+  else if (isRealRestPhase(phase)) playRestCue();
 }
 
 function updateLiveVolume() {
@@ -3702,11 +3719,8 @@ function updatePhase(time) {
     if (ph.mode === "breath") {
       els.dotIn.classList.toggle("active",  guide.phase.key === "inhale");
       els.dotOut.classList.toggle("active", guide.phase.key === "exhale");
-      // Geluid bij elke overgang: stijgend bij inademing, piepje bij uitademing
-      if (running && phaseChanged) {
-        if (guide.phase.key === "inhale") playInhaleCue();
-        else playRestCue();
-      }
+      // IN en UIT krijgen de ademfasecue; rust alleen bij een echte rustfase (>0s)
+      if (running && phaseChanged) triggerPhaseCues(guide.phase);
     }
     lastPhaseKey = phaseKey;
     return;
@@ -3738,14 +3752,9 @@ function updatePhase(time) {
   if (running && hum && phaseChanged && activePreset in bgAudioFiles) startBgAudio();
   if ((!hum || !running) && lastPhaseKey === "exhale") stopDroneEngine();
   if ((!hum || !running) && lastPhaseKey === "exhale" && activePreset in bgAudioFiles) stopBgAudio();
-  // Cues bij overgangen: inademing krijgt een stijgend geluid, rust/uitademing het bekende piepje
-  const noRestPhases = protocol.hold === 0 && protocol.pause === 0;
-  const isBreathingPreset = Boolean(presets[activePreset]?.breathingOnly);
-  if (running && phaseChanged) {
-    // Inademingscue voor alle geluidsprotocollen (ademhaling, humming én klank)
-    if (phase.key === "inhale") playInhaleCue();
-    else if (phase.key === "hold" || phase.key === "pause" || (noRestPhases && isBreathingPreset && phase.key === "exhale")) playRestCue();
-  }
+  // Ademfasecue bij IN en UIT; rustcue alleen bij een echte rustfase (>0s).
+  // getPhaseAt() levert nooit een 0-secondenfase, dus hold/pause:0 valt vanzelf weg.
+  if (running && phaseChanged) triggerPhaseCues(phase);
   lastPhaseKey = phase.key;
 }
 
