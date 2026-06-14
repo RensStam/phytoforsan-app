@@ -1230,7 +1230,6 @@ canvas {
     width: 100%;
     grid-template-columns: 1fr;
   }
-  }
   .rail {
     padding: 12px;
     border-radius: 0;
@@ -1367,10 +1366,8 @@ canvas {
     margin: 0;
   }
 }
-/* Start sessie-knop onderaan het protocolinstellingen-scherm.
-   Zichtbaarheid wordt via JS gestuurd (alleen mobiel). */
 .protocol-start-actions {
-  margin-top: 28px;
+  margin-top: 44px;
   padding: 0 0 calc(24px + env(safe-area-inset-bottom));
 }
 .primary-session-button {
@@ -1488,8 +1485,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.1</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1521,7 +1517,7 @@ canvas {
 
         <!-- Actie-balk -->
         <div class="stage-actions">
-          <button class="stage-btn" type="button" aria-label="Deel" title="Deel">
+          <button class="stage-btn" id="shareBtn" type="button" aria-label="Deel" title="Deel">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           </button>
           <button class="stage-btn primary-round" id="startBtn" type="button">▶</button>
@@ -3850,6 +3846,53 @@ function exitImmersive() {
 // Stop audio als gebruiker naar ander scherm gaat
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopBgAudio();
+});
+
+// ── Swipe-navigatie tussen instellingen- en sessiescherm (mobiel) ──
+// Vervangt het terug-pijltje: swipe links = naar sessiecirkel, swipe rechts = terug.
+let swipeStartX = 0, swipeStartY = 0, swipeActive = false;
+document.addEventListener("touchstart", (e) => {
+  if (!isMobile() || e.touches.length !== 1) { swipeActive = false; return; }
+  // Negeer gebaren die op bedienelementen beginnen (sliders, knoppen, toggles, links)
+  if (e.target.closest('input[type="range"], button, .switch, a, select')) { swipeActive = false; return; }
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+  swipeActive = true;
+}, { passive: true });
+document.addEventListener("touchend", (e) => {
+  if (!swipeActive || !isMobile()) return;
+  swipeActive = false;
+  const dx = e.changedTouches[0].clientX - swipeStartX;
+  const dy = e.changedTouches[0].clientY - swipeStartY;
+  // Alleen duidelijke horizontale swipes
+  if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+  if (currentMobileTab === "settings" && dx < 0) {
+    switchMobileTab("breath");        // swipe links → sessiecirkel
+  } else if (currentMobileTab === "breath" && dx > 0) {
+    history.back();                    // swipe rechts → terug naar instellingen
+  }
+}, { passive: true });
+
+// ── Deel-knop in het sessiescherm ──
+document.getElementById("shareBtn")?.addEventListener("click", async () => {
+  const preset = presets[activePreset];
+  const url = "https://rensstam.github.io/phytoforsan-app/deploy/";
+  const shareData = {
+    title: "PhytoForsan Relax",
+    text: `Ik gebruik de sessie "${preset?.label || ""}" in de PhytoForsan Relax App.`,
+    url
+  };
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(url);
+      const btn = document.getElementById("shareBtn");
+      const prev = btn.getAttribute("title");
+      btn.setAttribute("title", "Link gekopieerd");
+      setTimeout(() => btn.setAttribute("title", prev || "Deel"), 1800);
+    }
+  } catch {}
 });
 
 function showActiveBreathWarning(onConfirm) {
