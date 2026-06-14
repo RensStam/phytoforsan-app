@@ -1485,7 +1485,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1660,7 +1660,7 @@ canvas {
               <span>Trillen bij rust</span>
               <span class="switch"><input id="vibrateToggleBreath" type="checkbox"><span class="switch-track"></span></span>
             </label>
-            <label class="switch-label">
+            <label class="switch-label" id="breathSoundRow">
               <span>Achtergrondgeluid</span>
               <span class="switch"><input id="breathSoundToggle" type="checkbox"><span class="switch-track"></span></span>
             </label>
@@ -1684,14 +1684,6 @@ canvas {
             <label class="switch-label">
               <span>Drone tijdens hum</span>
               <span class="switch"><input id="guideToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
-            </label>
-            <label class="switch-label">
-              <span>Geluid bij rust</span>
-              <span class="switch"><input id="restCueToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
-            </label>
-            <label class="switch-label">
-              <span>Trillen bij rust</span>
-              <span class="switch"><input id="vibrateToggle" type="checkbox"><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
               <span>Levende toon</span>
@@ -2145,12 +2137,10 @@ const els = {
   dotPause: document.getElementById("dotPause"),
   guideToggle: document.getElementById("guideToggle"),
   droneToggle: document.getElementById("droneToggle"),
-  restCueToggle: document.getElementById("restCueToggle"),
   restCueToggleBreath: document.getElementById("restCueToggleBreath"),
   inhaleCueToggle: document.getElementById("inhaleCueToggle"),
   inhaleVibrateToggle: document.getElementById("inhaleVibrateToggle"),
   breathSoundToggle: document.getElementById("breathSoundToggle"),
-  vibrateToggle: document.getElementById("vibrateToggle"),
   vibrateToggleBreath: document.getElementById("vibrateToggleBreath"),
   productTitle: document.getElementById("productTitle"),
   productText: document.getElementById("productText"),
@@ -2733,9 +2723,12 @@ function applyPreset(id) {
   // Grondtoon: verberg bij ademhaling
   const grondtoonPanel = document.getElementById("grondtoonPanel");
   if (grondtoonPanel) grondtoonPanel.style.display = isBreathing ? "none" : "";
-  // Geluid-sectie: alleen bij ademhaling
+  // Geluid-sectie (geluid/tril-cues): voor alle geluidsprotocollen, niet bij meditatie
   const breathingControls = document.getElementById("breathingControls");
-  if (breathingControls) breathingControls.style.display = isBreathing ? "" : "none";
+  if (breathingControls) breathingControls.style.display = presets[id]?.meditationMode ? "none" : "";
+  // Achtergrondgeluid (ambient pad) hoort alleen bij ademhaling
+  const breathSoundRow = document.getElementById("breathSoundRow");
+  if (breathSoundRow) breathSoundRow.style.display = isBreathing ? "" : "none";
   const preset = presets[id];
   els.inhaleInput.value = preset.inhale;
   els.holdInput.value = preset.hold;
@@ -3236,7 +3229,7 @@ function stopDroneEngine() {
 }
 
 function playRestCue() {
-  if (audioCtx && els.restCueToggle.checked) {
+  if (audioCtx && els.restCueToggleBreath.checked) {
     const now = audioCtx.currentTime;
     const level = Math.max(0.008, Math.min(0.026, targetGain() * 0.55));
 
@@ -3272,7 +3265,7 @@ function playRestCue() {
   }
 
   // Trillen ná audio schedulen zodat vibrate() de AudioContext niet suspendeert
-  if (els.vibrateToggle?.checked && navigator.vibrate) navigator.vibrate([80, 120, 80]);
+  if (els.vibrateToggleBreath?.checked && navigator.vibrate) navigator.vibrate([80, 120, 80]);
 }
 
 // Positieve, stijgende cue voor de inademing (laag → hoog)
@@ -3415,7 +3408,8 @@ function updatePhase(time) {
   const noRestPhases = protocol.hold === 0 && protocol.pause === 0;
   const isBreathingPreset = Boolean(presets[activePreset]?.breathingOnly);
   if (running && phaseChanged) {
-    if (phase.key === "inhale" && isBreathingPreset) playInhaleCue();
+    // Inademingscue voor alle geluidsprotocollen (ademhaling, humming én klank)
+    if (phase.key === "inhale") playInhaleCue();
     else if (phase.key === "hold" || phase.key === "pause" || (noRestPhases && isBreathingPreset && phase.key === "exhale")) playRestCue();
   }
   lastPhaseKey = phase.key;
@@ -3763,20 +3757,6 @@ els.droneToggle.addEventListener("change", () => {
     droneHumanTimer = null;
   }
   syncUI();
-});
-
-// Piep-piep sync tussen humming en ademhaling sectie
-els.restCueToggleBreath.addEventListener("change", () => {
-  els.restCueToggle.checked = els.restCueToggleBreath.checked;
-});
-els.restCueToggle.addEventListener("change", () => {
-  els.restCueToggleBreath.checked = els.restCueToggle.checked;
-});
-els.vibrateToggle.addEventListener("change", () => {
-  els.vibrateToggleBreath.checked = els.vibrateToggle.checked;
-});
-els.vibrateToggleBreath.addEventListener("change", () => {
-  els.vibrateToggle.checked = els.vibrateToggleBreath.checked;
 });
 
 // Achtergrondgeluid toggle
