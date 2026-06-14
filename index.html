@@ -1477,7 +1477,7 @@ canvas {
 
       <div class="breath-stage" id="breathStage">
         <button class="immersive-back" id="immersiveBack" onclick="history.back()">&#8592;</button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.8</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.8.9</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1707,17 +1707,16 @@ canvas {
       </div>
       <p class="progress-encourage" id="progEncourage"></p>
     </div>
-    <p class="section-title" style="margin-top:18px">Sessie overzicht</p>
+    <p class="section-title" style="margin-top:18px">Weekoverzicht</p>
     <div class="progress-bars" id="progBars"></div>
     <div class="progress-streak" id="progStreak" style="display:none">
-      <span class="progress-streak-flame">&#128293;</span>
       <span id="progStreakText"></span>
     </div>
     <div id="progFavWrap" style="display:none">
-      <p class="section-title" style="margin-top:18px">Favoriete sessies</p>
+      <p class="section-title" style="margin-top:18px">Meest gebruikte sessies</p>
       <div class="progress-favs" id="progFavs"></div>
     </div>
-    <p class="progress-empty" id="progEmpty" style="display:none">Nog geen sessies gedaan. Start je eerste sessie via de bibliotheek!</p>
+    <p class="progress-empty" id="progEmpty" style="display:none">Je hebt nog geen sessie afgerond. Kies een rustige sessie uit de bibliotheek om te beginnen.</p>
   </section>
     </div>
   </div>
@@ -1871,7 +1870,7 @@ const presets = {
     breathingOnly: true, freeExhale: true,
     phases: [
       { id: "relaxation",  label: "Ontspannen",       duration: 60,  mode: "free", visualMode: "slowBreath",
-        cue: "ONTSPANNEN", sub: "Adem vrij en voel je buik." },
+        cue: "ONTSPANNEN", sub: "Adem vrij. Leg je handen op je buik en voel je buik." },
       { id: "bellyBreath", label: "Buikadem",         duration: 120, mode: "breath",
         inhale: 4, hold: 0, exhale: 6, pause: 0,
         cueIn: "IN", cueOut: "UIT", subIn: "Laat de buik zacht meebewegen.", subOut: "Laat buik en middenrif ontspannen." },
@@ -3922,10 +3921,10 @@ function renderProgress() {
   document.getElementById("progDays").textContent = weekDays;
 
   const enc = document.getElementById("progEncourage");
-  if (!week.length)        enc.textContent = "Begin de week met een rustige sessie.";
-  else if (weekDays >= 5)  enc.textContent = "Geweldig volgehouden deze week! \u{1F331}";
-  else if (weekDays >= 3)  enc.textContent = "Je bent op de goede weg! \u{1F331}";
-  else                     enc.textContent = "Goed begin, blijf erbij.";
+  if (!week.length)        enc.textContent = "Maak ruimte voor een rustig moment.";
+  else if (weekDays >= 5)  enc.textContent = "Je hebt deze week vaak ruimte gemaakt voor herstel.";
+  else if (weekDays >= 3)  enc.textContent = "Er ontstaat een rustig ritme.";
+  else                     enc.textContent = "Je hebt deze week al een moment van rust genomen.";
 
   // Staafdiagram ma t/m zo (minuten per dag)
   const dayLabels = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
@@ -3952,7 +3951,7 @@ function renderProgress() {
   }
   const streakEl = document.getElementById("progStreak");
   streakEl.style.display = streak >= 2 ? "" : "none";
-  document.getElementById("progStreakText").textContent = `${streak} dagen op rij`;
+  document.getElementById("progStreakText").textContent = `${streak} dagen op rij een rustmoment`;
 
   // Favoriete sessies (top 3, alle tijd)
   const counts = {};
@@ -3964,7 +3963,7 @@ function renderProgress() {
   const favWrap = document.getElementById("progFavWrap");
   favWrap.style.display = favs.length ? "" : "none";
   document.getElementById("progFavs").innerHTML = favs.map(([id, n]) =>
-    `<div class="progress-fav"><span>${presets[id].label}</span><span>${n}&times;</span></div>`
+    `<div class="progress-fav"><span>${presets[id].label}</span><span>&middot; ${n}&times;</span></div>`
   ).join("");
 }
 
