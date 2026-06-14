@@ -1485,7 +1485,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1591,7 +1591,7 @@ canvas {
         </section>
         <section class="control-group" id="rhythmSection">
           <div class="section-title-row">
-            <p class="section-title">Ademritme</p>
+            <p class="section-title" id="rhythmSectionTitle">Ademritme</p>
           </div>
           <div class="editor">
             <label>
@@ -1778,8 +1778,15 @@ const warningContent = {
     <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is geïnspireerd op holotropische ademhaling, maar is geen officiële Holotropic Breathwork®-sessie en vervangt geen begeleiding door een getrainde facilitator.</p>`
 };
 
+// =====================================================
+// 2. PRESET DATA / PROTOCOLLEN
+// Leidende bron voor alle sessiedata. Elk preset heeft
+// een id en sessionType (gedrag) naast category (groepering).
+// =====================================================
 const presets = {
   longExhale: {
+    id: "longExhale",
+    sessionType: "simpleBreath",
     label: "Lange Uitademing",
     category: "breathing",
     text: "Een rustige ademhaling waarbij de uitademing langer duurt dan de inademing. Gericht op ontspanning en vertraging.",
@@ -1800,6 +1807,8 @@ const presets = {
     exhaleSub: "laat de adem langzaam en ontspannen uitstromen"
   },
   resonanceBreath: {
+    id: "resonanceBreath",
+    sessionType: "simpleBreath",
     label: "Resonantie Adem",
     category: "breathing",
     text: "Een gelijkmatig ademritme van ongeveer zes ademhalingen per minuut. Gericht op balans, rust en regulatie.",
@@ -1820,6 +1829,8 @@ const presets = {
     exhaleSub: "laat de adem vloeiend uitstromen"
   },
   sleepBreath: {
+    id: "sleepBreath",
+    sessionType: "simpleBreath",
     label: "Slaapadem",
     category: "breathing",
     text: "Een langzame ademhaling voor het slapengaan. De langere uitademing helpt lichaam en geest vertragen.",
@@ -1840,6 +1851,8 @@ const presets = {
     exhaleSub: "laat de adem langzaam en volledig uitstromen"
   },
   flowingBreath: {
+    id: "flowingBreath",
+    sessionType: "simpleBreath",
     label: "Vloeiende Adem",
     category: "breathing",
     text: "Een rustige, doorlopende ademhaling zonder pauzes. Geschikt om eenvoudig in een ritme te komen.",
@@ -1860,6 +1873,8 @@ const presets = {
     exhaleSub: "laat de adem vloeiend uitstromen"
   },
   bellyRegulationBreath: {
+    id: "bellyRegulationBreath",
+    sessionType: "phasedBreath",
     label: "Buikregulatie Adem",
     category: "breathing",
     text: "Een rustige ademroutine gericht op buik, middenrif en ontspanning.",
@@ -1887,6 +1902,8 @@ const presets = {
     ]
   },
   relax: {
+    id: "relax",
+    sessionType: "humming",
     label: "Relax Moment",
     category: "humming",
     text: "Een rustige basisroutine met iets meer ruimte na de inademing. Minder gehaast, meer navoelen.",
@@ -1901,6 +1918,8 @@ const presets = {
     type: "tanpura"
   },
   lang: {
+    id: "lang",
+    sessionType: "humming",
     label: "Deep Relax",
     category: "humming",
     text: "Langere uitademing met lage grondtoon. Bedoeld om dieper te zakken en te vertragen.",
@@ -1915,6 +1934,8 @@ const presets = {
     type: "none"
   },
   focus: {
+    id: "focus",
+    sessionType: "humming",
     label: "Korte Reset",
     category: "humming",
     text: "Korter ritme met helderdere toon. Voor een compacte pauze overdag.",
@@ -1929,6 +1950,8 @@ const presets = {
     type: "human"
   },
   focusReset: {
+    id: "focusReset",
+    sessionType: "humming",
     label: "Focus Reset",
     category: "humming",
     text: "Een korte, heldere reset voor focus en frisse aandacht.",
@@ -1943,6 +1966,8 @@ const presets = {
     type: "none"
   },
   herstel: {
+    id: "herstel",
+    sessionType: "humming",
     label: "Stillness Flow",
     category: "humming",
     text: "Langzame cyclus zonder vaste klank. Rust, uitademen en zelf invullen.",
@@ -1962,6 +1987,8 @@ const presets = {
     exhaleSub: "adem langzaam uit in stilte, of vul zelf zacht een klank in"
   },
   maen: {
+    id: "maen",
+    sessionType: "sound",
     label: "MAEN",
     category: "klank",
     text: "Het oorspronkelijke ritme voor een klankafdaling met MAEN.",
@@ -1987,6 +2014,8 @@ const presets = {
     ]
   },
   amen: {
+    id: "amen",
+    sessionType: "sound",
     label: "AMEN",
     category: "klank",
     text: "Een zachte adem- en klankoefening met de klank Amen. Bedoeld als rustig ritueel bij stress of overprikkeling.",
@@ -2012,6 +2041,8 @@ const presets = {
     ]
   },
   om: {
+    id: "om",
+    sessionType: "sound",
     label: "OM",
     category: "klank",
     text: "Een klassieke klankmethode met A → O/U → M.",
@@ -2036,6 +2067,8 @@ const presets = {
     ]
   },
   meditationTimer: {
+    id: "meditationTimer",
+    sessionType: "meditation",
     label: "Meditatietimer",
     category: "meditatie",
     text: "Een vrije meditatie zonder ademsturing of klank. Alleen tijd, ruimte en aandacht.",
@@ -2049,6 +2082,8 @@ const presets = {
     meditationMode: true
   },
   holotropicBreathTest: {
+    id: "holotropicBreathTest",
+    sessionType: "test",
     label: "Holotropische Ademtest",
     category: "verdieping",
     text: "Een verborgen testprotocol met actieve verbonden ademhaling, geïnspireerd op holotropische ademhaling. Alleen gebruiken als je je goed voelt en voldoende ervaring hebt met ademwerk.",
@@ -2077,6 +2112,8 @@ const presets = {
     ]
   },
   activeBreathTest: {
+    id: "activeBreathTest",
+    sessionType: "test",
     label: "Actieve Ademtest",
     category: "verdieping",
     text: "Een korte, actieve ademtest met een vloeiend ademritme zonder pauzes. Alleen gebruiken als je je goed voelt en direct stoppen bij ongemak.",
@@ -2400,6 +2437,98 @@ function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return s === 0 ? `${m} min` : `${m}:${String(s).padStart(2, "0")} min`;
+}
+
+// =====================================================
+// 4. NORMALISATIE VAN PRESETS EN FASES
+// Genormaliseerde toegang met fallback op legacy-rootvelden,
+// zodat bestaande presetdata blijft werken.
+// =====================================================
+function getPresetRhythm(preset) {
+  if (preset && preset.rhythm) return preset.rhythm;
+  return {
+    inhale: Number(preset?.inhale || 0),
+    hold: Number(preset?.hold || 0),
+    exhale: Number(preset?.exhale || 0),
+    pause: Number(preset?.pause || 0)
+  };
+}
+
+function getPhaseRhythm(phase) {
+  if (phase && phase.rhythm) return phase.rhythm;
+  return {
+    inhale: Number(phase?.inhale || 0),
+    hold: Number(phase?.hold || 0),
+    exhale: Number(phase?.exhale || 0),
+    pause: Number(phase?.pause || 0)
+  };
+}
+
+function normalizePhases(phases) {
+  return (phases || []).map(ph => ({ ...ph, rhythm: getPhaseRhythm(ph) }));
+}
+
+// Bepaalt het sessietype, met fallback voor presets zonder expliciet veld.
+function getSessionType(preset) {
+  if (!preset) return "simpleBreath";
+  if (preset.sessionType) return preset.sessionType;
+  if (preset.meditationMode) return "meditation";
+  if (Array.isArray(preset.phases) && preset.phases.length) return preset.hidden ? "test" : "phasedBreath";
+  if (preset.category === "klank") return "sound";
+  if (preset.category === "humming") return "humming";
+  return "simpleBreath";
+}
+
+// Actieve, genormaliseerde sessieconfig — één bron voor de engine/UI.
+function getActiveSessionConfig() {
+  const preset = presets[activePreset];
+  if (!preset) return null;
+  const totalSeconds = sessionDuration();
+  const type = getSessionType(preset);
+  const base = { ...preset, sessionType: type, totalSeconds };
+  if (type === "phasedBreath" || type === "test") {
+    base.phases = normalizePhases(preset.phases || []);
+  } else {
+    base.rhythm = getPresetRhythm(preset);
+    if (type === "sound") {
+      base.soundSteps = preset.soundSteps || [];
+      base.exhaleFlow = preset.exhaleFlow || [];
+    }
+  }
+  return base;
+}
+
+// Sectietitel in het protocolinstellingenscherm, afhankelijk van het sessietype.
+function getSettingsSectionTitle(preset) {
+  switch (getSessionType(preset)) {
+    case "simpleBreath": return "ADEMRITME";
+    case "phasedBreath": return "OPBOUW VAN DE SESSIE";
+    case "humming":      return "ADEM- EN HUMRITME";
+    case "sound":        return "KLANKOPBOUW";
+    case "meditation":   return "DUUR EN STILTE";
+    case "test":         return "FASE-OPBOUW";
+    default:             return "SESSIE-INSTELLINGEN";
+  }
+}
+
+// Interne structuurcontrole (niet zichtbaar voor gebruikers).
+function debugAppStructure() {
+  Object.entries(presets).forEach(([key, preset]) => {
+    const total = getSessionTotalSeconds(preset);
+    console.log({
+      key,
+      id: preset.id,
+      label: preset.label,
+      category: preset.category,
+      sessionType: getSessionType(preset),
+      duration: formatDuration(total),
+      totalSeconds: total,
+      hasRhythm: !!preset.rhythm,
+      hasPhases: Array.isArray(preset.phases),
+      hidden: !!preset.hidden,
+      experimental: !!preset.experimental
+    });
+  });
 }
 
 function sessionDuration() {
@@ -2774,6 +2903,9 @@ function applyPreset(id) {
   const rhythmSectionEl = document.getElementById("rhythmSection");
   if (meditationDurationSection) meditationDurationSection.style.display = isMeditation ? "" : "none";
   if (rhythmSectionEl) rhythmSectionEl.style.display = isPhasedOrMeditation ? "none" : "";
+  // Dynamische sectietitel op basis van sessietype
+  const rhythmTitle = document.getElementById("rhythmSectionTitle");
+  if (rhythmTitle) rhythmTitle.textContent = getSettingsSectionTitle(preset);
   updateActiveCard();
   syncUI();
   reset();
