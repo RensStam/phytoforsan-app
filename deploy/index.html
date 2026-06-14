@@ -1505,7 +1505,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v2.9.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1800,14 +1800,7 @@ canvas {
       <p class="deep-gate-msg" id="deepInviteMsg" style="display:none"></p>
     </div>
 
-    <!-- Blok 3: Toegang controleren -->
-    <div class="deep-gate-block">
-      <h3 class="deep-gate-h">3. Toegang controleren</h3>
-      <button class="deep-gate-secondary" id="deepCheckBtn" type="button">Controleer toegang</button>
-      <p class="deep-gate-msg" id="deepCheckMsg" style="display:none"></p>
-    </div>
-
-    <button class="deep-gate-secondary" id="deepGateClose" type="button" style="margin-top:8px">Sluiten</button>
+    <button class="deep-gate-secondary" id="deepGateClose" type="button" style="margin-top:16px">Sluiten</button>
   </div>
 </div>
 
@@ -1966,7 +1959,6 @@ function requireDeepAccess(preset) {
 
 const warningContent = {
   activeBreathTest: `
-    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol — Experimenteel</p>
     <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Actieve Ademtest</h2>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze oefening is intensiever dan de gewone ademhalingssessies.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij:</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, of wanneer je snel paniek, flauwvallen of dissociatie ervaart.</p>
@@ -1974,7 +1966,6 @@ const warningContent = {
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 18px"><strong>Stop direct</strong> bij duizeligheid, sterke tintelingen, druk op de borst, paniek, misselijkheid of een gevoel van controleverlies.</p>
     <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is alleen bedoeld als korte interne test en is geen volledige holotropische ademhalingssessie.</p>`,
   holotropicBreathTest: `
-    <p style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin:0 0 10px">Testprotocol — Experimenteel</p>
     <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Holotropische Ademtest</h2>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze sessie is intensiever dan de gewone ademhalingssessies.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, psychosegevoeligheid, ernstige paniekklachten of wanneer je snel flauwvalt of dissocieert.</p>
@@ -2325,7 +2316,7 @@ const presets = {
     category: "verdieping",
     text: "Een korte, actieve ademtest met een vloeiend ademritme zonder pauzes. Alleen gebruiken als je je goed voelt en direct stoppen bij ongemak.",
     product: "Actieve Ademtest",
-    productText: "Deze sessie is een milde testvariant van actieve verbonden ademhaling. De oefening is kort gehouden en bedoeld voor ervaren gebruikers die willen onderzoeken hoe een actiever ademritme voelt. Dit is geen volledige holotropische sessie.",
+    productText: "Deze sessie is een milde testvariant van actieve verbonden ademhaling. De oefening is kort gehouden en bedoeld voor ervaren gebruikers die willen onderzoeken hoe een actiever ademritme voelt.",
     minutes: 5.5,
     totalSeconds: 330,
     inhale: 2,
@@ -2949,9 +2940,7 @@ function renderLibraryCard(id, item, experimental = false, locked = false) {
   const totalSec = getSessionTotalSeconds(item);
   const durationText = item.meditationMode ? "vrij" : (totalSec > 0 ? formatDuration(totalSec) : meta.duration);
   const isActive = id === activePreset;
-  const badge = (experimental || item.experimental)
-    ? `<span style="font-size:.6rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#c0392b;display:block;margin-top:2px">Testprotocol</span>`
-    : "";
+  const badge = "";
   // Verdieping zonder toegang: zichtbaar maar vergrendeld (slotje i.p.v. play)
   const action = locked
     ? `<span class="card-lock" aria-label="Vergrendeld" title="Toegang tot Verdieping vereist">&#128274;</span>`
@@ -4250,7 +4239,7 @@ function openDeepAccessGate(preset) {
   const overlay = document.getElementById("deepAccessOverlay");
   if (!overlay) return;
   // Reset meldingen; prefill bekende gegevens
-  ["deepReqMsg", "deepInviteMsg", "deepCheckMsg"].forEach(id => setGateMsg(id, "", ""));
+  ["deepReqMsg", "deepInviteMsg"].forEach(id => setGateMsg(id, "", ""));
   const profile = getUserProfile();
   const nameEl = document.getElementById("deepReqName");
   const emailEl = document.getElementById("deepReqEmail");
@@ -4299,18 +4288,6 @@ document.getElementById("deepInviteSubmit")?.addEventListener("click", () => {
   }
 });
 
-document.getElementById("deepCheckBtn")?.addEventListener("click", async () => {
-  const profile = getUserProfile();
-  const result = await checkDeepAccessStatus(profile.email);
-  if (result.deepAccess) {
-    setGateMsg("deepCheckMsg", "Verdieping is op dit apparaat ontgrendeld (testtoegang).", "ok");
-    refreshAfterDeepUnlock();
-  } else if (profile.deepAccessStatus === "requested_local_test") {
-    setGateMsg("deepCheckMsg", "Je aanvraag is lokaal opgeslagen, maar geeft nog geen toegang. Er is nog geen serververbinding actief.", "warn");
-  } else {
-    setGateMsg("deepCheckMsg", "Nog geen toegang op dit apparaat. Vraag toegang aan of voer een testcode in.", "warn");
-  }
-});
 
 els.startBtn.addEventListener("click", () => {
   if (running) {
