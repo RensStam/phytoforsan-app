@@ -1522,7 +1522,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.0.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.0.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3304,7 +3304,8 @@ function applyPreset(id) {
   // Sliders + stats-balk verbergen bij phased presets en meditationMode
   const isPhasedOrMeditation = Boolean(preset.phases) || Boolean(preset.meditationMode);
   const phaseStrip = document.getElementById("phaseStrip");
-  if (phaseStrip) phaseStrip.style.display = isPhasedOrMeditation ? "none" : "";
+  // Oude ritme-strip altijd verbergen; het opbouw-overzicht (onder de uitleg) vervangt deze voor alle protocollen.
+  if (phaseStrip) phaseStrip.style.display = "none";
   const controlsGrid = document.querySelector(".controls-grid");
   if (controlsGrid) controlsGrid.classList.toggle("controls-grid--compact", isPhasedOrMeditation);
   // Fase-bolletjes: alleen IN/UIT tonen bij presets met vaste phases of meditationMode
@@ -3887,18 +3888,23 @@ function phaseCells(ph) {
   if (Number(r.pause) > 0) cells.push({ v: s(r.pause), l: "rust" });
   return cells;
 }
-// Opbouw-overzicht (HTML) voor meerfasige protocollen; leeg voor enkelvoudige sessies.
-// Gebruikt dezelfde kaart-opmaak (phase-strip / phase-card) als de gewone ritme-weergave.
+function cellsToStrip(cells) {
+  const cards = cells.map(c => `<div class="phase-card"><strong>${c.v}</strong><span>${c.l}</span></div>`).join("");
+  return `<div class="phase-strip" style="grid-template-columns:repeat(${cells.length},1fr)">${cards}</div>`;
+}
+// Eenduidig opbouw-overzicht voor álle sessietypes (behalve meditatie):
+// meerfasig → blok per fase; enkelvoudig → één blok met het ademritme.
+// 0-secondenfases/rustcellen worden nooit getoond. Zelfde kaart-opmaak overal.
 function phaseOverviewHTML(preset) {
-  if (!preset || !Array.isArray(preset.phases) || preset.phases.length === 0) return "";
-  const blocks = preset.phases.map(ph => {
-    const cells = phaseCells(ph);
-    const cards = cells.map(c => `<div class="phase-card"><strong>${c.v}</strong><span>${c.l}</span></div>`).join("");
-    return `<div class="phase-overview-block">
-      <p class="phase-overview-phase">${ph.label || ""} &middot; ${fmtClock(Number(ph.duration || 0))}</p>
-      <div class="phase-strip" style="grid-template-columns:repeat(${cells.length},1fr)">${cards}</div>
-    </div>`;
-  }).join("");
+  if (!preset || preset.meditationMode) return "";
+  let blocks;
+  if (Array.isArray(preset.phases) && preset.phases.length) {
+    blocks = preset.phases.map(ph =>
+      `<div class="phase-overview-block"><p class="phase-overview-phase">${ph.label || ""} &middot; ${fmtClock(Number(ph.duration || 0))}</p>${cellsToStrip(phaseCells(ph))}</div>`
+    ).join("");
+  } else {
+    blocks = `<div class="phase-overview-block">${cellsToStrip(phaseCells({ mode: "breath", rhythm: getPresetRhythm(preset) }))}</div>`;
+  }
   return `<div class="phase-overview-wrap"><p class="phase-overview-title">Opbouw van de sessie</p>${blocks}</div>`;
 }
 // Cue/trilling bij een echte fasewisseling.
