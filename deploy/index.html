@@ -137,6 +137,12 @@ button { cursor: pointer; }
   margin: 12px 0 6px 2px;
 }
 .lib-subgroup-label:first-child { margin-top: 2px; }
+.phase-overview { display: grid; gap: 6px; }
+.phase-overview-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; background: rgba(18,55,52,.04); border-radius: 10px; padding: 9px 13px; }
+.phase-overview-row .po-name { font-weight: 800; font-size: .85rem; color: var(--deep); }
+.phase-overview-row .po-dur { font-size: .72rem; font-weight: 700; color: rgba(18,55,52,.5); margin-left: auto; white-space: nowrap; }
+.phase-overview-row .po-rhythm { font-size: .76rem; color: rgba(18,55,52,.7); flex-basis: 100%; }
+.phase-overview-row { flex-wrap: wrap; }
 
 /* ── Bibliotheek lijst ── */
 .lib-list {
@@ -1517,7 +1523,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.0.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.0.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1620,6 +1626,10 @@ canvas {
             <button class="med-dur-btn" data-min="20">20 min</button>
             <button class="med-dur-btn" data-min="30">30 min</button>
           </div>
+        </section>
+        <section class="control-group" id="phaseOverviewSection" style="display:none">
+          <p class="section-title">Opbouw van de sessie</p>
+          <div class="phase-overview" id="phaseOverviewList"></div>
         </section>
         <section class="control-group" id="rhythmSection">
           <div class="section-title-row">
@@ -3354,6 +3364,22 @@ function applyPreset(id) {
   const rhythmSectionEl = document.getElementById("rhythmSection");
   if (meditationDurationSection) meditationDurationSection.style.display = isMeditation ? "" : "none";
   if (rhythmSectionEl) rhythmSectionEl.style.display = isPhasedOrMeditation ? "none" : "";
+  // Fase-overzicht voor meerfasige protocollen (toont wat de sessie per fase doet)
+  const phaseOverviewSection = document.getElementById("phaseOverviewSection");
+  const phaseOverviewList = document.getElementById("phaseOverviewList");
+  const hasPhases = Array.isArray(preset.phases) && preset.phases.length > 0;
+  if (phaseOverviewSection && phaseOverviewList) {
+    if (hasPhases) {
+      phaseOverviewList.innerHTML = preset.phases.map(ph => {
+        const dur = fmtClock(Number(ph.duration || 0));
+        const rhythm = phaseRhythmText(ph);
+        return `<div class="phase-overview-row"><span class="po-name">${ph.label || ""}</span><span class="po-dur">${dur}</span><span class="po-rhythm">${rhythm}</span></div>`;
+      }).join("");
+      phaseOverviewSection.style.display = "";
+    } else {
+      phaseOverviewSection.style.display = "none";
+    }
+  }
   // Dynamische sectietitel op basis van sessietype
   const rhythmTitle = document.getElementById("rhythmSectionTitle");
   if (rhythmTitle) rhythmTitle.textContent = getSettingsSectionTitle(preset);
@@ -3899,6 +3925,17 @@ function isRealRestPhase(phase) {
 }
 function isBreathPhase(phase) {
   return !!phase && (phase.key === "inhale" || phase.key === "exhale");
+}
+// Leesbaar ritme van één fase voor het opbouw-overzicht.
+function phaseRhythmText(ph) {
+  if (!ph || ph.mode === "free") return "vrij ademen";
+  const r = getPhaseRhythm(ph);
+  const s = (n) => `${String(Number(n)).replace(".", ",")} s`;
+  const parts = [`${s(r.inhale)} in`];
+  if (Number(r.hold) > 0)  parts.push(`${s(r.hold)} rust`);
+  parts.push(`${s(r.exhale)} uit`);
+  if (Number(r.pause) > 0) parts.push(`${s(r.pause)} rust`);
+  return parts.join(" / ");
 }
 // Cue/trilling bij een echte fasewisseling.
 // playInhaleCue() = ademfasecue (geldt voor IN én UIT).
