@@ -138,13 +138,10 @@ button { cursor: pointer; }
 }
 .lib-subgroup-label:first-child { margin-top: 2px; }
 .phase-overview-wrap { margin-top: 14px; }
-.phase-overview-title { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: rgba(18,55,52,.55); margin: 0 0 8px; }
-.phase-overview { display: grid; gap: 6px; }
-.phase-overview-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; background: rgba(18,55,52,.04); border-radius: 10px; padding: 9px 13px; }
-.phase-overview-row .po-name { font-weight: 800; font-size: .85rem; color: var(--deep); }
-.phase-overview-row .po-dur { font-size: .72rem; font-weight: 700; color: rgba(18,55,52,.5); margin-left: auto; white-space: nowrap; }
-.phase-overview-row .po-rhythm { font-size: .76rem; color: rgba(18,55,52,.7); flex-basis: 100%; }
-.phase-overview-row { flex-wrap: wrap; }
+.phase-overview-title { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: rgba(18,55,52,.55); margin: 0 0 10px; }
+.phase-overview-block { margin-bottom: 12px; }
+.phase-overview-phase { font-size: .76rem; font-weight: 800; color: var(--deep); margin: 0 0 5px; }
+.phase-overview-block .phase-strip { border-radius: 10px; overflow: hidden; border: 1px solid rgba(216,229,225,.7); }
 
 /* ── Bibliotheek lijst ── */
 .lib-list {
@@ -1525,7 +1522,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.0.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.0.4</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3924,13 +3921,30 @@ function phaseRhythmText(ph) {
   if (Number(r.pause) > 0) parts.push(`${s(r.pause)} rust`);
   return parts.join(" / ");
 }
+// Kaart-cellen voor één fase, in dezelfde opmaak als de ritme-strip.
+function phaseCells(ph) {
+  const s = (n) => `${String(Number(n)).replace(".", ",")} s`;
+  if (!ph || ph.mode === "free") return [{ v: fmtClock(Number(ph?.duration || 0)), l: "vrije adem" }];
+  const r = getPhaseRhythm(ph);
+  const cells = [{ v: s(r.inhale), l: "in" }];
+  if (Number(r.hold) > 0)  cells.push({ v: s(r.hold), l: "rust" });
+  cells.push({ v: s(r.exhale), l: "uit" });
+  if (Number(r.pause) > 0) cells.push({ v: s(r.pause), l: "rust" });
+  return cells;
+}
 // Opbouw-overzicht (HTML) voor meerfasige protocollen; leeg voor enkelvoudige sessies.
+// Gebruikt dezelfde kaart-opmaak (phase-strip / phase-card) als de gewone ritme-weergave.
 function phaseOverviewHTML(preset) {
   if (!preset || !Array.isArray(preset.phases) || preset.phases.length === 0) return "";
-  const rows = preset.phases.map(ph =>
-    `<div class="phase-overview-row"><span class="po-name">${ph.label || ""}</span><span class="po-dur">${fmtClock(Number(ph.duration || 0))}</span><span class="po-rhythm">${phaseRhythmText(ph)}</span></div>`
-  ).join("");
-  return `<div class="phase-overview-wrap"><p class="phase-overview-title">Opbouw van de sessie</p><div class="phase-overview">${rows}</div></div>`;
+  const blocks = preset.phases.map(ph => {
+    const cells = phaseCells(ph);
+    const cards = cells.map(c => `<div class="phase-card"><strong>${c.v}</strong><span>${c.l}</span></div>`).join("");
+    return `<div class="phase-overview-block">
+      <p class="phase-overview-phase">${ph.label || ""} &middot; ${fmtClock(Number(ph.duration || 0))}</p>
+      <div class="phase-strip" style="grid-template-columns:repeat(${cells.length},1fr)">${cards}</div>
+    </div>`;
+  }).join("");
+  return `<div class="phase-overview-wrap"><p class="phase-overview-title">Opbouw van de sessie</p>${blocks}</div>`;
 }
 // Cue/trilling bij een echte fasewisseling.
 // playInhaleCue() = ademfasecue (geldt voor IN én UIT).
