@@ -1522,7 +1522,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.0.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.0.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3086,75 +3086,30 @@ function phases() {
 }
 
 const cardIllustrations = {
-  longExhale: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <rect width="60" height="60" rx="12" fill="#c8e6de"/>
-    <path d="M8 32 C15 22,23 22,30 32 C37 42,45 42,52 30" stroke="#1a6b5c" stroke-width="2.8" fill="none" stroke-linecap="round"/>
-    <path d="M48 26 L53 30 L48 34" stroke="#1a6b5c" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>`,
-  resonanceBreath: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <rect width="60" height="60" rx="12" fill="#d6eae2"/>
-    <circle cx="24" cy="30" r="12" stroke="#1a6b5c" stroke-width="2.2" fill="none" opacity="0.65"/>
-    <circle cx="36" cy="30" r="12" stroke="#1a6b5c" stroke-width="2.2" fill="none" opacity="0.65"/>
-    <circle cx="30" cy="30" r="3.5" fill="#1a6b5c" opacity="0.35"/>
-  </svg>`,
-  sleepBreath: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <rect width="60" height="60" rx="12" fill="#1b2e4a"/>
-    <path d="M35 14 A15 15 0 1 0 35 46 A11 11 0 1 1 35 14Z" fill="#ddeaf8" opacity="0.88"/>
-    <circle cx="44" cy="17" r="1.8" fill="#ddeaf8" opacity="0.55"/>
-    <circle cx="48" cy="28" r="1.2" fill="#ddeaf8" opacity="0.45"/>
-    <circle cx="44" cy="38" r="1.4" fill="#ddeaf8" opacity="0.38"/>
-  </svg>`,
-  flowingBreath: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <rect width="60" height="60" rx="12" fill="#dff0e8"/>
-    <path d="M8 30 C14 22,20 22,26 30 C32 38,38 38,44 30 C47 26,50 26,52 30" stroke="#1a6b5c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    <path d="M8 30 C14 38,20 38,26 30 C32 22,38 22,44 30 C47 34,50 34,52 30" stroke="#1a6b5c" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.35"/>
-  </svg>`,
-  bellyRegulationBreath: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <rect width="60" height="60" rx="12" fill="#e8f0df"/>
-    <ellipse cx="30" cy="34" rx="15" ry="11" stroke="#4a7c43" stroke-width="2.2" fill="none"/>
-    <ellipse cx="30" cy="34" rx="9" ry="6.5" stroke="#4a7c43" stroke-width="1.4" fill="none" opacity="0.45"/>
-    <path d="M30 12 C30 16,30 19,30 23" stroke="#4a7c43" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
-    <path d="M26 16 C28 19,30 21,30 23 M34 16 C32 19,30 21,30 23" stroke="#4a7c43" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.4"/>
-  </svg>`,
-  relax:      `<img src="https://www.phytoforsan.nl/Uploads/2021/07/phytoforsan-webbeeld-over-phytoforsan-2-239.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="Relax Moment">`,
-  lang:       `<img src="https://www.phytoforsan.nl/Uploads/2022/09/phytoforsan-webbeeld-wellness-332.jpg" style="width:100%;height:100%;object-fit:cover;object-position:left center;border-radius:12px" alt="Deep Relax">`,
-  focus:      `<img src="https://www.phytoforsan.nl/Uploads/2021/07/phytoforsan-webbeeld-over-phytoforsan-1-6.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="Korte Reset">`,
-  focusReset: `<img src="https://www.phytoforsan.nl/Uploads/2021/07/phytoforsan-webbeeld-over-phytoforsan-3-8.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="Focus Reset">`,
-  herstel:    `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-3-490.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="Stillness Flow">`,
-  maen:       `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-2-759.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="MAEN">`,
-  amen:       `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-5.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="AMEN">`,
-  om:         `<img src="https://www.phytoforsan.nl/Uploads/2020/10/phytoforsan-webbeeld-4.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="OM">`,
-  meditationTimer: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <rect width="60" height="60" rx="12" fill="#0d1f1e"/>
-    <circle cx="30" cy="30" r="18" stroke="#5fa89a" stroke-width="1.2" fill="none" opacity="0.35"/>
-    <circle cx="30" cy="30" r="11" stroke="#5fa89a" stroke-width="1.8" fill="none" opacity="0.6"/>
-    <circle cx="30" cy="30" r="4.5" fill="#5fa89a" opacity="0.85"/>
-    <line x1="30" y1="9" x2="30" y2="13" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-    <line x1="30" y1="47" x2="30" y2="51" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-    <line x1="9" y1="30" x2="13" y2="30" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-    <line x1="47" y1="30" x2="51" y2="30" stroke="#5fa89a" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-  </svg>`,
-  holotropicBreathTest: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <rect width="60" height="60" rx="12" fill="#0e1c2a"/>
-    <circle cx="30" cy="30" r="20" stroke="#7ec8d4" stroke-width="1" fill="none" opacity="0.25"/>
-    <circle cx="30" cy="30" r="14" stroke="#7ec8d4" stroke-width="1.4" fill="none" opacity="0.5"/>
-    <circle cx="30" cy="30" r="8"  stroke="#7ec8d4" stroke-width="2"   fill="none" opacity="0.8"/>
-    <circle cx="30" cy="30" r="3"  fill="#7ec8d4" opacity="0.9"/>
-    <line x1="30" y1="7"  x2="30" y2="11" stroke="#7ec8d4" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
-    <line x1="30" y1="49" x2="30" y2="53" stroke="#7ec8d4" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
-    <line x1="7"  y1="30" x2="11" y2="30" stroke="#7ec8d4" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
-    <line x1="49" y1="30" x2="53" y2="30" stroke="#7ec8d4" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
-  </svg>`,
-  activeBreathTest: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-    <rect width="60" height="60" rx="12" fill="#1a2a3a"/>
-    <circle cx="30" cy="30" r="14" stroke="#e8c96a" stroke-width="1.8" fill="none" opacity="0.5"/>
-    <circle cx="30" cy="30" r="8" stroke="#e8c96a" stroke-width="2.2" fill="none" opacity="0.8"/>
-    <line x1="30" y1="13" x2="30" y2="17" stroke="#e8c96a" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
-    <line x1="30" y1="43" x2="30" y2="47" stroke="#e8c96a" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
-    <line x1="13" y1="30" x2="17" y2="30" stroke="#e8c96a" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
-    <line x1="43" y1="30" x2="47" y2="30" stroke="#e8c96a" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
-    <text x="30" y="34" text-anchor="middle" font-size="7" font-weight="900" fill="#e8c96a" opacity="0.9" font-family="sans-serif">TEST</text>
-  </svg>`
+  longExhale: `<img src="tegels/lange-uitademing.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  resonanceBreath: `<img src="tegels/resonantie-adem.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  sleepBreath: `<img src="tegels/Slaapadem.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  flowingBreath: `<img src="tegels/vloeiende-adem.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  bellyRegulationBreath: `<img src="tegels/buikregulatie-adem.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  bijPiekeren: `<img src="tegels/bij-piekeren.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  lichaamTotRust: `<img src="tegels/lichaam-tot-rust.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  relax: `<img src="tegels/relax-moment.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  lang: `<img src="tegels/deep-relax.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  focus: `<img src="tegels/korte-reset.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  focusReset: `<img src="tegels/focus-reset.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  herstel: `<img src="tegels/stillness-flow.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  vanOnrustNaarRust: `<img src="tegels/van-onrust-naar-rust.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  maen: `<img src="tegels/maen.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  amen: `<img src="tegels/amen.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  om: `<img src="tegels/om-grid.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  meditationTimer: `<img src="tegels/meditatietimer.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  vanEmotiesNaarOntspanning: `<img src="tegels/van-emoties-naar-ontspanning.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  bijOverprikkeling: `<img src="tegels/bij-overprikkeling.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  voorHetSlapen: `<img src="tegels/voor-het-slapen.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  nachtelijkWakkerWorden: `<img src="tegels/nachtelijk-wakker-worden.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  herstelmoment: `<img src="tegels/herstelmoment.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  holotropicBreathTest: `<img src="tegels/holotropische-ademtest.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
+  activeBreathTest: `<img src="tegels/actieve-ademtest.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
 };
 const presetMeta = {
   longExhale:      { duration: "5 min",  desc: "Ontspanning door langere uitademing." },
