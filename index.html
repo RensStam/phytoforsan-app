@@ -138,9 +138,9 @@ button { cursor: pointer; }
 }
 .lib-subgroup-label:first-child { margin-top: 2px; }
 .phase-overview-wrap { margin-top: 14px; }
-.phase-overview-title { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: rgba(18,55,52,.55); margin: 0 0 10px; }
+.phase-overview-title { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: rgba(18,55,52,.55); margin: 0 0 10px; text-align: center; }
 .phase-overview-block { margin-bottom: 12px; }
-.phase-overview-phase { font-size: .76rem; font-weight: 800; color: var(--deep); margin: 0 0 5px; }
+.phase-overview-phase { font-size: .76rem; font-weight: 800; color: var(--deep); margin: 0 0 5px; text-align: center; }
 .phase-overview-block .phase-strip { border-radius: 10px; overflow: hidden; border: 1px solid rgba(216,229,225,.7); }
 
 /* ── Bibliotheek lijst ── */
@@ -1522,7 +1522,7 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.0.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.1.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2667,7 +2667,6 @@ function logSession(seconds, completed) {
 }
 let running = false;
 let sessionState = "idle"; // idle | running | paused | completed
-let skipNextCue = false;   // onderdrukt de cue op het exacte startmoment
 let startTime = 0;
 let elapsedBefore = 0;
 let raf = 0;
@@ -3920,8 +3919,6 @@ function phaseOverviewHTML(preset) {
 // playRestCue()   = rustcue, alleen bij een echte rustfase (>0s).
 function triggerPhaseCues(phase) {
   if (!phase || Number(phase.dur || 0) <= 0) return;
-  // Geen losse cue op het exacte startmoment van een verse sessie
-  if (skipNextCue) { skipNextCue = false; return; }
   if (isBreathPhase(phase)) playInhaleCue();
   else if (isRealRestPhase(phase)) playRestCue();
 }
@@ -4093,7 +4090,7 @@ async function start() {
   }
   running = true;
   sessionState = "running";
-  if (elapsedBefore === 0) { sessionLogged = false; skipNextCue = true; }
+  if (elapsedBefore === 0) { sessionLogged = false; }
   startTime = performance.now();
   els.startBtn.textContent = "II";
   els.breathVisual.classList.add("running");
