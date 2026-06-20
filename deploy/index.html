@@ -550,9 +550,8 @@ select:focus, input[type="number"]:focus {
   display: block;
 }
 
-.immersive-back {
-  display: none;
-}
+/* Terug-pijltjes: standaard verborgen (desktop), zichtbaar op mobiel */
+.stage-back, .settings-back { display: none; }
 
 .breath-stage.immersive {
   position: fixed !important;
@@ -573,29 +572,26 @@ select:focus, input[type="number"]:focus {
   overflow: hidden !important;
 }
 
-.breath-stage.immersive .immersive-back {
+.breath-stage.immersive .stage-back {
   display: flex;
   align-items: center;
   justify-content: center;
   position: absolute;
   top: 14px;
-  right: 14px;
+  left: 14px;
   z-index: 10000;
-  background: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.4);
   border: none;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 1.1em;
+  width: 38px;
+  height: 38px;
   cursor: pointer;
   backdrop-filter: blur(6px);
   color: var(--deep);
-  opacity: 0.6;
+  opacity: 0.55;
   transition: opacity 0.2s;
 }
-.breath-stage.immersive .immersive-back:hover {
-  opacity: 1;
-}
+.breath-stage.immersive .stage-back:active { opacity: 1; }
 
 .breath-stage {
   min-height: 760px;
@@ -608,6 +604,13 @@ select:focus, input[type="number"]:focus {
     radial-gradient(circle at 78% 12%, rgba(105,182,38,.18), transparent 28%),
     radial-gradient(circle at 50% 46%, rgba(168,190,162,.34), rgba(255,255,255,.26) 48%, transparent 70%),
     linear-gradient(180deg, #eef4e9, #f8faf3 58%, #fff);
+}
+/* Nacht/avond-protocollen: zelfde opmaak, blauwere tint */
+.breath-stage.night {
+  background:
+    radial-gradient(circle at 78% 12%, rgba(58,110,190,.20), transparent 28%),
+    radial-gradient(circle at 50% 46%, rgba(150,170,205,.34), rgba(255,255,255,.24) 48%, transparent 70%),
+    linear-gradient(180deg, #e7edf6, #f4f7fc 58%, #fff);
 }
 
 /* ── Sessie stage elementen ── */
@@ -1304,6 +1307,21 @@ canvas {
     border-left: none;
     border-right: none;
   }
+  .settings-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(18,55,52,.06);
+    color: var(--deep);
+    cursor: pointer;
+    opacity: .7;
+    margin: 0 0 10px;
+  }
+  .settings-back:active { opacity: 1; }
   .controls-grid {
     gap: 16px;
   }
@@ -1525,7 +1543,10 @@ canvas {
     <section class="surface practice" aria-labelledby="practiceTitle">
 
       <div class="breath-stage" id="breathStage">
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.1.1</span>
+        <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.1.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1616,6 +1637,9 @@ canvas {
     </section>
 
     <section class="surface controls-panel" aria-label="Instellingen">
+    <button class="settings-back" id="settingsBack" type="button" aria-label="Terug naar bibliotheek">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
     <div class="mobile-preset-header" id="mobilePresetHeader" style="display:none"></div>
     <div class="controls-grid">
         <!-- Duurkeuze: alleen zichtbaar bij meditationMode -->
@@ -2049,6 +2073,7 @@ const presets = {
   sleepBreath: {
     id: "sleepBreath",
     sessionType: "simpleBreath",
+    night: true,
     label: "Slaapadem",
     category: "breathing",
     text: "Een langzame ademhaling voor het slapengaan. De langere uitademing helpt lichaam en geest vertragen.",
@@ -2441,6 +2466,7 @@ const presets = {
     label: "Voor het slapen",
     category: "verdieping",
     group: "Slaap & herstel",
+    night: true,
     accessTier: "deep", requiresDeepAccess: true, requiresPremium: false,
     audio: { enabled: false, optional: true, type: null, src: null, premium: false },
     text: "Een rustige, verdiepende sessie om de dag af te bouwen en het lichaam richting rust te begeleiden.",
@@ -2468,6 +2494,7 @@ const presets = {
     label: "Nachtelijk wakker worden",
     category: "verdieping",
     group: "Slaap & herstel",
+    night: true,
     accessTier: "deep", requiresDeepAccess: true, requiresPremium: false,
     audio: { enabled: false, optional: true, type: null, src: null, premium: false },
     text: "Een zachte sessie voor wanneer je 's nachts wakker ligt en niet actief wilt oefenen.",
@@ -2495,6 +2522,7 @@ const presets = {
     label: "Herstelmoment",
     category: "verdieping",
     group: "Slaap & herstel",
+    night: true,
     accessTier: "deep", requiresDeepAccess: true, requiresPremium: false,
     audio: { enabled: false, optional: true, type: null, src: null, premium: false },
     text: "Een langere sessie om ruimte te maken voor herstel, rust en navoelen.",
@@ -3295,6 +3323,8 @@ function applyPreset(id) {
   els.productTitle.textContent = preset.product;
   els.productText.textContent = preset.productText;
   els.stageTitle.textContent = preset.label;
+  // Nacht/avond-protocollen: blauwe stage-tint
+  document.getElementById("breathStage")?.classList.toggle("night", !!preset.night);
   // Protocol-info bovenaan instellingenpaneel op mobiel (titel, duur, omschrijving)
   const mobileHeader = document.getElementById('mobilePresetHeader');
   if (mobileHeader) {
@@ -4216,7 +4246,10 @@ function draw(time) {
   const hold = guide.phase.key === "hold";
   const pause = guide.phase.key === "pause";
   const restPhase = hold || pause;
-  const phaseColor = hum ? "212,155,63" : exhale ? "98,135,77" : inhale ? "98,135,77" : hold ? "105,182,38" : "0,47,45";
+  const night = !!presets[activePreset]?.night;
+  // Adem-/uitademkleur van de cirkel: groen overdag, blauwer bij nacht/avond
+  const breathColor = night ? "74,110,170" : "98,135,77";
+  const phaseColor = hum ? "212,155,63" : exhale ? breathColor : inhale ? breathColor : hold ? (night ? "90,120,185" : "105,182,38") : "0,47,45";
   const minRadius = 150;
   const maxRadius = 254;
   const radius = lerp(168, 236, guide.breath);
@@ -4226,13 +4259,13 @@ function draw(time) {
 
   const bg = ctx.createRadialGradient(cx, cy, minRadius * 0.35, cx, cy, maxRadius + 118);
   bg.addColorStop(0, "rgba(255,255,255,.78)");
-  bg.addColorStop(0.55, "rgba(220,232,211,.22)");
+  bg.addColorStop(0.55, night ? "rgba(210,221,240,.24)" : "rgba(220,232,211,.22)");
   bg.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
 
   [
-    { radius: radius + 10, width: 40, color: hum ? "rgba(212,155,63,.13)" : "rgba(168,190,162,.18)" },
+    { radius: radius + 10, width: 40, color: hum ? "rgba(212,155,63,.13)" : (night ? "rgba(150,170,205,.18)" : "rgba(168,190,162,.18)") },
     { radius: radius + 54, width: 36, color: "rgba(255,255,255,.54)" },
     { radius: radius + 88, width: 18, color: "rgba(255,255,255,.46)" }
   ].forEach(ring => {
@@ -4437,30 +4470,9 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopBgAudio();
 });
 
-// ── Swipe-navigatie tussen instellingen- en sessiescherm (mobiel) ──
-// Vervangt het terug-pijltje: swipe links = naar sessiecirkel, swipe rechts = terug.
-let swipeStartX = 0, swipeStartY = 0, swipeActive = false;
-document.addEventListener("touchstart", (e) => {
-  if (!isMobile() || e.touches.length !== 1) { swipeActive = false; return; }
-  // Negeer gebaren die op bedienelementen beginnen (sliders, knoppen, toggles, links)
-  if (e.target.closest('input[type="range"], button, .switch, a, select')) { swipeActive = false; return; }
-  swipeStartX = e.touches[0].clientX;
-  swipeStartY = e.touches[0].clientY;
-  swipeActive = true;
-}, { passive: true });
-document.addEventListener("touchend", (e) => {
-  if (!swipeActive || !isMobile()) return;
-  swipeActive = false;
-  const dx = e.changedTouches[0].clientX - swipeStartX;
-  const dy = e.changedTouches[0].clientY - swipeStartY;
-  // Alleen duidelijke horizontale swipes
-  if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-  if (currentMobileTab === "settings" && dx < 0) {
-    switchMobileTab("breath");        // swipe links → sessiecirkel
-  } else if (currentMobileTab === "breath" && dx > 0) {
-    history.back();                    // swipe rechts → terug naar instellingen
-  }
-}, { passive: true });
+// ── Terug-pijltjes (mobiel): sessiecirkel → instellingen, instellingen → bibliotheek ──
+document.getElementById("immersiveBack")?.addEventListener("click", () => history.back());
+document.getElementById("settingsBack")?.addEventListener("click", () => switchMobileTab("library"));
 
 // ── Deel-knop in het sessiescherm ──
 document.getElementById("shareBtn")?.addEventListener("click", async () => {
