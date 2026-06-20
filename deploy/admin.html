@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PhytoForsan — Backoffice</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<style>
+  :root { --deep:#002f2d; --green:#69b626; --line:rgba(18,55,52,.14); --muted:#5f7470; --page:#f3f6f2; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--deep); background:var(--page); }
+  header { background:var(--deep); color:#fff; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  header h1 { font-size:1.05rem; margin:0; font-weight:900; letter-spacing:.02em; }
+  .env-badge { font-size:.7rem; font-weight:800; background:rgba(255,255,255,.16); padding:3px 9px; border-radius:999px; }
+  .who { font-size:.78rem; opacity:.9; }
+  .wrap { max-width:1100px; margin:0 auto; padding:18px; }
+  nav.tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  nav.tabs button { border:1px solid var(--line); background:#fff; color:var(--deep); border-radius:999px; padding:8px 14px; font-weight:800; font-size:.82rem; cursor:pointer; }
+  nav.tabs button.active { background:var(--deep); color:#fff; border-color:var(--deep); }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; }
+  h2 { font-size:1rem; margin:0 0 12px; }
+  h3 { font-size:.9rem; margin:14px 0 8px; }
+  label { display:block; font-size:.76rem; font-weight:800; color:var(--muted); margin:10px 0 4px; }
+  input, select, textarea { width:100%; padding:9px 11px; border:1.5px solid var(--line); border-radius:10px; font-size:.88rem; font-family:inherit; }
+  textarea { min-height:64px; resize:vertical; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .row4 { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  button.btn { background:var(--deep); color:#fff; border:none; border-radius:10px; padding:10px 16px; font-weight:800; font-size:.85rem; cursor:pointer; }
+  button.btn.secondary { background:#fff; color:var(--deep); border:1.5px solid var(--line); }
+  button.btn.danger { background:#c0392b; }
+  button.btn.small { padding:6px 10px; font-size:.78rem; }
+  table { width:100%; border-collapse:collapse; font-size:.84rem; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); }
+  th { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .pill { font-size:.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(18,55,52,.08); }
+  .pill.published { background:rgba(105,182,38,.18); color:#3f6b1f; }
+  .pill.draft { background:rgba(212,155,63,.18); color:#8a5a00; }
+  .pill.archived,.pill.hidden { background:rgba(192,57,43,.12); color:#c0392b; }
+  .msg { padding:10px 12px; border-radius:10px; font-size:.84rem; margin:10px 0; }
+  .msg.ok { background:rgba(105,182,38,.14); color:#3f6b1f; }
+  .msg.err { background:rgba(192,57,43,.1); color:#c0392b; }
+  .muted { color:var(--muted); font-size:.8rem; }
+  .phase-row { border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; }
+  .hidden { display:none !important; }
+  .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+  .grow { flex:1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PhytoForsan · Backoffice</h1>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="env-badge" id="envBadge">env</span>
+    <span class="who" id="whoami">niet ingelogd</span>
+    <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- LOGIN -->
+  <div id="loginView" class="card" style="max-width:420px;margin:40px auto">
+    <h2>Inloggen</h2>
+    <div id="mockNotice" class="msg ok hidden">Testmodus (local_mock): geen Supabase nodig. Klik op "Inloggen als admin (mock)".</div>
+    <div id="loginForm">
+      <label>E-mailadres</label>
+      <input id="loginEmail" type="email" autocomplete="username">
+      <label>Wachtwoord</label>
+      <input id="loginPass" type="password" autocomplete="current-password">
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn" id="loginBtn">Inloggen</button>
+        <button class="btn secondary" id="mockLoginBtn">Inloggen als admin (mock)</button>
+      </div>
+    </div>
+    <p class="msg err hidden" id="loginMsg"></p>
+  </div>
+
+  <!-- DENIED -->
+  <div id="deniedView" class="card hidden" style="max-width:480px;margin:40px auto">
+    <h2>Toegang geweigerd</h2>
+    <p class="muted">Dit account heeft geen adminrechten. Vraag een beheerder om je profiel op <code>role = admin</code> te zetten.</p>
+    <button class="btn secondary" id="deniedLogout">Uitloggen</button>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="adminView" class="hidden">
+    <nav class="tabs">
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="protocols">Protocollen</button>
+      <button data-tab="audio">Audio</button>
+      <button data-tab="media">Media</button>
+      <button data-tab="users">Gebruikers</button>
+      <button data-tab="settings">Instellingen</button>
+    </nav>
+    <div id="tabBody"></div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// Data-service: werkt in local_mock (localStorage) of via Supabase.
+// =====================================================================
+const TABLES = ["categories","protocols","protocol_phases","audio_tracks","protocol_audio","media_files","license_records","app_settings","profiles","user_access"];
+let sb = null;                  // supabase client (of null in mock)
+let session = null;             // { email, role, access_level }
+const cfg = getActiveConfig();
+document.getElementById("envBadge").textContent = APP_ENV;
+
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+const now = () => new Date().toISOString();
+
+// ----- Mock store (localStorage) -----
+const MOCK_KEY = "phyto_admin_mock";
+function mockLoad() {
+  try { return JSON.parse(localStorage.getItem(MOCK_KEY)) || null; } catch { return null; }
+}
+function mockSave(db) { localStorage.setItem(MOCK_KEY, JSON.stringify(db)); }
+function mockSeed() {
+  const cats = ["Ademhaling","Humming","Klank","Meditatie","Verdieping"].map((t,i)=>({
+    id: uid(), slug: t.toLowerCase(), title: t, description:"", sort_order:i, status:"published", created_at:now(), updated_at:now()
+  }));
+  const adem = cats[0];
+  const p = { id: uid(), slug:"voorbeeld-ademsessie", title:"Voorbeeld ademsessie", category_id: adem.id,
+    group_name:null, short_description:"Een korte voorbeeldsessie.", long_description:"", evidence_text:"",
+    safety_text:"", closing_text:"", access_tier:"free", requires_deep_access:false, requires_premium:false,
+    status:"draft", sort_order:0, image_id:null, night:false, created_at:now(), updated_at:now() };
+  const phases = [
+    { id:uid(), protocol_id:p.id, sort_order:0, title:"Aankomen", type:"free", duration_seconds:60, inhale_seconds:0,hold_seconds:0,exhale_seconds:0,pause_seconds:0, instruction_text:"Adem vrij.", visual_mode:"slowBreath", cue:"AANKOMEN", created_at:now(), updated_at:now() },
+    { id:uid(), protocol_id:p.id, sort_order:1, title:"Ademritme", type:"breath", duration_seconds:180, inhale_seconds:4,hold_seconds:0,exhale_seconds:6,pause_seconds:0, instruction_text:"Adem rustig.", visual_mode:null, cue:"IN", created_at:now(), updated_at:now() }
+  ];
+  const db = Object.fromEntries(TABLES.map(t=>[t,[]]));
+  db.categories = cats; db.protocols = [p]; db.protocol_phases = phases;
+  db.app_settings = [
+    {key:"app_name", value:"PhytoForsan Relax", updated_at:now()},
+    {key:"default_closing_title", value:"AFGEROND", updated_at:now()},
+    {key:"default_closing_text", value:"Neem de tijd om de ervaring een plek te geven.", updated_at:now()},
+    {key:"default_audio_volume", value:"0.35", updated_at:now()}
+  ];
+  db.profiles = [{ id:"mock-admin", email:"admin@mock.local", display_name:"Mock admin", role:"admin", access_level:"admin", created_at:now(), updated_at:now() }];
+  mockSave(db);
+  return db;
+}
+function mockDb() { return mockLoad() || mockSeed(); }
+
+// ----- Generic CRUD -----
+async function dbList(table, filter) {
+  if (cfg.useBackend && sb) {
+    let q = sb.from(table).select("*");
+    if (filter) Object.entries(filter).forEach(([k,v]) => { q = q.eq(k,v); });
+    const { data, error } = await q;
+    if (error) throw error;
+    return data || [];
+  }
+  let rows = mockDb()[table] || [];
+  if (filter) rows = rows.filter(r => Object.entries(filter).every(([k,v]) => r[k] === v));
+  return rows.slice();
+}
+async function dbUpsert(table, rec) {
+  rec.updated_at = now();
+  if (cfg.useBackend && sb) {
+    const { data, error } = await sb.from(table).upsert(rec).select().single();
+    if (error) throw error;
+    return data;
+  }
+  const db = mockDb();
+  db[table] = db[table] || [];
+  if (!rec.id && table !== "app_settings") rec.id = uid();
+  if (!rec.created_at) rec.created_at = now();
+  const keyField = table === "app_settings" ? "key" : "id";
+  const i = db[table].findIndex(r => r[keyField] === rec[keyField]);
+  if (i >= 0) db[table][i] = { ...db[table][i], ...rec }; else db[table].push(rec);
+  mockSave(db);
+  return rec;
+}
+async function dbDelete(table, id) {
+  if (cfg.useBackend && sb) {
+    const { error } = await sb.from(table).delete().eq("id", id);
+    if (error) throw error;
+    return;
+  }
+  const db = mockDb();
+  db[table] = (db[table] || []).filter(r => r.id !== id);
+  mockSave(db);
+}
+
+// =====================================================================
+// Auth
+// =====================================================================
+async function initAuth() {
+  if (cfg.useBackend) {
+    sb = createSupabaseClient();
+    if (!sb) {
+      showLoginMsg("Supabase niet geconfigureerd. Vul je URL/anon key in js/config.js, of zet APP_ENV op local_mock.");
+    }
+    const { data } = sb ? await sb.auth.getSession() : { data:{ session:null } };
+    if (data?.session) await onSignedIn(data.session.user);
+  } else {
+    document.getElementById("mockNotice").classList.remove("hidden");
+  }
+}
+async function loadProfile(userId, email) {
+  if (cfg.useBackend && sb) {
+    const { data } = await sb.from("profiles").select("*").eq("id", userId).maybeSingle();
+    return data || { email, role:"user", access_level:"free" };
+  }
+  return mockDb().profiles[0];
+}
+async function onSignedIn(user) {
+  const profile = await loadProfile(user.id, user.email);
+  session = { id:user.id, email:profile.email || user.email, role:profile.role, access_level:profile.access_level };
+  document.getElementById("whoami").textContent = `${session.email} · ${session.role} · ${session.access_level}`;
+  document.getElementById("logoutBtn").style.display = "";
+  document.getElementById("loginView").classList.add("hidden");
+  if (session.role !== "admin") {
+    document.getElementById("deniedView").classList.remove("hidden");
+    return;
+  }
+  document.getElementById("adminView").classList.remove("hidden");
+  openTab("dashboard");
+}
+function showLoginMsg(t) { const e=document.getElementById("loginMsg"); e.textContent=t; e.classList.toggle("hidden", !t); }
+
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  showLoginMsg("");
+  if (!cfg.useBackend) { showLoginMsg("In local_mock: gebruik de mock-knop."); return; }
+  if (!sb) { showLoginMsg("Supabase niet geconfigureerd."); return; }
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPass").value;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { showLoginMsg(error.message); return; }
+  await onSignedIn(data.user);
+});
+document.getElementById("mockLoginBtn").addEventListener("click", async () => {
+  if (cfg.useBackend) { showLoginMsg("Mock-login werkt alleen in APP_ENV=local_mock."); return; }
+  await onSignedIn({ id:"mock-admin", email:"admin@mock.local" });
+});
+async function doLogout() {
+  if (cfg.useBackend && sb) { try { await sb.auth.signOut(); } catch {} }
+  session = null;
+  location.reload();
+}
+document.getElementById("logoutBtn").addEventListener("click", doLogout);
+document.getElementById("deniedLogout").addEventListener("click", doLogout);
+
+// =====================================================================
+// UI / tabs
+// =====================================================================
+let editingProtocolId = null;
+const tabBody = document.getElementById("tabBody");
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => openTab(b.dataset.tab)));
+function openTab(tab) {
+  document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  ({ dashboard:renderDashboard, protocols:renderProtocols, audio:renderAudio, media:renderMedia, users:renderUsers, settings:renderSettings }[tab] || renderDashboard)();
+}
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+function totalSeconds(phases) { return (phases||[]).reduce((s,p)=>s+Number(p.duration_seconds||0),0); }
+function fmtDur(s){ const m=Math.floor(s/60), r=s%60; return r?`${m}:${String(r).padStart(2,"0")}`:`${m} min`; }
+
+async function renderDashboard() {
+  const [prot, cats, phases] = await Promise.all([dbList("protocols"), dbList("categories"), dbList("protocol_phases")]);
+  const pub = prot.filter(p=>p.status==="published").length;
+  tabBody.innerHTML = `<div class="card"><h2>Dashboard</h2>
+    <p class="muted">Omgeving: <b>${APP_ENV}</b> · backend: <b>${cfg.useBackend ? "Supabase" : "lokaal (mock)"}</b></p>
+    <div class="row4" style="margin-top:10px">
+      <div class="card"><b style="font-size:1.4rem">${prot.length}</b><div class="muted">protocollen</div></div>
+      <div class="card"><b style="font-size:1.4rem">${pub}</b><div class="muted">gepubliceerd</div></div>
+      <div class="card"><b style="font-size:1.4rem">${cats.length}</b><div class="muted">categorieën</div></div>
+      <div class="card"><b style="font-size:1.4rem">${phases.length}</b><div class="muted">fases</div></div>
+    </div></div>`;
+}
+
+// ---------- Protocollen ----------
+async function renderProtocols() {
+  editingProtocolId = null;
+  const [prot, cats] = await Promise.all([dbList("protocols"), dbList("categories")]);
+  const allPhases = await dbList("protocol_phases");
+  const catName = (id) => cats.find(c=>c.id===id)?.title || "—";
+  const rows = prot.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(p => {
+    const ph = allPhases.filter(x=>x.protocol_id===p.id);
+    return `<tr>
+      <td><b>${esc(p.title)}</b><div class="muted">${esc(p.slug)}</div></td>
+      <td>${esc(catName(p.category_id))}</td>
+      <td>${esc(p.access_tier)}</td>
+      <td>${fmtDur(totalSeconds(ph))} · ${ph.length} fases</td>
+      <td><span class="pill ${p.status}">${p.status}</span></td>
+      <td><button class="btn small secondary" data-edit="${p.id}">Bewerken</button></td>
+    </tr>`;
+  }).join("");
+  tabBody.innerHTML = `<div class="card">
+    <div class="toolbar"><h2 class="grow">Protocollen</h2><button class="btn" id="newProtocol">+ Nieuw protocol</button></div>
+    <table><thead><tr><th>Titel</th><th>Categorie</th><th>Toegang</th><th>Duur</th><th>Status</th><th></th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="6" class="muted">Nog geen protocollen.</td></tr>'}</tbody></table>
+  </div>`;
+  document.getElementById("newProtocol").addEventListener("click", () => editProtocol(null));
+  tabBody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editProtocol(b.dataset.edit)));
+}
+
+async function editProtocol(id) {
+  const cats = await dbList("categories");
+  const media = await dbList("media_files", { type:"image" });
+  let p = id ? (await dbList("protocols")).find(x=>x.id===id) : null;
+  if (!p) p = { id:null, slug:"", title:"", category_id:cats[0]?.id||null, group_name:"", short_description:"", long_description:"", evidence_text:"", safety_text:"", closing_text:"", access_tier:"free", requires_deep_access:false, requires_premium:false, status:"draft", sort_order:0, image_id:null, night:false };
+  editingProtocolId = p.id;
+  const opt = (arr,val,fn)=>arr.map(o=>`<option value="${o.id}" ${o.id===val?"selected":""}>${esc(fn(o))}</option>`).join("");
+  const statusOpt = (v)=>["draft","published","hidden","archived"].map(s=>`<option ${s===v?"selected":""}>${s}</option>`).join("");
+  const tierOpt = (v)=>["free","deep","premium","admin"].map(s=>`<option ${s===v?"selected":""}>${s}</option>`).join("");
+  tabBody.innerHTML = `<div class="card">
+    <div class="toolbar"><button class="btn secondary small" id="backList">← Terug</button><h2 class="grow">${id?"Protocol bewerken":"Nieuw protocol"}</h2></div>
+    <div class="row">
+      <div><label>Titel *</label><input id="f_title" value="${esc(p.title)}"></div>
+      <div><label>Slug * (uniek)</label><input id="f_slug" value="${esc(p.slug)}"></div>
+    </div>
+    <div class="row">
+      <div><label>Categorie *</label><select id="f_cat">${opt(cats,p.category_id,c=>c.title)}</select></div>
+      <div><label>Groep (optioneel)</label><input id="f_group" value="${esc(p.group_name)}"></div>
+    </div>
+    <label>Korte omschrijving</label><textarea id="f_short">${esc(p.short_description)}</textarea>
+    <label>Lange omschrijving</label><textarea id="f_long">${esc(p.long_description)}</textarea>
+    <label>Evidence-tekst</label><textarea id="f_evi">${esc(p.evidence_text)}</textarea>
+    <label>Veiligheidstekst</label><textarea id="f_safe">${esc(p.safety_text)}</textarea>
+    <label>Afsluittekst</label><textarea id="f_close">${esc(p.closing_text)}</textarea>
+    <div class="row4">
+      <div><label>Toegangsniveau</label><select id="f_tier">${tierOpt(p.access_tier)}</select></div>
+      <div><label>Status</label><select id="f_status">${statusOpt(p.status)}</select></div>
+      <div><label>Sortering</label><input id="f_sort" type="number" value="${p.sort_order||0}"></div>
+      <div><label>Afbeelding</label><select id="f_img"><option value="">— geen —</option>${opt(media,p.image_id,m=>m.filename)}</select></div>
+    </div>
+    <div class="row4">
+      <div><label>requires_deep_access</label><select id="f_deep"><option value="false" ${!p.requires_deep_access?"selected":""}>nee</option><option value="true" ${p.requires_deep_access?"selected":""}>ja</option></select></div>
+      <div><label>requires_premium</label><select id="f_prem"><option value="false" ${!p.requires_premium?"selected":""}>nee</option><option value="true" ${p.requires_premium?"selected":""}>ja</option></select></div>
+      <div><label>Nacht-tint</label><select id="f_night"><option value="false" ${!p.night?"selected":""}>nee</option><option value="true" ${p.night?"selected":""}>ja</option></select></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="saveProtocol">Opslaan</button>
+      ${id?'<button class="btn secondary" id="archiveProtocol">Archiveren</button>':""}
+    </div>
+    <p class="msg hidden" id="protMsg"></p>
+    <div id="phasesWrap"></div>
+  </div>`;
+  document.getElementById("backList").addEventListener("click", renderProtocols);
+  document.getElementById("saveProtocol").addEventListener("click", saveProtocolForm);
+  if (id) document.getElementById("archiveProtocol").addEventListener("click", async () => {
+    const cur = (await dbList("protocols")).find(x=>x.id===id); cur.status="archived"; await dbUpsert("protocols", cur); renderProtocols();
+  });
+  renderPhases();
+}
+
+function readProtocolForm() {
+  return {
+    id: editingProtocolId,
+    title: document.getElementById("f_title").value.trim(),
+    slug: document.getElementById("f_slug").value.trim().toLowerCase().replace(/\s+/g,"-"),
+    category_id: document.getElementById("f_cat").value || null,
+    group_name: document.getElementById("f_group").value.trim() || null,
+    short_description: document.getElementById("f_short").value,
+    long_description: document.getElementById("f_long").value,
+    evidence_text: document.getElementById("f_evi").value,
+    safety_text: document.getElementById("f_safe").value,
+    closing_text: document.getElementById("f_close").value,
+    access_tier: document.getElementById("f_tier").value,
+    status: document.getElementById("f_status").value,
+    sort_order: Number(document.getElementById("f_sort").value)||0,
+    image_id: document.getElementById("f_img").value || null,
+    requires_deep_access: document.getElementById("f_deep").value === "true",
+    requires_premium: document.getElementById("f_prem").value === "true",
+    night: document.getElementById("f_night").value === "true"
+  };
+}
+
+async function validateForPublish(p, phases) {
+  const errs = [];
+  if (!p.slug) errs.push("Slug verplicht.");
+  if (!p.title) errs.push("Titel verplicht.");
+  if (!p.category_id) errs.push("Categorie verplicht.");
+  const all = await dbList("protocols");
+  if (p.slug && all.some(x=>x.slug===p.slug && x.id!==p.id)) errs.push("Slug is niet uniek.");
+  if (!phases.length) errs.push("Minimaal één fase nodig.");
+  if (phases.some(f=>Number(f.duration_seconds)<=0)) errs.push("Iedere fase moet duur > 0 hebben.");
+  if (totalSeconds(phases) <= 0) errs.push("Totale duur moet > 0 zijn.");
+  return errs;
+}
+
+async function saveProtocolForm() {
+  const p = readProtocolForm();
+  const msg = document.getElementById("protMsg");
+  const phases = editingProtocolId ? await dbList("protocol_phases", { protocol_id: editingProtocolId }) : [];
+  if (p.status === "published") {
+    const errs = await validateForPublish(p, phases);
+    if (errs.length) {
+      p.status = "draft";
+      msg.className = "msg err"; msg.textContent = "Kan niet publiceren (status blijft draft): " + errs.join(" ");
+      msg.classList.remove("hidden");
+      document.getElementById("f_status").value = "draft";
+    }
+  }
+  try {
+    const saved = await dbUpsert("protocols", p);
+    editingProtocolId = saved.id;
+    if (!(p.status === "draft" && msg.textContent)) { msg.className="msg ok"; msg.textContent="Opgeslagen."; msg.classList.remove("hidden"); }
+    renderPhases();
+  } catch (e) { msg.className="msg err"; msg.textContent="Fout bij opslaan: "+(e.message||e); msg.classList.remove("hidden"); }
+}
+
+// ---------- Fasebeheer ----------
+async function renderPhases() {
+  const wrap = document.getElementById("phasesWrap");
+  if (!editingProtocolId) { wrap.innerHTML = `<p class="muted" style="margin-top:16px">Sla het protocol eerst op om fases toe te voegen.</p>`; return; }
+  const phases = (await dbList("protocol_phases", { protocol_id: editingProtocolId })).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+  const typeOpt = (v)=>["breath","free","humming","sound","silence","integration","warning"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
+  const invalid = phases.some(f=>Number(f.duration_seconds)<=0);
+  wrap.innerHTML = `<h3>Fases — totale duur ${fmtDur(totalSeconds(phases))} · ${phases.length} fases ${invalid?'<span class="pill archived">ongeldige fase</span>':''}</h3>
+    ${phases.map(f=>`<div class="phase-row" data-ph="${f.id}">
+      <div class="row"><div><label>Titel</label><input class="ph_title" value="${esc(f.title)}"></div>
+      <div><label>Type</label><select class="ph_type">${typeOpt(f.type)}</select></div></div>
+      <div class="row4">
+        <div><label>Duur (s)</label><input class="ph_dur" type="number" value="${f.duration_seconds||0}"></div>
+        <div><label>In (s)</label><input class="ph_in" type="number" step="0.5" value="${f.inhale_seconds||0}"></div>
+        <div><label>Hold (s)</label><input class="ph_hold" type="number" step="0.5" value="${f.hold_seconds||0}"></div>
+        <div><label>Uit (s)</label><input class="ph_ex" type="number" step="0.5" value="${f.exhale_seconds||0}"></div>
+      </div>
+      <div class="row4">
+        <div><label>Pauze (s)</label><input class="ph_pause" type="number" step="0.5" value="${f.pause_seconds||0}"></div>
+        <div><label>visual_mode</label><input class="ph_vis" value="${esc(f.visual_mode)}"></div>
+        <div><label>cue</label><input class="ph_cue" value="${esc(f.cue)}"></div>
+        <div><label>volgorde</label><input class="ph_sort" type="number" value="${f.sort_order||0}"></div>
+      </div>
+      <label>Instructietekst</label><textarea class="ph_instr">${esc(f.instruction_text)}</textarea>
+      <div style="margin-top:8px;display:flex;gap:8px"><button class="btn small ph_save">Fase opslaan</button><button class="btn small danger ph_del">Verwijderen</button></div>
+    </div>`).join("")}
+    <button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>`;
+  document.getElementById("addPhase").addEventListener("click", async () => {
+    await dbUpsert("protocol_phases", { protocol_id:editingProtocolId, sort_order:phases.length, title:"Nieuwe fase", type:"free", duration_seconds:60, inhale_seconds:0,hold_seconds:0,exhale_seconds:0,pause_seconds:0, instruction_text:"", visual_mode:"slowBreath", cue:"" });
+    renderPhases();
+  });
+  wrap.querySelectorAll(".phase-row").forEach(rowEl => {
+    const pid = rowEl.dataset.ph;
+    rowEl.querySelector(".ph_save").addEventListener("click", async () => {
+      const g=(c)=>rowEl.querySelector(c);
+      await dbUpsert("protocol_phases", { id:pid, protocol_id:editingProtocolId,
+        title:g(".ph_title").value, type:g(".ph_type").value, duration_seconds:Number(g(".ph_dur").value)||0,
+        inhale_seconds:Number(g(".ph_in").value)||0, hold_seconds:Number(g(".ph_hold").value)||0,
+        exhale_seconds:Number(g(".ph_ex").value)||0, pause_seconds:Number(g(".ph_pause").value)||0,
+        visual_mode:g(".ph_vis").value||null, cue:g(".ph_cue").value||null, sort_order:Number(g(".ph_sort").value)||0,
+        instruction_text:g(".ph_instr").value });
+      renderPhases();
+    });
+    rowEl.querySelector(".ph_del").addEventListener("click", async () => { await dbDelete("protocol_phases", pid); renderPhases(); });
+  });
+}
+
+// ---------- Audio ----------
+async function renderAudio() {
+  const tracks = await dbList("audio_tracks");
+  tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Audio-tracks</h2><button class="btn" id="newAudio">+ Nieuwe track</button></div>
+    <table><thead><tr><th>Titel</th><th>Maker</th><th>Licentie</th><th>storage_path</th><th></th></tr></thead>
+    <tbody>${tracks.map(t=>`<tr><td>${esc(t.title)}</td><td>${esc(t.artist)}</td><td>${esc(t.license)}</td><td class="muted">${esc(t.storage_path)}</td><td><button class="btn small secondary" data-edit="${t.id}">Bewerken</button></td></tr>`).join("")||'<tr><td colspan="5" class="muted">Nog geen audio.</td></tr>'}</tbody></table></div>
+    <div id="audioForm"></div>`;
+  document.getElementById("newAudio").addEventListener("click", ()=>editAudio(null));
+  tabBody.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAudio(b.dataset.edit)));
+}
+async function editAudio(id) {
+  let t = id ? (await dbList("audio_tracks")).find(x=>x.id===id) : { title:"", original_filename:"", internal_filename:"", artist:"", source:"", license:"", source_url:"", profile_url:"", duration_seconds:"", storage_path:"", claim_safe_description:"", notes:"" };
+  const f=(l,k,ph="")=>`<label>${l}</label><input id="a_${k}" value="${esc(t[k])}" placeholder="${ph}">`;
+  document.getElementById("audioForm").innerHTML = `<div class="card"><h3>${id?"Track bewerken":"Nieuwe track"}</h3>
+    ${f("Titel","title")}${f("Originele bestandsnaam","original_filename")}${f("Interne bestandsnaam","internal_filename")}
+    ${f("Maker","artist")}${f("Bron","source","bv. Pixabay")}${f("Licentie","license")}${f("source_url","source_url")}${f("profile_url","profile_url")}
+    ${f("Duur (s)","duration_seconds")}${f("storage_path","storage_path","bucket/pad.mp3 — handmatig invoeren kan")}
+    <label>Claim-veilige omschrijving</label><textarea id="a_claim_safe_description">${esc(t.claim_safe_description)}</textarea>
+    <label>Notities</label><textarea id="a_notes">${esc(t.notes)}</textarea>
+    <p class="muted">Upload naar Supabase Storage is voorbereid; handmatige storage_path werkt nu al.</p>
+    <button class="btn" id="saveAudio" style="margin-top:8px">Opslaan</button></div>`;
+  document.getElementById("saveAudio").addEventListener("click", async () => {
+    const rec = { id, title:document.getElementById("a_title").value, original_filename:document.getElementById("a_original_filename").value, internal_filename:document.getElementById("a_internal_filename").value, artist:document.getElementById("a_artist").value, source:document.getElementById("a_source").value, license:document.getElementById("a_license").value, source_url:document.getElementById("a_source_url").value, profile_url:document.getElementById("a_profile_url").value, duration_seconds:Number(document.getElementById("a_duration_seconds").value)||null, storage_path:document.getElementById("a_storage_path").value, claim_safe_description:document.getElementById("a_claim_safe_description").value, notes:document.getElementById("a_notes").value };
+    if (!rec.id) delete rec.id;
+    await dbUpsert("audio_tracks", rec); renderAudio();
+  });
+}
+
+// ---------- Media ----------
+async function renderMedia() {
+  const media = await dbList("media_files");
+  tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Media</h2><button class="btn" id="newMedia">+ Nieuw bestand</button></div>
+    <table><thead><tr><th>Bestand</th><th>Type</th><th>storage_path</th><th>Licentie</th><th></th></tr></thead>
+    <tbody>${media.map(m=>`<tr><td>${esc(m.filename)}</td><td>${esc(m.type)}</td><td class="muted">${esc(m.storage_path)}</td><td>${esc(m.license)}</td><td><button class="btn small secondary" data-edit="${m.id}">Bewerken</button></td></tr>`).join("")||'<tr><td colspan="5" class="muted">Nog geen media.</td></tr>'}</tbody></table></div>
+    <div id="mediaForm"></div>`;
+  document.getElementById("newMedia").addEventListener("click", ()=>editMedia(null));
+  tabBody.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editMedia(b.dataset.edit)));
+}
+async function editMedia(id) {
+  let m = id ? (await dbList("media_files")).find(x=>x.id===id) : { filename:"", type:"image", storage_path:"", alt_text:"", source:"", license:"", notes:"" };
+  const typeOpt=(v)=>["image","audio","document","license_proof","other"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
+  document.getElementById("mediaForm").innerHTML = `<div class="card"><h3>${id?"Media bewerken":"Nieuw bestand"}</h3>
+    <label>Bestandsnaam</label><input id="m_filename" value="${esc(m.filename)}">
+    <label>Type</label><select id="m_type">${typeOpt(m.type)}</select>
+    <label>storage_path</label><input id="m_storage_path" value="${esc(m.storage_path)}" placeholder="tegels/voorbeeld.webp of bucket/pad">
+    <label>Alt-tekst</label><input id="m_alt_text" value="${esc(m.alt_text)}">
+    <label>Bron</label><input id="m_source" value="${esc(m.source)}">
+    <label>Licentie</label><input id="m_license" value="${esc(m.license)}">
+    <label>Notities</label><textarea id="m_notes">${esc(m.notes)}</textarea>
+    <button class="btn" id="saveMedia" style="margin-top:8px">Opslaan</button></div>`;
+  document.getElementById("saveMedia").addEventListener("click", async () => {
+    const rec = { id, filename:document.getElementById("m_filename").value, type:document.getElementById("m_type").value, storage_path:document.getElementById("m_storage_path").value, alt_text:document.getElementById("m_alt_text").value, source:document.getElementById("m_source").value, license:document.getElementById("m_license").value, notes:document.getElementById("m_notes").value };
+    if (!rec.id) delete rec.id;
+    await dbUpsert("media_files", rec); renderMedia();
+  });
+}
+
+// ---------- Gebruikers ----------
+async function renderUsers() {
+  const users = await dbList("profiles");
+  const sel=(v,opts)=>opts.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("");
+  tabBody.innerHTML = `<div class="card"><h2>Gebruikers</h2>
+    <p class="muted">${cfg.useBackend?"Wijzigingen worden via Supabase opgeslagen (alleen admin via RLS).":"Mock-modus: alleen lokaal."}</p>
+    <table><thead><tr><th>E-mail</th><th>Rol</th><th>Toegang</th><th></th></tr></thead>
+    <tbody>${users.map(u=>`<tr data-u="${u.id}">
+      <td>${esc(u.email)}</td>
+      <td><select class="u_role">${sel(u.role,["user","tester","admin"])}</select></td>
+      <td><select class="u_access">${sel(u.access_level,["free","deep","premium","admin"])}</select></td>
+      <td><button class="btn small u_save">Opslaan</button></td></tr>`).join("")||'<tr><td colspan="4" class="muted">Geen gebruikers.</td></tr>'}</tbody></table></div>`;
+  tabBody.querySelectorAll("tr[data-u]").forEach(row=>{
+    row.querySelector(".u_save")?.addEventListener("click", async ()=>{
+      const id=row.dataset.u;
+      const u=(await dbList("profiles")).find(x=>x.id===id);
+      u.role=row.querySelector(".u_role").value; u.access_level=row.querySelector(".u_access").value;
+      await dbUpsert("profiles", u);
+      row.querySelector(".u_save").textContent="Opgeslagen";
+    });
+  });
+}
+
+// ---------- Instellingen ----------
+async function renderSettings() {
+  const s = await dbList("app_settings");
+  const map = Object.fromEntries(s.map(x=>[x.key,x.value]));
+  const keys = ["app_name","default_closing_title","default_closing_text","maintenance_mode","deep_access_enabled","default_audio_enabled","default_audio_volume"];
+  tabBody.innerHTML = `<div class="card"><h2>App-instellingen</h2>
+    ${keys.map(k=>`<label>${k}</label><input data-key="${k}" value="${esc(map[k]??"")}">`).join("")}
+    <button class="btn" id="saveSettings" style="margin-top:10px">Opslaan</button><p class="msg hidden" id="setMsg"></p></div>`;
+  document.getElementById("saveSettings").addEventListener("click", async ()=>{
+    for (const el of tabBody.querySelectorAll("[data-key]")) await dbUpsert("app_settings", { key:el.dataset.key, value:el.value });
+    const m=document.getElementById("setMsg"); m.className="msg ok"; m.textContent="Instellingen opgeslagen."; m.classList.remove("hidden");
+  });
+}
+
+initAuth();
+</script>
+</body>
+</html>
