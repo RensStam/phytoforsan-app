@@ -12,8 +12,8 @@
 // lokale testmodus (browseropslag) en synchroniseert er niets tussen apparaten.
 // =====================================================================
 window.CONFIG = {
-  supabaseUrl: "VUL_SUPABASE_URL_IN",        // bv. https://xxxx.supabase.co
-  supabaseAnonKey: "VUL_SUPABASE_ANON_KEY_IN"
+  supabaseUrl: "https://bbumyqthhyizsmgyqfue.supabase.co",
+  supabaseAnonKey: "sb_publishable_F53OcwgOGEkpoFkBJgceQw_qjKpQvv0"
 };
 
 function _phytoConfigured() {

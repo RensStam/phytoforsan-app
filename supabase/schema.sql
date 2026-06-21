@@ -4,17 +4,7 @@
 -- Geen betaal-/Mollie-logica. Alleen anon key in de frontend; beveiliging via RLS.
 -- =====================================================================
 
--- ---------- Helper: is de huidige gebruiker admin? ----------
-create or replace function public.is_admin()
-returns boolean
-language sql stable security definer set search_path = public as $$
-  select exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  );
-$$;
-
--- ---------- 1. profiles ----------
+-- ---------- 1. profiles (eerst, want is_admin() verwijst ernaar) ----------
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
@@ -25,6 +15,16 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now(),
   last_login_at timestamptz
 );
+
+-- ---------- Helper: is de huidige gebruiker admin? ----------
+create or replace function public.is_admin()
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.role = 'admin'
+  );
+$$;
 
 -- Nieuwe auth-gebruiker → automatisch profiel (role=user, access=free)
 create or replace function public.handle_new_user()
