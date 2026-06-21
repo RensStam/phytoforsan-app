@@ -286,7 +286,7 @@ async function renderProtocols() {
       <td>${esc(p.access_tier)}</td>
       <td>${fmtDur(totalSeconds(ph))} · ${ph.length} fases</td>
       <td><span class="pill ${p.status}">${p.status}</span></td>
-      <td><button class="btn small secondary" data-edit="${p.id}">Bewerken</button></td>
+      <td><button class="btn small secondary" data-edit="${p.id}">Bewerken</button>${p.status === "archived" ? ` <button class="btn small danger" data-del="${p.id}">Verwijderen</button>` : ""}</td>
     </tr>`;
   }).join("");
   tabBody.innerHTML = `<div class="card">
@@ -303,6 +303,16 @@ async function renderProtocols() {
   document.getElementById("exportAll").addEventListener("click", exportAllProtocols);
   document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
   document.getElementById("importFile").addEventListener("change", handleImportFile);
+  tabBody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+    const p = prot.find(x => x.id === b.dataset.del);
+    if (!p) return;
+    if (confirm(`Protocol "${p.title}" definitief verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
+      const phs = await dbList("protocol_phases", { protocol_id: p.id });
+      for (const ph of phs) await dbDelete("protocol_phases", ph.id);
+      await dbDelete("protocols", p.id);
+      renderProtocols();
+    }
+  }));
   tabBody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editProtocol(b.dataset.edit)));
 }
 
