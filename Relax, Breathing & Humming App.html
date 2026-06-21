@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0d3d35">
   <title>Relax, Breathing &amp; Humming App</title>
-  <link rel="icon" href="phytoforsan-leaf-extracted.svg" type="image/svg+xml">
+  <link rel="icon" href="deploy/icon.svg" type="image/svg+xml">
   <style>
     :root {
       --page: #f7faf8;
@@ -155,7 +155,7 @@
       bottom: -80px;
       width: 330px;
       height: 330px;
-      background: url("phytoforsan-leaf-extracted.svg") center / contain no-repeat;
+      background: url("deploy/icon.svg") center / contain no-repeat;
       opacity: .13;
       transform: rotate(-10deg);
     }
@@ -624,6 +624,16 @@
       margin-top: 18px;
     }
 
+    .protocol-group-title {
+      grid-column: 1 / -1;
+      margin: 12px 0 0;
+      color: var(--deep);
+      font-size: .78rem;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
     .protocol-tile {
       border: 1px solid var(--line);
       background: rgba(255,255,255,.78);
@@ -720,12 +730,12 @@
   <main class="page">
     <header class="topbar">
       <a class="brand" href="#top" aria-label="Relax, Breathing & Humming App">
-        <img src="phytoforsan-leaf-extracted.svg" alt="">
+        <img src="deploy/logo.svg" alt="">
         <span><strong>PHYTO</strong><span>FORSAN</span></span>
       </a>
       <nav class="nav" aria-label="Hoofdmenu">
-        <a href="#app">App</a>
-        <a href="#protocollen">Protocollen</a>
+        <a href="#app">Preview</a>
+        <a href="#protocollen">Bibliotheek</a>
         <a href="#sessie-engine">Open sessie</a>
         <a href="#site">Website</a>
         <a href="#basis">Basis</a>
@@ -737,7 +747,7 @@
       <div class="panel intro">
         <p class="eyebrow">Force of Nature</p>
         <h1>Relax, Breathing &amp; Humming App</h1>
-        <p class="lead">Een rustige app-ervaring voor vertragen, ademen en resonantie. Aangeboden door PhytoForsan, met dagelijkse routines, protocollen en voortgang.</p>
+        <p class="lead">Een rustige digitale omgeving voor ademhaling, humming, klank en meditatie. Powered by PhytoForsan, met korte routines, verdiepende sessies en lokale voortgang.</p>
         <div class="actions">
           <a class="btn primary" href="#sessie-engine">Open sessie</a>
           <a class="btn" href="#protocollen">Bekijk protocollen</a>
@@ -745,7 +755,7 @@
         <div class="trust-row">
           <div class="trust"><b>Natuurlijk</b><span>Rustige vormgeving met adem, klank en aandacht als basis.</span></div>
           <div class="trust"><b>Veilig</b><span>Geen medische claims, geen druk, geen prestatiemeting.</span></div>
-          <div class="trust"><b>Persoonlijk</b><span>Protocollen voor rust, focus, stilte en klank.</span></div>
+          <div class="trust"><b>Persoonlijk</b><span>Ademhaling, humming, klank, meditatie en verdieping in een duidelijke bibliotheek.</span></div>
           <div class="trust"><b>Merkbaar</b><span>Een zachte aanvulling op het PhytoForsan gevoel.</span></div>
         </div>
       </div>
@@ -765,28 +775,28 @@
     <section class="panel site-section" id="sessie-engine">
       <p class="eyebrow">Open sessie</p>
       <h2>De echte adem- en humming-engine</h2>
-      <p>Hier staat de werkende sessie-engine die we al gebouwd hebben. De app-pagina's verwijzen hier naartoe in plaats van een tweede, versimpelde sessie na te bouwen.</p>
+      <p>De website introduceert de app. De echte sessie-engine blijft de bestaande app zelf, met de actuele bibliotheek, voortgang, profiel en sessiecirkel.</p>
       <div class="engine-shell">
-        <iframe class="engine-frame" src="humming_resonance_app_beter.html" title="Relax, Breathing & Humming App sessie engine"></iframe>
+        <iframe class="engine-frame" src="index.html" title="Relax, Breathing & Humming App sessie engine"></iframe>
       </div>
     </section>
 
     <section class="panel site-section" id="protocollen">
       <p class="eyebrow">App bibliotheek</p>
-      <h2>Alle protocollen als duidelijke bibliotheek</h2>
-      <p>De app kan starten met een eenvoudige keuze: ontspanning, focus, stilte of klankmethode. De technische toon-engine blijft op de achtergrond en wordt per protocol automatisch gekozen.</p>
+      <h2>De actuele app-indeling als websiteverhaal</h2>
+      <p>De website volgt nu dezelfde opbouw als de app: eerst rustige ademhaling, daarna humming, klankmethodes, meditatie en optionele verdiepingsprotocollen.</p>
       <div class="protocol-grid" id="protocolGrid"></div>
     </section>
 
     <section class="panel site-section" id="site">
       <p class="eyebrow">Website structuur</p>
       <h2>Van productpagina naar app-ervaring</h2>
-      <p>De website kan kort uitleggen wat de app is, waarom PhytoForsan dit aanbiedt en hoe iemand direct kan starten. Daarna neemt de app het dagelijkse gebruik over.</p>
+      <p>De website hoeft niet de engine na te bouwen. Zij geeft rust, context en vertrouwen; daarna opent de gebruiker de echte app-ervaring.</p>
       <div class="flow">
-        <div class="flow-card"><strong>1. Landingspagina</strong><span>Merk, belofte, Force of Nature, rustige introductie en directe start.</span></div>
-        <div class="flow-card"><strong>2. Protocollen</strong><span>Relax, Deep Relax, Korte Reset, Focus Reset, Stillness, MAEN en AMEN.</span></div>
-        <div class="flow-card"><strong>3. App starten</strong><span>Open als web-app op telefoon of later als PWA installeren.</span></div>
-        <div class="flow-card"><strong>4. Verdieping</strong><span>Artikelen over adem, rust, klank en verantwoord gebruik.</span></div>
+        <div class="flow-card"><strong>1. Landingspagina</strong><span>Merk, Force of Nature, rustige introductie en directe start.</span></div>
+        <div class="flow-card"><strong>2. Bibliotheek</strong><span>Ademhaling, humming, klank, meditatie en verdieping in herkenbare categorieen.</span></div>
+        <div class="flow-card"><strong>3. App starten</strong><span>Open de echte sessiecirkel en bewaar voortgang lokaal.</span></div>
+        <div class="flow-card"><strong>4. Verdieping</strong><span>Voorzichtig uitleggen, zonder medische claims of prestatiedruk.</span></div>
       </div>
     </section>
 
@@ -805,13 +815,22 @@
 
   <script>
     const protocols = [
-      { id: "relax", name: "Relax Moment", group: "Ontspanning & focus", minutes: 8, icon: "L", color: "mint", rhythm: [4,2,8,2], tone: "131 Hz", desc: "Een rustige basisroutine voor dagelijks gebruik.", intent: "Rust & herstel" },
-      { id: "deep", name: "Deep Relax", group: "Ontspanning & focus", minutes: 12, icon: "D", color: "blue", rhythm: [5,2,10,3], tone: "110 Hz", desc: "Dieper zakken, vertragen en avondrust.", intent: "Diepe ontspanning" },
-      { id: "short", name: "Korte Reset", group: "Ontspanning & focus", minutes: 4, icon: "K", color: "green", rhythm: [4,1,6,1], tone: "196 Hz", desc: "Een compacte pauze tijdens werk of drukte.", intent: "Snelle reset" },
-      { id: "focus", name: "Focus Reset", group: "Ontspanning & focus", minutes: 4, icon: "F", color: "sage", rhythm: [4,1,7,1], tone: "220 Hz", desc: "Rustige alertheid zonder opjagen.", intent: "Focus" },
-      { id: "still", name: "Stillness Flow", group: "Ontspanning & focus", minutes: 10, icon: "S", color: "mint", rhythm: [6,2,12,4], tone: "Vrij", desc: "Minimale begeleiding, meer ruimte en rust.", intent: "Rust zonder toon", silent: true },
-      { id: "maen", name: "MAEN", group: "Klankmethodes", minutes: 8, icon: "M", color: "amber", rhythm: [4.5,2,8,2], tone: "174 Hz", desc: "M -> A -> E -> N, adem en resonantie.", intent: "Klankafdaling" },
-      { id: "amen", name: "AMEN", group: "Klankmethodes", minutes: 8, icon: "A", color: "blue", rhythm: [4.5,2,8,2], tone: "174 Hz", desc: "A -> M -> E -> N, adem en resonantie.", intent: "Klankritueel" }
+      { id: "longExhale", name: "Lange Uitademing", group: "Ademhaling", minutes: 5, icon: "LU", color: "mint", rhythm: [4,0,8,0], tone: "geen", desc: "Ontspanning door een langere uitademing.", intent: "Rustige adem" },
+      { id: "resonanceBreath", name: "Resonantie Adem", group: "Ademhaling", minutes: 5, icon: "RA", color: "sage", rhythm: [5,0,5,0], tone: "geen", desc: "Gelijkmatig ademritme voor balans.", intent: "Balans" },
+      { id: "sleepBreath", name: "Slaapadem", group: "Ademhaling", minutes: 10, icon: "SA", color: "blue", rhythm: [4,2,8,2], tone: "geen", desc: "Langzame ademhaling voor slaap.", intent: "Avondrust" },
+      { id: "flowingBreath", name: "Vloeiende Adem", group: "Ademhaling", minutes: 5, icon: "VA", color: "green", rhythm: [4,0,6,0], tone: "geen", desc: "Een zachte golf zonder pauzes.", intent: "Flow" },
+      { id: "bellyRegulationBreath", name: "Buikregulatie Adem", group: "Ademhaling", minutes: 8, icon: "BA", color: "mint", rhythm: null, tone: "geen", desc: "Buik, middenrif en ontspanning in vijf fases.", intent: "Regulatie", phases: "5 fases" },
+      { id: "relax", name: "Relax Moment", group: "Humming", minutes: 8, icon: "RM", color: "mint", rhythm: [4,2,8,2], tone: "131 Hz", desc: "Een rustige basisroutine voor dagelijks gebruik.", intent: "Rust & herstel" },
+      { id: "lang", name: "Deep Relax", group: "Humming", minutes: 12, icon: "DR", color: "blue", rhythm: [5,2,10,3], tone: "mp3", desc: "Dieper zakken, vertragen en avondrust.", intent: "Diepe ontspanning" },
+      { id: "focus", name: "Korte Reset", group: "Humming", minutes: 4, icon: "KR", color: "green", rhythm: [4,1,6,1], tone: "196 Hz", desc: "Een compacte pauze tijdens werk of drukte.", intent: "Snelle reset" },
+      { id: "focusReset", name: "Focus Reset", group: "Humming", minutes: 4, icon: "FR", color: "sage", rhythm: [4,1,7,1], tone: "220 Hz", desc: "Rustige alertheid zonder opjagen.", intent: "Focus" },
+      { id: "herstel", name: "Stillness Flow", group: "Humming", minutes: 10, icon: "SF", color: "mint", rhythm: [6,2,12,4], tone: "vrij", desc: "Minimale begeleiding, meer ruimte en rust.", intent: "Rust zonder toon", silent: true },
+      { id: "maen", name: "MAEN", group: "Klank", minutes: 8, icon: "M", color: "amber", rhythm: [4.5,2,8,2], tone: "174 Hz", desc: "M - A - E - N, adem en resonantie.", intent: "Klankafdaling" },
+      { id: "amen", name: "AMEN", group: "Klank", minutes: 8, icon: "A", color: "blue", rhythm: [4.5,2,8,2], tone: "174 Hz", desc: "A - M - E - N, adem en resonantie.", intent: "Klankritueel" },
+      { id: "om", name: "OM", group: "Klank", minutes: 12, icon: "OM", color: "amber", rhythm: [4.5,2,8,2], tone: "audio", desc: "A - O/U - M, klassieke diepe resonantie.", intent: "Diepe klank" },
+      { id: "meditationTimer", name: "Meditatietimer", group: "Meditatie", minutes: "vrij", icon: "MT", color: "sage", rhythm: null, tone: "stil", desc: "Stille meditatie op jouw eigen tempo.", intent: "Vrije duur" },
+      { id: "holotropicBreathTest", name: "Holotropische Ademtest", group: "Verdieping", minutes: 25, icon: "HT", color: "blue", rhythm: null, tone: "geen", desc: "Actieve verbonden ademhaling, intern testprotocol.", intent: "Testprotocol", experimental: true },
+      { id: "activeBreathTest", name: "Actieve Ademtest", group: "Verdieping", minutes: "5:30", icon: "AT", color: "amber", rhythm: null, tone: "geen", desc: "Kort actief ademritme, intern testprotocol.", intent: "Testprotocol", experimental: true }
     ];
 
     const state = {
@@ -824,6 +843,23 @@
 
     function protocolById(id) {
       return protocols.find(item => item.id === id) || protocols[0];
+    }
+
+    function durationText(item) {
+      return typeof item.minutes === "number" ? `${item.minutes} minuten` : String(item.minutes);
+    }
+
+    function groupedProtocols() {
+      const groups = [];
+      protocols.forEach(item => {
+        let group = groups.find(entry => entry.name === item.group);
+        if (!group) {
+          group = { name: item.group, items: [] };
+          groups.push(group);
+        }
+        group.items.push(item);
+      });
+      return groups;
     }
 
     function iconStyle(item) {
@@ -841,7 +877,7 @@
       return `
         <button class="session-card" data-protocol="${item.id}">
           <span class="soft-icon" style="${iconStyle(item)}">${item.icon}</span>
-          <span><b>${item.name}</b><span>${item.minutes} minuten<br>${item.desc}</span></span>
+          <span><b>${item.name}</b><span>${durationText(item)}<br>${item.desc}</span></span>
           <span class="chev">›</span>
         </button>
       `;
@@ -852,16 +888,16 @@
         <button class="library-tile" data-protocol="${item.id}">
           <span class="soft-icon" style="${iconStyle(item)}">${item.icon}</span>
           <b>${item.name}</b>
-          <span>${item.minutes} minuten<br>${item.desc}</span>
+          <span>${durationText(item)}<br>${item.desc}</span>
         </button>
       `;
     }
 
     function renderHome() {
-      const recs = [protocols[0], protocols[3], protocols[1]];
+      const recs = [protocolById("relax"), protocolById("longExhale"), protocolById("sleepBreath")];
       return `
         <div class="phone-top">
-          <img class="phone-logo" src="phytoforsan-leaf-extracted.svg" alt="PhytoForsan">
+          <img class="phone-logo" src="deploy/logo.svg" alt="PhytoForsan">
           <button class="icon-btn" type="button" aria-label="Melding">B</button>
         </div>
         <h2>Goedemorgen, Rens</h2>
@@ -884,11 +920,15 @@
           <h2>Bibliotheek</h2>
           <button class="icon-btn" type="button" aria-label="Zoeken">Z</button>
         </div>
-        <div class="library-tile-grid">${protocols.map(libraryTile).join("")}</div>
+        ${groupedProtocols().map(group => `
+          <div class="category-label">${group.name}</div>
+          <div class="library-tile-grid">${group.items.map(libraryTile).join("")}</div>
+        `).join("")}
       `;
     }
 
     function phaseLabels(protocol) {
+      if (!protocol.rhythm) return [];
       const exhale = protocol.silent ? "Vrij uit" : protocol.id === "maen" ? "MAEN" : protocol.id === "amen" ? "AMEN" : "Uitademen";
       return [
         { label: "Inademen", dur: protocol.rhythm[0] },
@@ -901,24 +941,30 @@
     function renderSession() {
       const protocol = state.selected;
       const phases = phaseLabels(protocol);
+      const primary = protocol.rhythm
+        ? `<span><b>${protocol.rhythm[0]}</b>in</span><span><b>${protocol.rhythm[2]}</b>uit</span><span><b>${protocol.tone}</b>toon</span>`
+        : `<span><b>${durationText(protocol)}</b>duur</span><span><b>${protocol.phases || protocol.group}</b>opbouw</span><span><b>${protocol.tone}</b>geluid</span>`;
       return `
         <div class="phone-top">
           <button class="icon-btn" data-screen="library" type="button" aria-label="Terug"><</button>
           <button class="icon-btn" type="button" aria-label="Menu">M</button>
         </div>
         <h2>${protocol.name}</h2>
-        <p>${protocol.minutes} minuten - ${protocol.intent}</p>
+        <p>${durationText(protocol)} - ${protocol.intent}</p>
         <div class="chart">
-          <span><b>${protocol.rhythm[0]}</b>in</span>
-          <span><b>${protocol.rhythm[2]}</b>uit</span>
-          <span><b>${protocol.tone}</b>toon</span>
+          ${primary}
         </div>
-        <div class="section-head"><span>Ritme</span></div>
-        <div class="phase-row">
-          ${phases.map(phase => `
-            <div><b>${phase.label}</b>${phase.dur} sec<div class="phase-dot"></div></div>
-          `).join("")}
-        </div>
+        ${phases.length ? `
+          <div class="section-head"><span>Ritme</span></div>
+          <div class="phase-row">
+            ${phases.map(phase => `
+              <div><b>${phase.label}</b>${phase.dur} sec<div class="phase-dot"></div></div>
+            `).join("")}
+          </div>
+        ` : `
+          <div class="section-head"><span>Opbouw</span></div>
+          <div class="article"><span class="soft-icon" style="${iconStyle(protocol)}">${protocol.icon}</span><span><b>${protocol.group}</b><p>${protocol.desc}</p></span><span class="chev">></span></div>
+        `}
         <div class="session-list" style="margin-top:18px">
           <div class="article">
             <span class="soft-icon" style="${iconStyle(protocol)}">${protocol.icon}</span>
@@ -945,7 +991,7 @@
         <div class="bars">
           ${[88,44,92,38,64,30,70].map((height, index) => `<div class="bar ${index < 4 ? "active" : ""}" style="height:${height}%"></div>`).join("")}
         </div>
-        <div class="session-list">${[protocols[0], protocols[1]].map(sessionCard).join("")}</div>
+        <div class="session-list">${[protocolById("relax"), protocolById("lang")].map(sessionCard).join("")}</div>
       `;
     }
 
@@ -1042,7 +1088,20 @@
 
     });
 
-    renderProtocolGrid();
+    function renderProtocolGridUpdated() {
+      protocolGrid.innerHTML = groupedProtocols().map(group => `
+        <h3 class="protocol-group-title">${group.name}</h3>
+        ${group.items.map(item => `
+          <div class="protocol-tile">
+            <span class="soft-icon" style="${iconStyle(item)}">${item.icon}</span>
+            <b>${item.name}</b>
+            <span>${durationText(item)} - ${item.tone}<br>${item.intent}${item.experimental ? "<br>Intern testprotocol" : ""}</span>
+          </div>
+        `).join("")}
+      `).join("");
+    }
+
+    renderProtocolGridUpdated();
     renderPhone();
   </script>
 </body>

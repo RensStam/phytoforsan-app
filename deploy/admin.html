@@ -6,7 +6,6 @@
 <title>PhytoForsan — Backoffice</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
-<script src="js/seed-protocols.js"></script>
 <style>
   :root { --deep:#002f2d; --green:#69b626; --line:rgba(18,55,52,.14); --muted:#5f7470; --page:#f3f6f2; }
   * { box-sizing:border-box; }
@@ -288,82 +287,130 @@ async function renderProtocols() {
     </tr>`;
   }).join("");
   tabBody.innerHTML = `<div class="card">
-    <div class="toolbar"><h2 class="grow">Protocollen</h2><button class="btn secondary" id="importSeed">Importeer protocollen</button><button class="btn" id="newProtocol">+ Nieuw protocol</button></div>
+    <div class="toolbar"><h2 class="grow">Protocollen</h2>
+      <button class="btn secondary" id="exportAll">Exporteer alles</button>
+      <button class="btn secondary" id="importBtn">Importeer…</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      <button class="btn" id="newProtocol">+ Nieuw protocol</button></div>
     <div id="importMsg" class="muted" style="margin-bottom:8px"></div>
     <table><thead><tr><th>Titel</th><th>Categorie</th><th>Toegang</th><th>Duur</th><th>Status</th><th></th></tr></thead>
     <tbody>${rows || '<tr><td colspan="6" class="muted">Nog geen protocollen.</td></tr>'}</tbody></table>
   </div>`;
   document.getElementById("newProtocol").addEventListener("click", () => editProtocol(null));
-  document.getElementById("importSeed").addEventListener("click", importSeed);
+  document.getElementById("exportAll").addEventListener("click", exportAllProtocols);
+  document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+  document.getElementById("importFile").addEventListener("change", handleImportFile);
   tabBody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editProtocol(b.dataset.edit)));
 }
 
-async function importSeed() {
+// ---------- Export / Import (los van seed) ----------
+function downloadJson(filename, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+// Bouwt een zelfstandig, draagbaar protocol-object (categorie als slug i.p.v. id).
+function buildExportEntry(p, phases, cats) {
+  const cat = cats.find(c => c.id === p.category_id);
+  return {
+    protocol: {
+      slug: p.slug, title: p.title, category_slug: cat ? cat.slug : null,
+      group_name: p.group_name || null,
+      short_description: p.short_description || "", long_description: p.long_description || "",
+      evidence_text: p.evidence_text || "", safety_text: p.safety_text || "", closing_text: p.closing_text || "",
+      access_tier: p.access_tier || "free",
+      requires_deep_access: !!p.requires_deep_access, requires_premium: !!p.requires_premium,
+      status: p.status || "draft", sort_order: p.sort_order || 0, night: !!p.night
+    },
+    phases: phases.slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(ph => ({
+      sort_order: ph.sort_order || 0, title: ph.title || "", type: ph.type || "free",
+      duration_seconds: Number(ph.duration_seconds||0), inhale_seconds: Number(ph.inhale_seconds||0),
+      hold_seconds: Number(ph.hold_seconds||0), exhale_seconds: Number(ph.exhale_seconds||0), pause_seconds: Number(ph.pause_seconds||0),
+      instruction_text: ph.instruction_text || "", visual_mode: ph.visual_mode || null, cue: ph.cue || null,
+      cue_in: ph.cue_in || null, cue_out: ph.cue_out || null, sub_in: ph.sub_in || null, sub_out: ph.sub_out || null
+    }))
+  };
+}
+async function exportAllProtocols() {
   const msg = document.getElementById("importMsg");
-  const btn = document.getElementById("importSeed");
+  const [prot, cats, phases] = await Promise.all([dbList("protocols"), dbList("categories"), dbList("protocol_phases")]);
+  const entries = prot.slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))
+    .map(p => buildExportEntry(p, phases.filter(x=>x.protocol_id===p.id), cats));
+  downloadJson("protocollen-export.json", entries);
+  if (msg) msg.textContent = `Geëxporteerd: ${entries.length} protocollen.`;
+}
+async function exportSingleProtocol(id) {
+  const [cats, phases] = await Promise.all([dbList("categories"), dbList("protocol_phases")]);
+  const p = (await dbList("protocols")).find(x => x.id === id);
+  if (!p) return;
+  downloadJson((p.slug || "protocol") + ".json", buildExportEntry(p, phases.filter(x=>x.protocol_id===p.id), cats));
+}
+// Verwerkt geïmporteerde protocol-objecten (één of meer). Bestaande slug = bijwerken.
+async function applyImportEntries(entries) {
+  let cats = await dbList("categories");
+  const catBySlug = {}; cats.forEach(c => { catBySlug[c.slug] = c; });
+  const titleFor = (slug) => slug.charAt(0).toUpperCase() + slug.slice(1);
+  let order = cats.length;
+  for (const e of entries) {
+    const slug = e.protocol.category_slug;
+    if (slug && !catBySlug[slug]) {
+      const c = await dbUpsert("categories", { slug, title:titleFor(slug), description:"", sort_order:order++, status:"published" });
+      catBySlug[slug] = c;
+    }
+  }
+  const existing = await dbList("protocols");
+  const bySlug = {}; existing.forEach(p => { bySlug[p.slug] = p; });
+  let created = 0, updated = 0;
+  for (const e of entries) {
+    const src = e.protocol;
+    const cat = catBySlug[src.category_slug];
+    const prev = bySlug[src.slug];
+    const rec = {
+      ...(prev ? { id: prev.id } : {}),
+      slug: src.slug, title: src.title, category_id: cat ? cat.id : null,
+      group_name: src.group_name || null,
+      short_description: src.short_description || "", long_description: src.long_description || "",
+      evidence_text: src.evidence_text || "", safety_text: src.safety_text || "", closing_text: src.closing_text || "",
+      access_tier: src.access_tier || "free",
+      requires_deep_access: !!src.requires_deep_access, requires_premium: !!src.requires_premium,
+      status: src.status || "draft", sort_order: src.sort_order || 0, night: !!src.night
+    };
+    const saved = await dbUpsert("protocols", rec);
+    if (prev) updated++; else created++;
+    // Bestaande fases vervangen
+    const oldPhases = await dbList("protocol_phases", { protocol_id: saved.id });
+    for (const op of oldPhases) await dbDelete("protocol_phases", op.id);
+    for (const ph of (e.phases || [])) {
+      await dbUpsert("protocol_phases", {
+        protocol_id: saved.id, sort_order: ph.sort_order || 0, title: ph.title || "",
+        type: ph.type || "free", duration_seconds: Number(ph.duration_seconds || 0),
+        inhale_seconds: Number(ph.inhale_seconds || 0), hold_seconds: Number(ph.hold_seconds || 0),
+        exhale_seconds: Number(ph.exhale_seconds || 0), pause_seconds: Number(ph.pause_seconds || 0),
+        instruction_text: ph.instruction_text || "", visual_mode: ph.visual_mode || null, cue: ph.cue || "",
+        cue_in: ph.cue_in || null, cue_out: ph.cue_out || null, sub_in: ph.sub_in || null, sub_out: ph.sub_out || null
+      });
+    }
+  }
+  return { created, updated };
+}
+async function handleImportFile(ev) {
+  const file = ev.target.files[0];
+  ev.target.value = ""; // zelfde bestand opnieuw kunnen kiezen
+  if (!file) return;
+  const msg = document.getElementById("importMsg");
   msg.textContent = "Bezig met importeren…";
-  btn.disabled = true;
   try {
-    let seed = Array.isArray(window.SEED_PROTOCOLS) ? window.SEED_PROTOCOLS : null;
-    if (!seed) {
-      const res = await fetch("supabase/seed-protocols.json", { cache:"no-store" });
-      if (!res.ok) throw new Error("seed-protocols.json niet gevonden (" + res.status + ")");
-      seed = await res.json();
+    let data = JSON.parse(await file.text());
+    if (!Array.isArray(data)) data = [data]; // één protocol → lijst
+    if (!data.length || !data.every(e => e && e.protocol && e.protocol.slug)) {
+      throw new Error("Ongeldig bestand: verwacht één of meer objecten met 'protocol.slug' en 'phases'.");
     }
-
-    // Categorieën resolven/aanmaken op slug
-    let cats = await dbList("categories");
-    const catBySlug = {};
-    cats.forEach(c => { catBySlug[c.slug] = c; });
-    const titleFor = (slug) => slug.charAt(0).toUpperCase() + slug.slice(1);
-    let order = cats.length;
-    for (const entry of seed) {
-      const slug = entry.protocol.category_slug;
-      if (slug && !catBySlug[slug]) {
-        const c = await dbUpsert("categories", { slug, title:titleFor(slug), description:"", sort_order:order++, status:"published" });
-        catBySlug[slug] = c;
-      }
-    }
-
-    const existing = await dbList("protocols");
-    const bySlug = {}; existing.forEach(p => { bySlug[p.slug] = p; });
-    let created = 0, updated = 0;
-    for (const entry of seed) {
-      const src = entry.protocol;
-      const cat = catBySlug[src.category_slug];
-      const prev = bySlug[src.slug];
-      const rec = {
-        ...(prev ? { id: prev.id } : {}),
-        slug: src.slug, title: src.title, category_id: cat ? cat.id : null,
-        group_name: src.group_name || null,
-        short_description: src.short_description || "", long_description: src.long_description || "",
-        access_tier: src.access_tier || "free",
-        requires_deep_access: !!src.requires_deep_access, requires_premium: !!src.requires_premium,
-        status: src.status || "draft", sort_order: src.sort_order || 0, night: !!src.night
-      };
-      const saved = await dbUpsert("protocols", rec);
-      if (prev) updated++; else created++;
-
-      // Bestaande fases vervangen
-      const oldPhases = await dbList("protocol_phases", { protocol_id: saved.id });
-      for (const op of oldPhases) await dbDelete("protocol_phases", op.id);
-      for (const ph of (entry.phases || [])) {
-        await dbUpsert("protocol_phases", {
-          protocol_id: saved.id, sort_order: ph.sort_order || 0, title: ph.title || "",
-          type: ph.type || "free", duration_seconds: Number(ph.duration_seconds || 0),
-          inhale_seconds: Number(ph.inhale_seconds || 0), hold_seconds: Number(ph.hold_seconds || 0),
-          exhale_seconds: Number(ph.exhale_seconds || 0), pause_seconds: Number(ph.pause_seconds || 0),
-          instruction_text: ph.instruction_text || "", visual_mode: ph.visual_mode || null, cue: ph.cue || "",
-          cue_in: ph.cue_in || null, cue_out: ph.cue_out || null, sub_in: ph.sub_in || null, sub_out: ph.sub_out || null
-        });
-      }
-    }
-    msg.textContent = `Klaar: ${created} nieuw, ${updated} bijgewerkt (van ${seed.length}).`;
+    const res = await applyImportEntries(data);
+    msg.textContent = `Klaar: ${res.created} nieuw, ${res.updated} bijgewerkt (van ${data.length}).`;
     setTimeout(renderProtocols, 1200);
   } catch (e) {
     msg.textContent = "Import mislukt: " + (e.message || e);
-  } finally {
-    btn.disabled = false;
   }
 }
 
@@ -405,6 +452,7 @@ async function editProtocol(id) {
     <div id="f_img_preview" style="margin-top:8px"></div>
     <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" id="saveProtocol">Opslaan</button>
+      ${id?'<button class="btn secondary" id="exportProtocol">Exporteren</button>':""}
       ${id?'<button class="btn secondary" id="archiveProtocol">Archiveren</button>':""}
     </div>
     <p class="msg hidden" id="protMsg"></p>
@@ -420,6 +468,7 @@ async function editProtocol(id) {
   };
   imgSel.addEventListener("change", renderImgPrev); renderImgPrev();
   document.getElementById("saveProtocol").addEventListener("click", saveProtocolForm);
+  if (id) document.getElementById("exportProtocol").addEventListener("click", () => exportSingleProtocol(id));
   if (id) document.getElementById("archiveProtocol").addEventListener("click", async () => {
     const cur = (await dbList("protocols")).find(x=>x.id===id); cur.status="archived"; await dbUpsert("protocols", cur); renderProtocols();
   });

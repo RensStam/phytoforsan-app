@@ -12,11 +12,9 @@ if not exist deploy\tegels mkdir deploy\tegels
 xcopy /Y /I /Q tegels\*.webp deploy\tegels\ >nul
 if not exist deploy\js mkdir deploy\js
 xcopy /Y /I /Q js\*.js deploy\js\ >nul
-if not exist deploy\supabase mkdir deploy\supabase
-copy /Y supabase\seed-protocols.json deploy\supabase\seed-protocols.json
 
 echo Wijzigingen naar GitHub sturen...
-git add index.html sw.js admin.html js deploy\index.html deploy\sw.js deploy\admin.html deploy\js deploy\manifest.json deploy\tegels deploy\supabase supabase
+git add index.html sw.js admin.html js deploy\index.html deploy\sw.js deploy\admin.html deploy\js deploy\manifest.json deploy\tegels supabase
 git commit -m "deploy update"
 git push origin master:main
 
