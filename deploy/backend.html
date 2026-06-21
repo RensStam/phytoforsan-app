@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.0.2</span>
+    <span class="env-badge" id="backendVersion">backend v1.0.3</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -734,7 +734,8 @@ async function renderUsers() {
       <td>${esc(u.email)}</td>
       <td><select class="u_role">${sel(u.role,["user","tester","admin"])}</select></td>
       <td><select class="u_access">${sel(u.access_level,["free","deep","premium","admin"])}</select></td>
-      <td class="actions"><div class="row-actions"><button class="btn small u_save">Opslaan</button></div></td></tr>`).join("")||'<tr><td colspan="4" class="muted">Geen gebruikers.</td></tr>'}</tbody></table></div>`;
+      <td class="actions"><div class="row-actions"><button class="btn small u_save">Opslaan</button>${(session && u.id===session.id) ? "" : `<button class="btn small danger u_del">Verwijderen</button>`}</div></td></tr>`).join("")||'<tr><td colspan="4" class="muted">Geen gebruikers.</td></tr>'}</tbody></table>
+    <p class="msg hidden" id="u_msg"></p></div>`;
   tabBody.querySelectorAll("tr[data-u]").forEach(row=>{
     row.querySelector(".u_save")?.addEventListener("click", async ()=>{
       const id=row.dataset.u;
@@ -742,6 +743,21 @@ async function renderUsers() {
       u.role=row.querySelector(".u_role").value; u.access_level=row.querySelector(".u_access").value;
       await dbUpsert("profiles", u);
       row.querySelector(".u_save").textContent="Opgeslagen";
+    });
+    row.querySelector(".u_del")?.addEventListener("click", async ()=>{
+      const id=row.dataset.u;
+      const u=(await dbList("profiles")).find(x=>x.id===id);
+      const msg=document.getElementById("u_msg");
+      if(!confirm(`Gebruiker "${u?.email||id}" definitief verwijderen? Het account en profiel worden verwijderd.`)) return;
+      try {
+        if (cfg.useBackend && sb) {
+          const { error } = await sb.rpc("admin_delete_user", { p_user: id });
+          if (error) throw error;
+        } else {
+          await dbDelete("profiles", id);
+        }
+        renderUsers();
+      } catch(e){ msg.className="msg err"; msg.textContent="Verwijderen mislukt: "+(e.message||e); msg.classList.remove("hidden"); }
     });
   });
 }
