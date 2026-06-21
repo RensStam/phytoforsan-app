@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.0.5</span>
+    <span class="env-badge" id="backendVersion">backend v1.0.6</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -185,6 +185,16 @@ async function dbDelete(table, id) {
   const db = mockDb();
   db[table] = (db[table] || []).filter(r => r.id !== id);
   mockSave(db);
+}
+
+// Upload een bestand naar de 'media' Storage-bucket en geef de publieke URL terug.
+async function uploadToStorage(file, folder) {
+  if (!(cfg.useBackend && sb)) throw new Error("Uploaden vereist Supabase (niet in testmodus).");
+  const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${folder}/${Date.now()}-${safe}`;
+  const { error } = await sb.storage.from("media").upload(path, file, { upsert: true, contentType: file.type || undefined });
+  if (error) throw error;
+  return sb.storage.from("media").getPublicUrl(path).data.publicUrl;
 }
 
 // =====================================================================
@@ -661,12 +671,26 @@ async function editAudio(id) {
     ${f("Duur (s)","duration_seconds")}${f("storage_path","storage_path","bucket/pad.mp3 — handmatig invoeren kan")}
     <label>Claim-veilige omschrijving</label><textarea id="a_claim_safe_description">${esc(t.claim_safe_description)}</textarea>
     <label>Notities</label><textarea id="a_notes">${esc(t.notes)}</textarea>
-    <p class="muted">Upload naar Supabase Storage is voorbereid; handmatige storage_path werkt nu al.</p>
+    <label>Audiobestand uploaden (mp3, m4a…)</label><input id="a_file" type="file" accept="audio/*">
+    <p class="muted" style="margin:2px 0 8px">Het bestand gaat naar Supabase Storage; de URL wordt automatisch in 'storage_path' gezet. Grote bestanden (bv. 9 MB) zijn geen probleem.</p>
+    <div id="a_audio_preview" style="margin:6px 0">${ (t.storage_path && /^https?:/.test(t.storage_path)) ? `<audio controls src="${esc(t.storage_path)}" style="width:100%"></audio>` : "" }</div>
+    <p class="msg hidden" id="a_msg"></p>
     <button class="btn" id="saveAudio" style="margin-top:8px">Opslaan</button></div>`;
   document.getElementById("saveAudio").addEventListener("click", async () => {
-    const rec = { id, title:document.getElementById("a_title").value, original_filename:document.getElementById("a_original_filename").value, internal_filename:document.getElementById("a_internal_filename").value, artist:document.getElementById("a_artist").value, source:document.getElementById("a_source").value, license:document.getElementById("a_license").value, source_url:document.getElementById("a_source_url").value, profile_url:document.getElementById("a_profile_url").value, duration_seconds:Number(document.getElementById("a_duration_seconds").value)||null, storage_path:document.getElementById("a_storage_path").value, claim_safe_description:document.getElementById("a_claim_safe_description").value, notes:document.getElementById("a_notes").value };
-    if (!rec.id) delete rec.id;
-    await dbUpsert("audio_tracks", rec); renderAudio();
+    const msg = document.getElementById("a_msg");
+    const btn = document.getElementById("saveAudio");
+    try {
+      const file = document.getElementById("a_file").files[0];
+      let storagePath = document.getElementById("a_storage_path").value;
+      if (file) {
+        btn.disabled = true; msg.className="msg"; msg.textContent="Bestand uploaden…"; msg.classList.remove("hidden");
+        storagePath = await uploadToStorage(file, "audio");
+        if (!document.getElementById("a_original_filename").value) document.getElementById("a_original_filename").value = file.name;
+      }
+      const rec = { id, title:document.getElementById("a_title").value, original_filename:document.getElementById("a_original_filename").value, internal_filename:document.getElementById("a_internal_filename").value, artist:document.getElementById("a_artist").value, source:document.getElementById("a_source").value, license:document.getElementById("a_license").value, source_url:document.getElementById("a_source_url").value, profile_url:document.getElementById("a_profile_url").value, duration_seconds:Number(document.getElementById("a_duration_seconds").value)||null, storage_path:storagePath, claim_safe_description:document.getElementById("a_claim_safe_description").value, notes:document.getElementById("a_notes").value };
+      if (!rec.id) delete rec.id;
+      await dbUpsert("audio_tracks", rec); renderAudio();
+    } catch (e) { msg.className="msg err"; msg.textContent="Mislukt: "+(e.message||e); msg.classList.remove("hidden"); btn.disabled=false; }
   });
 }
 
@@ -690,15 +714,14 @@ async function renderMedia() {
 async function editMedia(id) {
   let m = id ? (await dbList("media_files")).find(x=>x.id===id) : { filename:"", type:"image", storage_path:"", data_url:"", alt_text:"", source:"", license:"", notes:"" };
   const typeOpt=(v)=>["image","audio","document","license_proof","other"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
-  let dataUrl = m.data_url || "";
-  const previewSrc = () => dataUrl || document.getElementById("m_storage_path").value;
+  let pendingFile = null;
   document.getElementById("mediaForm").innerHTML = `<div class="card"><h3>${id?"Media bewerken":"Nieuw bestand"}</h3>
     <label>Bestandsnaam</label><input id="m_filename" value="${esc(m.filename)}">
     <label>Type</label><select id="m_type">${typeOpt(m.type)}</select>
-    <label>Afbeelding uploaden</label><input id="m_file" type="file" accept="image/*">
-    <p class="muted" style="margin:2px 0 8px">Of geef hieronder een URL / pad op. Een upload heeft voorrang.</p>
-    <label>URL of pad</label><input id="m_storage_path" value="${esc(m.storage_path)}" placeholder="tegels/voorbeeld.webp of https://…">
-    <div id="m_preview" style="margin:8px 0">${ (m.type==="image" && (dataUrl||m.storage_path)) ? `<img src="${esc(dataUrl||m.storage_path)}" style="max-width:160px;max-height:120px;border-radius:8px;border:1px solid #ddd">` : "" }</div>
+    <label>Bestand uploaden (afbeelding of audio)</label><input id="m_file" type="file" accept="image/*,audio/*">
+    <p class="muted" style="margin:2px 0 8px">Het bestand gaat naar Supabase Storage (geen grootte-limiet); de URL komt automatisch in 'URL of pad'. Of vul zelf een URL/pad in.</p>
+    <label>URL of pad</label><input id="m_storage_path" value="${esc(m.storage_path)}" placeholder="https://…  of  tegels/voorbeeld.webp">
+    <div id="m_preview" style="margin:8px 0">${ (m.type==="image" && (m.data_url||m.storage_path)) ? `<img src="${esc(m.data_url||m.storage_path)}" style="max-width:160px;max-height:120px;border-radius:8px;border:1px solid #ddd">` : "" }</div>
     <label>Alt-tekst</label><input id="m_alt_text" value="${esc(m.alt_text)}">
     <label>Bron</label><input id="m_source" value="${esc(m.source)}">
     <label>Licentie</label><input id="m_license" value="${esc(m.license)}">
@@ -706,20 +729,26 @@ async function editMedia(id) {
     <p class="msg hidden" id="m_msg"></p>
     <button class="btn" id="saveMedia" style="margin-top:8px">Opslaan</button></div>`;
   const prev = document.getElementById("m_preview");
-  const renderPrev = () => { const s = previewSrc(); prev.innerHTML = s ? `<img src="${esc(s)}" style="max-width:160px;max-height:120px;border-radius:8px;border:1px solid #ddd">` : ""; };
+  const renderPrev = () => { const s = document.getElementById("m_storage_path").value; prev.innerHTML = (document.getElementById("m_type").value==="image" && s) ? `<img src="${esc(s)}" style="max-width:160px;max-height:120px;border-radius:8px;border:1px solid #ddd">` : ""; };
   document.getElementById("m_storage_path").addEventListener("input", renderPrev);
   document.getElementById("m_file").addEventListener("change", (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const msg = document.getElementById("m_msg");
-    if (file.size > 1.5*1024*1024) { msg.className="msg err"; msg.textContent="Afbeelding is groter dan 1,5 MB. Kies een kleiner bestand of gebruik een URL."; msg.classList.remove("hidden"); return; }
-    const reader = new FileReader();
-    reader.onload = () => { dataUrl = reader.result; if(!document.getElementById("m_filename").value) document.getElementById("m_filename").value = file.name; renderPrev(); };
-    reader.readAsDataURL(file);
+    pendingFile = e.target.files[0] || null;
+    if (pendingFile && !document.getElementById("m_filename").value) document.getElementById("m_filename").value = pendingFile.name;
+    if (pendingFile && pendingFile.type.startsWith("audio")) document.getElementById("m_type").value = "audio";
   });
   document.getElementById("saveMedia").addEventListener("click", async () => {
-    const rec = { id, filename:document.getElementById("m_filename").value, type:document.getElementById("m_type").value, storage_path:document.getElementById("m_storage_path").value, data_url: dataUrl || null, alt_text:document.getElementById("m_alt_text").value, source:document.getElementById("m_source").value, license:document.getElementById("m_license").value, notes:document.getElementById("m_notes").value };
-    if (!rec.id) delete rec.id;
-    await dbUpsert("media_files", rec); renderMedia();
+    const msg = document.getElementById("m_msg");
+    const btn = document.getElementById("saveMedia");
+    try {
+      let storagePath = document.getElementById("m_storage_path").value;
+      if (pendingFile) {
+        btn.disabled = true; msg.className="msg"; msg.textContent="Bestand uploaden…"; msg.classList.remove("hidden");
+        storagePath = await uploadToStorage(pendingFile, document.getElementById("m_type").value === "audio" ? "audio" : "afbeeldingen");
+      }
+      const rec = { id, filename:document.getElementById("m_filename").value, type:document.getElementById("m_type").value, storage_path:storagePath, data_url: null, alt_text:document.getElementById("m_alt_text").value, source:document.getElementById("m_source").value, license:document.getElementById("m_license").value, notes:document.getElementById("m_notes").value };
+      if (!rec.id) delete rec.id;
+      await dbUpsert("media_files", rec); renderMedia();
+    } catch (e) { msg.className="msg err"; msg.textContent="Mislukt: "+(e.message||e); msg.classList.remove("hidden"); btn.disabled=false; }
   });
 }
 
