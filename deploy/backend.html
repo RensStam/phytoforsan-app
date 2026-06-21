@@ -348,6 +348,11 @@ async function exportSingleProtocol(id) {
 }
 // Verwerkt geïmporteerde protocol-objecten (één of meer). Bestaande slug = bijwerken.
 async function applyImportEntries(entries) {
+  // Ontdubbel op slug binnen het bestand zelf (laatste wint) → nooit dubbele protocollen.
+  const dedup = new Map();
+  for (const e of entries) { if (e && e.protocol && e.protocol.slug) dedup.set(e.protocol.slug, e); }
+  entries = [...dedup.values()];
+
   let cats = await dbList("categories");
   const catBySlug = {}; cats.forEach(c => { catBySlug[c.slug] = c; });
   const titleFor = (slug) => slug.charAt(0).toUpperCase() + slug.slice(1);
@@ -377,6 +382,7 @@ async function applyImportEntries(entries) {
       status: src.status || "draft", sort_order: src.sort_order || 0, night: !!src.night
     };
     const saved = await dbUpsert("protocols", rec);
+    bySlug[src.slug] = saved; // bijwerken zodat herhaling binnen dezelfde run niet dupliceert
     if (prev) updated++; else created++;
     // Bestaande fases vervangen
     const oldPhases = await dbList("protocol_phases", { protocol_id: saved.id });
@@ -513,6 +519,16 @@ async function validateForPublish(p, phases) {
 async function saveProtocolForm() {
   const p = readProtocolForm();
   const msg = document.getElementById("protMsg");
+  // Geen dubbele slugs: bij een nieuw protocol mag de slug nog niet bestaan.
+  if (!editingProtocolId) {
+    const dup = (await dbList("protocols")).find(x => x.slug === p.slug);
+    if (dup) {
+      msg.className = "msg err";
+      msg.textContent = `Er bestaat al een protocol met slug "${p.slug}". Kies een unieke slug of bewerk het bestaande protocol.`;
+      msg.classList.remove("hidden");
+      return;
+    }
+  }
   const phases = editingProtocolId ? await dbList("protocol_phases", { protocol_id: editingProtocolId }) : [];
   if (p.status === "published") {
     const errs = await validateForPublish(p, phases);
