@@ -1,40 +1,45 @@
 // =====================================================================
-// PhytoForsan Relax — gedeelde configuratie (publieke app + admin)
-// Vul je Supabase-gegevens in en zet APP_ENV op "local_supabase" of "production".
-// Gebruik NOOIT de service-role key hier; alleen de anon key. Beveiliging via RLS.
+// PhytoForsan Relax — gedeelde configuratie (app + backend)
+//
+// Vul hieronder je Supabase-gegevens in. DEZELFDE waarden gelden voor zowel
+// de lokale versie als de live (deploy) versie — daardoor lezen/schrijven beide
+// naar één gedeelde database en zijn wijzigingen overal hetzelfde.
+//
+// Gebruik NOOIT de service-role key hier; alleen de publieke "anon" key.
+// Beveiliging loopt via Supabase RLS (zie supabase/schema.sql).
+//
+// Zolang deze velden leeg zijn (of met VUL_… beginnen) draait alles in
+// lokale testmodus (browseropslag) en synchroniseert er niets tussen apparaten.
 // =====================================================================
-window.APP_ENV = "local_mock"; // local_mock | local_supabase | production
-
 window.CONFIG = {
-  local_mock: {
-    useBackend: false,
-    supabaseUrl: "",
-    supabaseAnonKey: ""
-  },
-  local_supabase: {
-    useBackend: true,
-    supabaseUrl: "VUL_SUPABASE_TEST_URL_IN",
-    supabaseAnonKey: "VUL_SUPABASE_TEST_ANON_KEY_IN"
-  },
-  production: {
-    useBackend: true,
-    supabaseUrl: "VUL_SUPABASE_PRODUCTIE_URL_IN",
-    supabaseAnonKey: "VUL_SUPABASE_PRODUCTIE_ANON_KEY_IN"
-  }
+  supabaseUrl: "VUL_SUPABASE_URL_IN",        // bv. https://xxxx.supabase.co
+  supabaseAnonKey: "VUL_SUPABASE_ANON_KEY_IN"
 };
 
+function _phytoConfigured() {
+  const c = window.CONFIG || {};
+  return !!(c.supabaseUrl && c.supabaseAnonKey && !/^VUL/i.test(c.supabaseUrl) && !/^VUL/i.test(c.supabaseAnonKey));
+}
+
+// Eén actieve configuratie. useBackend is automatisch waar zodra Supabase is ingevuld.
 window.getActiveConfig = function () {
-  return window.CONFIG[window.APP_ENV] || window.CONFIG.local_mock;
+  return {
+    useBackend: _phytoConfigured(),
+    supabaseUrl: window.CONFIG.supabaseUrl,
+    supabaseAnonKey: window.CONFIG.supabaseAnonKey
+  };
 };
 
-// Maakt (indien geconfigureerd) een Supabase-client. Vereist dat de supabase-js
-// CDN-bundel is geladen (window.supabase). Geeft null terug in local_mock.
+// Label voor de badge in het backend ("supabase" of "mock").
+window.APP_ENV = _phytoConfigured() ? "supabase" : "mock";
+
+// Maakt (indien geconfigureerd) een Supabase-client. Vereist de supabase-js CDN.
+// Geeft null terug in testmodus of als de gegevens ontbreken.
 window.createSupabaseClient = function () {
-  const cfg = window.getActiveConfig();
-  if (!cfg.useBackend) return null;
-  if (!window.supabase || !cfg.supabaseUrl || cfg.supabaseUrl.startsWith("VUL_")) return null;
+  if (!_phytoConfigured()) return null;
+  if (!window.supabase) return null;
   try {
-    return window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+    return window.supabase.createClient(window.CONFIG.supabaseUrl, window.CONFIG.supabaseAnonKey);
   } catch (e) {
     console.warn("Supabase-client kon niet worden aangemaakt:", e);
     return null;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PhytoForsan — Backoffice</title>
+<title>PhytoForsan — Backend</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <style>
@@ -49,7 +49,7 @@
 </head>
 <body>
 <header>
-  <h1>PhytoForsan · Backoffice</h1>
+  <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
@@ -61,7 +61,7 @@
   <!-- LOGIN -->
   <div id="loginView" class="card" style="max-width:420px;margin:40px auto">
     <h2>Inloggen</h2>
-    <div id="mockNotice" class="msg ok hidden">Testmodus (local_mock): geen Supabase nodig. Klik op "Inloggen als admin (mock)".</div>
+    <div id="mockNotice" class="msg ok hidden">Testmodus (lokaal, nog geen Supabase ingevuld): wijzigingen blijven op dit apparaat. Klik op "Inloggen als admin (mock)". Vul js/config.js in voor een gedeelde database.</div>
     <div id="loginForm">
       <label>E-mailadres</label>
       <input id="loginEmail" type="email" autocomplete="username">
@@ -190,7 +190,7 @@ async function initAuth() {
   if (cfg.useBackend) {
     sb = createSupabaseClient();
     if (!sb) {
-      showLoginMsg("Supabase niet geconfigureerd. Vul je URL/anon key in js/config.js, of zet APP_ENV op local_mock.");
+      showLoginMsg("Supabase niet geconfigureerd. Vul je URL/anon key in js/config.js, of laat ze leeg voor lokale testmodus.");
     }
     const { data } = sb ? await sb.auth.getSession() : { data:{ session:null } };
     if (data?.session) await onSignedIn(data.session.user);
@@ -222,7 +222,7 @@ function showLoginMsg(t) { const e=document.getElementById("loginMsg"); e.textCo
 
 document.getElementById("loginBtn").addEventListener("click", async () => {
   showLoginMsg("");
-  if (!cfg.useBackend) { showLoginMsg("In local_mock: gebruik de mock-knop."); return; }
+  if (!cfg.useBackend) { showLoginMsg("Lokale testmodus: gebruik de mock-knop."); return; }
   if (!sb) { showLoginMsg("Supabase niet geconfigureerd."); return; }
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPass").value;
@@ -231,7 +231,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
   await onSignedIn(data.user);
 });
 document.getElementById("mockLoginBtn").addEventListener("click", async () => {
-  if (cfg.useBackend) { showLoginMsg("Mock-login werkt alleen in APP_ENV=local_mock."); return; }
+  if (cfg.useBackend) { showLoginMsg("Mock-login werkt alleen in lokale testmodus (geen Supabase ingevuld)."); return; }
   await onSignedIn({ id:"mock-admin", email:"admin@mock.local" });
 });
 async function doLogout() {

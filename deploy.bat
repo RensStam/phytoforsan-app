@@ -7,14 +7,15 @@ powershell -NoProfile -Command "$u8 = New-Object Text.UTF8Encoding($false); $sw 
 echo Bestanden kopieren naar deploy map...
 copy /Y index.html deploy\index.html
 copy /Y sw.js deploy\sw.js
-copy /Y admin.html deploy\admin.html
+copy /Y backend.html deploy\backend.html
+if exist deploy\admin.html del /Q deploy\admin.html
 if not exist deploy\tegels mkdir deploy\tegels
 xcopy /Y /I /Q tegels\*.webp deploy\tegels\ >nul
 if not exist deploy\js mkdir deploy\js
 xcopy /Y /I /Q js\*.js deploy\js\ >nul
 
 echo Wijzigingen naar GitHub sturen...
-git add index.html sw.js admin.html js deploy\index.html deploy\sw.js deploy\admin.html deploy\js deploy\manifest.json deploy\tegels supabase
+git add -A index.html sw.js backend.html js deploy\index.html deploy\sw.js deploy\backend.html deploy\js deploy\manifest.json deploy\tegels supabase
 git commit -m "deploy update"
 git push origin master:main
 
