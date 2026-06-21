@@ -6,6 +6,7 @@
 <title>PhytoForsan — Backoffice</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
+<script src="js/seed-protocols.js"></script>
 <style>
   :root { --deep:#002f2d; --green:#69b626; --line:rgba(18,55,52,.14); --muted:#5f7470; --page:#f3f6f2; }
   * { box-sizing:border-box; }
@@ -303,9 +304,12 @@ async function importSeed() {
   msg.textContent = "Bezig met importeren…";
   btn.disabled = true;
   try {
-    const res = await fetch("supabase/seed-protocols.json", { cache:"no-store" });
-    if (!res.ok) throw new Error("seed-protocols.json niet gevonden (" + res.status + ")");
-    const seed = await res.json();
+    let seed = Array.isArray(window.SEED_PROTOCOLS) ? window.SEED_PROTOCOLS : null;
+    if (!seed) {
+      const res = await fetch("supabase/seed-protocols.json", { cache:"no-store" });
+      if (!res.ok) throw new Error("seed-protocols.json niet gevonden (" + res.status + ")");
+      seed = await res.json();
+    }
 
     // Categorieën resolven/aanmaken op slug
     let cats = await dbList("categories");
@@ -349,7 +353,8 @@ async function importSeed() {
           type: ph.type || "free", duration_seconds: Number(ph.duration_seconds || 0),
           inhale_seconds: Number(ph.inhale_seconds || 0), hold_seconds: Number(ph.hold_seconds || 0),
           exhale_seconds: Number(ph.exhale_seconds || 0), pause_seconds: Number(ph.pause_seconds || 0),
-          instruction_text: ph.instruction_text || "", visual_mode: ph.visual_mode || null, cue: ph.cue || ""
+          instruction_text: ph.instruction_text || "", visual_mode: ph.visual_mode || null, cue: ph.cue || "",
+          cue_in: ph.cue_in || null, cue_out: ph.cue_out || null, sub_in: ph.sub_in || null, sub_out: ph.sub_out || null
         });
       }
     }
@@ -488,10 +493,17 @@ async function renderPhases() {
       <div class="row4">
         <div><label>Pauze (s)</label><input class="ph_pause" type="number" step="0.5" value="${f.pause_seconds||0}"></div>
         <div><label>visual_mode</label><input class="ph_vis" value="${esc(f.visual_mode)}"></div>
-        <div><label>cue</label><input class="ph_cue" value="${esc(f.cue)}"></div>
+        <div><label>cue (rustfase)</label><input class="ph_cue" value="${esc(f.cue)}"></div>
         <div><label>volgorde</label><input class="ph_sort" type="number" value="${f.sort_order||0}"></div>
       </div>
-      <label>Instructietekst</label><textarea class="ph_instr">${esc(f.instruction_text)}</textarea>
+      <p class="muted" style="margin:6px 0 2px">Teksten in de sessie-cirkel</p>
+      <div class="row">
+        <div><label>Cue-woord inademen</label><input class="ph_cuein" value="${esc(f.cue_in)}" placeholder="IN"></div>
+        <div><label>Cue-woord uitademen</label><input class="ph_cueout" value="${esc(f.cue_out)}" placeholder="UIT"></div>
+      </div>
+      <label>Subtekst bij inademen</label><textarea class="ph_subin">${esc(f.sub_in)}</textarea>
+      <label>Subtekst bij uitademen</label><textarea class="ph_subout">${esc(f.sub_out)}</textarea>
+      <label>Instructietekst (rustfase)</label><textarea class="ph_instr">${esc(f.instruction_text)}</textarea>
       <div style="margin-top:8px;display:flex;gap:8px"><button class="btn small ph_save">Fase opslaan</button><button class="btn small danger ph_del">Verwijderen</button></div>
     </div>`).join("")}
     <button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>`;
@@ -508,6 +520,8 @@ async function renderPhases() {
         inhale_seconds:Number(g(".ph_in").value)||0, hold_seconds:Number(g(".ph_hold").value)||0,
         exhale_seconds:Number(g(".ph_ex").value)||0, pause_seconds:Number(g(".ph_pause").value)||0,
         visual_mode:g(".ph_vis").value||null, cue:g(".ph_cue").value||null, sort_order:Number(g(".ph_sort").value)||0,
+        cue_in:g(".ph_cuein").value||null, cue_out:g(".ph_cueout").value||null,
+        sub_in:g(".ph_subin").value||null, sub_out:g(".ph_subout").value||null,
         instruction_text:g(".ph_instr").value });
       renderPhases();
     });

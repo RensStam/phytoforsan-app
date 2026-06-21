@@ -106,10 +106,19 @@ create table if not exists public.protocol_phases (
   pause_seconds numeric not null default 0,
   instruction_text text,
   visual_mode text,
-  cue text,
+  cue text,            -- cue-woord voor rustfases (type=free)
+  cue_in text,         -- cue-woord bij inademing (type=breath)
+  cue_out text,        -- cue-woord bij uitademing (type=breath)
+  sub_in text,         -- subtekst bij inademing (type=breath)
+  sub_out text,        -- subtekst bij uitademing (type=breath)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- Voor bestaande databases: voeg de kolommen toe als ze nog niet bestaan.
+alter table public.protocol_phases add column if not exists cue_in text;
+alter table public.protocol_phases add column if not exists cue_out text;
+alter table public.protocol_phases add column if not exists sub_in text;
+alter table public.protocol_phases add column if not exists sub_out text;
 create index if not exists phases_protocol_idx on public.protocol_phases(protocol_id, sort_order);
 
 -- ---------- 10. audio_tracks ----------

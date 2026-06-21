@@ -1546,7 +1546,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.1.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.1.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3120,10 +3120,10 @@ function phases() {
     ? `hum licht mee met de heldere resettoon op ${p.tone} Hz`
     : `hum mee met de drone op ${p.tone} Hz`);
   return [
-    { key: "inhale", label: "Neus in", cue: "IN", sub: "adem rustig door de neus in", dur: p.inhale },
-    { key: "hold", label: "Rust", cue: "RUST", sub: "pauzeer zacht na de inademing", dur: p.hold },
+    { key: "inhale", label: p.inhaleLabel || "Neus in", cue: p.inhaleCue || "IN", sub: p.inhaleSub || "adem rustig door de neus in", dur: p.inhale },
+    { key: "hold", label: p.holdLabel || "Rust", cue: p.holdCue || "RUST", sub: p.holdSub || "pauzeer zacht na de inademing", dur: p.hold },
     { key: "exhale", label: p.exhaleLabel, cue: p.exhaleCue, sub: humText, dur: p.exhale },
-    { key: "pause", label: "Rust", cue: "RUST", sub: "blijf even in rust", dur: p.pause }
+    { key: "pause", label: p.pauseLabel || "Rust", cue: p.pauseCue || "RUST", sub: p.pauseSub || "blijf even in rust", dur: p.pause }
   ];
 }
 
@@ -4876,7 +4876,8 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
     mode: ph.type === "breath" ? "breath" : "free",
     visualMode: ph.visual_mode || undefined,
     cue: ph.cue || undefined, sub: ph.instruction_text || "",
-    cueIn: "IN", cueOut: "UIT", subIn: ph.instruction_text || "", subOut: "",
+    cueIn: ph.cue_in || "IN", cueOut: ph.cue_out || "UIT",
+    subIn: ph.sub_in || ph.instruction_text || "", subOut: ph.sub_out || "",
     inhale: Number(ph.inhale_seconds||0), hold: Number(ph.hold_seconds||0),
     exhale: Number(ph.exhale_seconds||0), pause: Number(ph.pause_seconds||0)
   }));
@@ -4892,7 +4893,7 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
     phases: phs.length ? phs : undefined
   };
 }
-async function loadProtocolsFromBackend() {
+async function fetchBackendData() {
   const client = (typeof createSupabaseClient === "function") ? createSupabaseClient() : null;
   if (!client) return null;
   const [{ data: cats }, { data: prot }, { data: phases }] = await Promise.all([
@@ -4901,25 +4902,70 @@ async function loadProtocolsFromBackend() {
     client.from("protocol_phases").select("*")
   ]);
   if (!prot) return null;
-  const catSlug = Object.fromEntries((cats||[]).map(c => [c.id, c.slug]));
+  return { cats: cats || [], prot, phases: phases || [] };
+}
+async function loadProtocolsFromBackend() {
+  const data = await fetchBackendData();
+  if (!data) return null;
+  const catSlug = Object.fromEntries(data.cats.map(c => [c.id, c.slug]));
   const out = {};
-  for (const row of prot) {
-    const phs = (phases||[]).filter(x => x.protocol_id === row.id);
+  for (const row of data.prot) {
+    const phs = data.phases.filter(x => x.protocol_id === row.id);
     out[row.slug] = normalizeProtocol(row, phs, catSlug[row.category_id]);
   }
   return out;
 }
+// Legt alleen de bewerkte teksten uit de backoffice over de lokale preset heen.
+// Timing, klank, humming en audio van de lokale preset blijven intact.
+// Lege backend-waarden vallen terug op de bestaande lokale tekst.
+function overlayProtocolTexts(preset, row, phaseRows) {
+  const set = (obj, key, val) => { if (val !== undefined && val !== null && String(val).trim() !== "") obj[key] = val; };
+  set(preset, "text", row.short_description);
+  set(preset, "productText", row.long_description);
+  set(preset, "label", row.title);
+  const phs = (phaseRows || []).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+  if (Array.isArray(preset.phases) && preset.phases.length) {
+    preset.phases.forEach((lp, i) => {
+      const bp = phs[i];
+      if (!bp) return;
+      set(lp, "label", bp.title);
+      if (lp.mode === "breath") {
+        set(lp, "cueIn", bp.cue_in); set(lp, "cueOut", bp.cue_out);
+        set(lp, "subIn", bp.sub_in); set(lp, "subOut", bp.sub_out);
+      } else {
+        set(lp, "cue", bp.cue); set(lp, "sub", bp.instruction_text);
+      }
+    });
+  } else {
+    // Enkelvoudig ritme: backend heeft één ademfase met in/uit-teksten.
+    const bp = phs.find(x => x.type === "breath") || phs[0];
+    if (bp) {
+      set(preset, "inhaleCue", bp.cue_in); set(preset, "inhaleSub", bp.sub_in);
+      set(preset, "exhaleCue", bp.cue_out); set(preset, "exhaleSub", bp.sub_out);
+      set(preset, "exhaleLabel", bp.title);
+    }
+  }
+}
 async function bootstrapBackend() {
   try {
     if (typeof getActiveConfig !== "function" || !getActiveConfig().useBackend) return; // standaard uit → lokaal
-    const loaded = await loadProtocolsFromBackend();
-    if (!loaded || !Object.keys(loaded).length) { console.info("PhytoForsan: backend leeg/onbereikbaar — lokale protocollen blijven actief."); return; }
-    // Vervang de presets door de backend-versie en herteken
-    Object.keys(presets).forEach(k => { delete presets[k]; });
-    Object.assign(presets, loaded);
+    const data = await fetchBackendData();
+    if (!data || !data.prot.length) { console.info("PhytoForsan: backend leeg/onbereikbaar — lokale protocollen blijven actief."); return; }
+    const catSlug = Object.fromEntries(data.cats.map(c => [c.id, c.slug]));
+    let overlaid = 0, added = 0;
+    for (const row of data.prot) {
+      const phs = data.phases.filter(x => x.protocol_id === row.id);
+      if (presets[row.slug]) {
+        overlayProtocolTexts(presets[row.slug], row, phs); // bestaande preset: alleen teksten
+        overlaid++;
+      } else {
+        presets[row.slug] = normalizeProtocol(row, phs, catSlug[row.category_id]); // nieuw protocol
+        added++;
+      }
+    }
     renderProtocols();
-    applyPreset(Object.keys(presets)[0]);
-    console.info("PhytoForsan: protocollen geladen uit Supabase.");
+    applyPreset(activePreset && presets[activePreset] ? activePreset : Object.keys(presets)[0]);
+    console.info(`PhytoForsan: teksten uit Supabase toegepast (${overlaid} bijgewerkt, ${added} nieuw).`);
   } catch (e) {
     console.info("PhytoForsan: backend-load mislukt, lokale protocollen blijven actief.", e);
   }
@@ -4935,11 +4981,20 @@ function exportLocalProtocolsAsJson() {
       requires_deep_access: !!p.requiresDeepAccess, requires_premium: !!p.requiresPremium,
       status: "published", sort_order: i, night: !!p.night
     },
-    phases: (p.phases || (p.meditationMode ? [] : [{ label:"Ademritme", duration:getSessionTotalSeconds(p), mode:"breath", inhale:p.inhale,hold:p.hold,exhale:p.exhale,pause:p.pause, cue:"IN" }]))
+    phases: (p.phases || (p.meditationMode ? [] : [{
+        label: p.exhaleLabel || "Ademritme", duration:getSessionTotalSeconds(p), mode:"breath",
+        inhale:p.inhale,hold:p.hold,exhale:p.exhale,pause:p.pause,
+        cueIn: p.inhaleCue || "IN", cueOut: p.exhaleCue || "UIT",
+        subIn: p.inhaleSub || "adem rustig door de neus in", subOut: p.exhaleSub || "" }]))
       .map((ph, j) => ({ sort_order:j, title:ph.label||"", type:ph.mode==="breath"?"breath":"free",
         duration_seconds:Number(ph.duration||0), inhale_seconds:Number(ph.inhale||0), hold_seconds:Number(ph.hold||0),
         exhale_seconds:Number(ph.exhale||0), pause_seconds:Number(ph.pause||0),
-        instruction_text:ph.sub||ph.subIn||"", visual_mode:ph.visualMode||null, cue:ph.cue||ph.cueIn||null }))
+        instruction_text:ph.sub||"", visual_mode:ph.visualMode||null,
+        cue:ph.cue||null,
+        cue_in: ph.mode==="breath" ? (ph.cueIn||"IN") : null,
+        cue_out: ph.mode==="breath" ? (ph.cueOut||"UIT") : null,
+        sub_in: ph.mode==="breath" ? (ph.subIn||"") : null,
+        sub_out: ph.mode==="breath" ? (ph.subOut||"") : null }))
   }));
   const json = JSON.stringify(data, null, 2);
   console.log(json);
