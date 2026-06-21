@@ -6,6 +6,7 @@
 <title>PhytoForsan — Backoffice</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
+<script src="js/seed-protocols.js"></script>
 <style>
   :root { --deep:#002f2d; --green:#69b626; --line:rgba(18,55,52,.14); --muted:#5f7470; --page:#f3f6f2; }
   * { box-sizing:border-box; }
@@ -303,9 +304,12 @@ async function importSeed() {
   msg.textContent = "Bezig met importeren…";
   btn.disabled = true;
   try {
-    const res = await fetch("supabase/seed-protocols.json", { cache:"no-store" });
-    if (!res.ok) throw new Error("seed-protocols.json niet gevonden (" + res.status + ")");
-    const seed = await res.json();
+    let seed = Array.isArray(window.SEED_PROTOCOLS) ? window.SEED_PROTOCOLS : null;
+    if (!seed) {
+      const res = await fetch("supabase/seed-protocols.json", { cache:"no-store" });
+      if (!res.ok) throw new Error("seed-protocols.json niet gevonden (" + res.status + ")");
+      seed = await res.json();
+    }
 
     // Categorieën resolven/aanmaken op slug
     let cats = await dbList("categories");
