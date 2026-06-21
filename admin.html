@@ -287,12 +287,79 @@ async function renderProtocols() {
     </tr>`;
   }).join("");
   tabBody.innerHTML = `<div class="card">
-    <div class="toolbar"><h2 class="grow">Protocollen</h2><button class="btn" id="newProtocol">+ Nieuw protocol</button></div>
+    <div class="toolbar"><h2 class="grow">Protocollen</h2><button class="btn secondary" id="importSeed">Importeer protocollen</button><button class="btn" id="newProtocol">+ Nieuw protocol</button></div>
+    <div id="importMsg" class="muted" style="margin-bottom:8px"></div>
     <table><thead><tr><th>Titel</th><th>Categorie</th><th>Toegang</th><th>Duur</th><th>Status</th><th></th></tr></thead>
     <tbody>${rows || '<tr><td colspan="6" class="muted">Nog geen protocollen.</td></tr>'}</tbody></table>
   </div>`;
   document.getElementById("newProtocol").addEventListener("click", () => editProtocol(null));
+  document.getElementById("importSeed").addEventListener("click", importSeed);
   tabBody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editProtocol(b.dataset.edit)));
+}
+
+async function importSeed() {
+  const msg = document.getElementById("importMsg");
+  const btn = document.getElementById("importSeed");
+  msg.textContent = "Bezig met importeren…";
+  btn.disabled = true;
+  try {
+    const res = await fetch("supabase/seed-protocols.json", { cache:"no-store" });
+    if (!res.ok) throw new Error("seed-protocols.json niet gevonden (" + res.status + ")");
+    const seed = await res.json();
+
+    // Categorieën resolven/aanmaken op slug
+    let cats = await dbList("categories");
+    const catBySlug = {};
+    cats.forEach(c => { catBySlug[c.slug] = c; });
+    const titleFor = (slug) => slug.charAt(0).toUpperCase() + slug.slice(1);
+    let order = cats.length;
+    for (const entry of seed) {
+      const slug = entry.protocol.category_slug;
+      if (slug && !catBySlug[slug]) {
+        const c = await dbUpsert("categories", { slug, title:titleFor(slug), description:"", sort_order:order++, status:"published" });
+        catBySlug[slug] = c;
+      }
+    }
+
+    const existing = await dbList("protocols");
+    const bySlug = {}; existing.forEach(p => { bySlug[p.slug] = p; });
+    let created = 0, updated = 0;
+    for (const entry of seed) {
+      const src = entry.protocol;
+      const cat = catBySlug[src.category_slug];
+      const prev = bySlug[src.slug];
+      const rec = {
+        ...(prev ? { id: prev.id } : {}),
+        slug: src.slug, title: src.title, category_id: cat ? cat.id : null,
+        group_name: src.group_name || null,
+        short_description: src.short_description || "", long_description: src.long_description || "",
+        access_tier: src.access_tier || "free",
+        requires_deep_access: !!src.requires_deep_access, requires_premium: !!src.requires_premium,
+        status: src.status || "draft", sort_order: src.sort_order || 0, night: !!src.night
+      };
+      const saved = await dbUpsert("protocols", rec);
+      if (prev) updated++; else created++;
+
+      // Bestaande fases vervangen
+      const oldPhases = await dbList("protocol_phases", { protocol_id: saved.id });
+      for (const op of oldPhases) await dbDelete("protocol_phases", op.id);
+      for (const ph of (entry.phases || [])) {
+        await dbUpsert("protocol_phases", {
+          protocol_id: saved.id, sort_order: ph.sort_order || 0, title: ph.title || "",
+          type: ph.type || "free", duration_seconds: Number(ph.duration_seconds || 0),
+          inhale_seconds: Number(ph.inhale_seconds || 0), hold_seconds: Number(ph.hold_seconds || 0),
+          exhale_seconds: Number(ph.exhale_seconds || 0), pause_seconds: Number(ph.pause_seconds || 0),
+          instruction_text: ph.instruction_text || "", visual_mode: ph.visual_mode || null, cue: ph.cue || ""
+        });
+      }
+    }
+    msg.textContent = `Klaar: ${created} nieuw, ${updated} bijgewerkt (van ${seed.length}).`;
+    setTimeout(renderProtocols, 1200);
+  } catch (e) {
+    msg.textContent = "Import mislukt: " + (e.message || e);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function editProtocol(id) {
