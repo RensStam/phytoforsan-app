@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.0.4</span>
+    <span class="env-badge" id="backendVersion">backend v1.0.5</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -736,9 +736,10 @@ async function renderUsers() {
       <td>${esc(u.birthdate)}</td>
       <td><select class="u_role">${sel(u.role,["user","tester","admin"])}</select></td>
       <td><select class="u_access">${sel(u.access_level,["free","deep","premium","admin"])}</select></td>
-      <td class="actions"><div class="row-actions"><button class="btn small u_save">Opslaan</button>${(session && u.id===session.id) ? "" : `<button class="btn small danger u_del">Verwijderen</button>`}</div></td></tr>`).join("")||'<tr><td colspan="6" class="muted">Geen gebruikers.</td></tr>'}</tbody></table>
+      <td class="actions"><div class="row-actions"><button class="btn small secondary u_edit">Bewerken</button><button class="btn small u_save">Opslaan</button>${(session && u.id===session.id) ? "" : `<button class="btn small danger u_del">Verwijderen</button>`}</div></td></tr>`).join("")||'<tr><td colspan="6" class="muted">Geen gebruikers.</td></tr>'}</tbody></table>
     <p class="msg hidden" id="u_msg"></p></div>`;
   tabBody.querySelectorAll("tr[data-u]").forEach(row=>{
+    row.querySelector(".u_edit")?.addEventListener("click", ()=> editUser(row.dataset.u));
     row.querySelector(".u_save")?.addEventListener("click", async ()=>{
       const id=row.dataset.u;
       const u=(await dbList("profiles")).find(x=>x.id===id);
@@ -761,6 +762,54 @@ async function renderUsers() {
         renderUsers();
       } catch(e){ msg.className="msg err"; msg.textContent="Verwijderen mislukt: "+(e.message||e); msg.classList.remove("hidden"); }
     });
+  });
+}
+
+// Volledig bewerkscherm + voortgang per gebruiker
+async function editUser(id) {
+  const u = (await dbList("profiles")).find(x => x.id === id) || { id };
+  // Voortgang ophalen (admin mag user_state lezen)
+  let sessions = [];
+  if (cfg.useBackend && sb) {
+    try { const { data } = await sb.from("user_state").select("sessions").eq("user_id", id).maybeSingle(); sessions = (data && data.sessions) || []; } catch {}
+  }
+  const totalMin = Math.round(sessions.reduce((s,x)=>s+Number(x.s||0),0)/60);
+  const lastDate = sessions.length ? sessions[sessions.length-1].d : "—";
+  const recent = sessions.slice(-10).reverse().map(x=>`<tr><td>${esc(x.d)}</td><td>${esc(x.p)}</td><td>${Math.round((x.s||0)/60)} min</td><td>${x.c?"afgerond":"gestopt"}</td></tr>`).join("");
+  const f = (l,k,type="text") => `<div><label>${l}</label><input id="eu_${k}" type="${type}" value="${esc(u[k])}"></div>`;
+  const selOpt = (v,opts)=>opts.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("");
+  tabBody.innerHTML = `<div class="card">
+    <div class="toolbar"><button class="btn secondary small" id="euBack">← Terug</button><h2 class="grow">Gebruiker bewerken</h2></div>
+    <p class="muted">${esc(u.email)}</p>
+    <div class="row">${f("Voornaam","first_name")}${f("Achternaam","last_name")}</div>
+    <div class="row">
+      <div><label>Geslacht</label><select id="eu_sex">${selOpt(u.sex||"",["","man","vrouw","anders","onbekend"])}</select></div>
+      ${f("Geboortedatum","birthdate","date")}
+    </div>
+    ${f("Telefoon","phone")}
+    <div class="row">${f("Straat","street")}${f("Huisnummer","house_number")}</div>
+    <div class="row">${f("Postcode","postal_code")}${f("Woonplaats","city")}</div>
+    ${f("Land","country")}
+    <div class="row">
+      <div><label>Rol</label><select id="eu_role">${selOpt(u.role||"user",["user","tester","admin"])}</select></div>
+      <div><label>Toegangsniveau</label><select id="eu_access">${selOpt(u.access_level||"free",["free","deep","premium","admin"])}</select></div>
+    </div>
+    <button class="btn" id="euSave" style="margin-top:12px">Opslaan</button>
+    <p class="msg hidden" id="euMsg"></p>
+    <h3 style="margin-top:18px">Voortgang</h3>
+    <p class="muted">${sessions.length} sessies · ${totalMin} min totaal · laatste: ${esc(lastDate)}</p>
+    <table><thead><tr><th>Datum</th><th>Protocol</th><th>Duur</th><th>Status</th></tr></thead>
+    <tbody>${recent || '<tr><td colspan="4" class="muted">Nog geen sessies.</td></tr>'}</tbody></table>
+  </div>`;
+  document.getElementById("euBack").addEventListener("click", renderUsers);
+  document.getElementById("euSave").addEventListener("click", async () => {
+    const msg = document.getElementById("euMsg");
+    const g = (k) => document.getElementById("eu_"+k).value || null;
+    const rec = { id, first_name:g("first_name"), last_name:g("last_name"), sex:g("sex"), birthdate:g("birthdate"),
+      phone:g("phone"), street:g("street"), house_number:g("house_number"), postal_code:g("postal_code"),
+      city:g("city"), country:g("country"), role:document.getElementById("eu_role").value, access_level:document.getElementById("eu_access").value };
+    try { await dbUpsert("profiles", rec); msg.className="msg ok"; msg.textContent="Opgeslagen."; msg.classList.remove("hidden"); }
+    catch(e){ msg.className="msg err"; msg.textContent="Fout bij opslaan: "+(e.message||e); msg.classList.remove("hidden"); }
   });
 }
 
