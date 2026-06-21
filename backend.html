@@ -53,6 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
+    <span class="env-badge" id="backendVersion">backend v1.0.1</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -454,7 +455,7 @@ async function editProtocol(id) {
     <div class="toolbar"><button class="btn secondary small" id="backList">← Terug</button><h2 class="grow">${id?"Protocol bewerken":"Nieuw protocol"}</h2></div>
     <div class="row">
       <div><label>Titel *</label><input id="f_title" value="${esc(p.title)}"></div>
-      <div><label>Slug * (uniek)</label><input id="f_slug" value="${esc(p.slug)}"></div>
+      <div><label>Slug * (vaste ID${id ? ", niet wijzigen" : ""})</label><input id="f_slug" value="${esc(p.slug)}"${id ? " readonly title='De slug is een vaste technische ID en koppelt het protocol aan tegels, klank en beveiliging. Hernoem via Titel.' style='background:#f0f0f0;color:#777;cursor:not-allowed'" : ""}></div>
     </div>
     <div class="row">
       <div><label>Categorie *</label><select id="f_cat">${opt(cats,p.category_id,c=>c.title)}</select></div>
