@@ -1546,7 +1546,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.2.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.2.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -4973,19 +4973,25 @@ function overlayProtocolTexts(preset, row, phaseRows) {
 function applyAdminData(data) {
   const catSlug = Object.fromEntries(data.cats.map(c => [c.id, c.slug]));
   const mediaById = Object.fromEntries((data.media || []).map(m => [m.id, m]));
+  // Bestaande preset-sleutel ongeacht hoofd-/kleine letters vinden (voorkomt kopieën
+  // als een slug per ongeluk anders is geschreven, bv. longExhale vs longexhale).
+  const keyByLower = {};
+  Object.keys(presets).forEach(k => { keyByLower[k.toLowerCase()] = k; });
   let overlaid = 0, added = 0;
   for (const row of data.prot) {
     if (row.status && row.status !== "published") continue; // concepten/gearchiveerd niet tonen
     const phs = data.phases.filter(x => x.protocol_id === row.id);
     const img = resolveMediaUrl(mediaById[row.image_id]);
-    if (presets[row.slug]) {
-      overlayProtocolTexts(presets[row.slug], row, phs);
-      if (img) presets[row.slug].image = img;
+    const matchKey = presets[row.slug] ? row.slug : keyByLower[(row.slug || "").toLowerCase()];
+    if (matchKey && presets[matchKey]) {
+      overlayProtocolTexts(presets[matchKey], row, phs);
+      if (img) presets[matchKey].image = img;
       overlaid++;
     } else {
       const np = normalizeProtocol(row, phs, catSlug[row.category_id]);
       if (img) np.image = img;
       presets[row.slug] = np;
+      keyByLower[(row.slug || "").toLowerCase()] = row.slug;
       added++;
     }
   }

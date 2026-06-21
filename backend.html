@@ -488,7 +488,9 @@ function readProtocolForm() {
   return {
     id: editingProtocolId,
     title: document.getElementById("f_title").value.trim(),
-    slug: document.getElementById("f_slug").value.trim().toLowerCase().replace(/\s+/g,"-"),
+    // Slug niet naar kleine letters forceren: bestaande slugs (bv. longExhale) moeten
+    // exact gelijk blijven, anders herkent de app het protocol niet en ontstaat een kopie.
+    slug: document.getElementById("f_slug").value.trim().replace(/\s+/g,"-"),
     category_id: document.getElementById("f_cat").value || null,
     group_name: document.getElementById("f_group").value.trim() || null,
     short_description: document.getElementById("f_short").value,
@@ -532,20 +534,27 @@ async function saveProtocolForm() {
       return;
     }
   }
-  const phases = editingProtocolId ? await dbList("protocol_phases", { protocol_id: editingProtocolId }) : [];
-  if (p.status === "published") {
-    const errs = await validateForPublish(p, phases);
-    if (errs.length) {
-      p.status = "draft";
-      msg.className = "msg err"; msg.textContent = "Kan niet publiceren (status blijft draft): " + errs.join(" ");
-      msg.classList.remove("hidden");
-      document.getElementById("f_status").value = "draft";
-    }
-  }
+  const wantPublish = p.status === "published";
   try {
+    // 1. Protocol opslaan (levert id op bij een nieuw protocol)
     const saved = await dbUpsert("protocols", p);
     editingProtocolId = saved.id;
-    if (!(p.status === "draft" && msg.textContent)) { msg.className="msg ok"; msg.textContent="Opgeslagen."; msg.classList.remove("hidden"); }
+    // 2. Alle fases uit het formulier in één keer meeopslaan
+    await savePhasesFromDom();
+    // 3. Pas nu publicatie valideren (fases bestaan nu)
+    if (wantPublish) {
+      const phases = await dbList("protocol_phases", { protocol_id: editingProtocolId });
+      const errs = await validateForPublish(p, phases);
+      if (errs.length) {
+        await dbUpsert("protocols", { ...saved, status: "draft" });
+        document.getElementById("f_status").value = "draft";
+        msg.className = "msg err"; msg.textContent = "Opgeslagen als concept (kan nog niet publiceren): " + errs.join(" ");
+        msg.classList.remove("hidden");
+        renderPhases();
+        return;
+      }
+    }
+    msg.className = "msg ok"; msg.textContent = "Opgeslagen."; msg.classList.remove("hidden");
     renderPhases();
   } catch (e) { msg.className="msg err"; msg.textContent="Fout bij opslaan: "+(e.message||e); msg.classList.remove("hidden"); }
 }
@@ -581,29 +590,36 @@ async function renderPhases() {
       <label>Subtekst bij inademen</label><textarea class="ph_subin">${esc(f.sub_in)}</textarea>
       <label>Subtekst bij uitademen</label><textarea class="ph_subout">${esc(f.sub_out)}</textarea>
       <label>Instructietekst (rustfase)</label><textarea class="ph_instr">${esc(f.instruction_text)}</textarea>
-      <div style="margin-top:8px;display:flex;gap:8px"><button class="btn small ph_save">Fase opslaan</button><button class="btn small danger ph_del">Verwijderen</button></div>
+      <div style="margin-top:8px;display:flex;gap:8px"><button class="btn small danger ph_del">Fase verwijderen</button></div>
     </div>`).join("")}
-    <button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>`;
+    <button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>
+    <p class="muted" style="margin-top:6px">Wijzigingen in de fases worden mee opgeslagen met de knop <b>Opslaan</b> bovenaan.</p>`;
   document.getElementById("addPhase").addEventListener("click", async () => {
+    await savePhasesFromDom(); // bestaande wijzigingen niet verliezen
     await dbUpsert("protocol_phases", { protocol_id:editingProtocolId, sort_order:phases.length, title:"Nieuwe fase", type:"free", duration_seconds:60, inhale_seconds:0,hold_seconds:0,exhale_seconds:0,pause_seconds:0, instruction_text:"", visual_mode:"slowBreath", cue:"" });
     renderPhases();
   });
   wrap.querySelectorAll(".phase-row").forEach(rowEl => {
     const pid = rowEl.dataset.ph;
-    rowEl.querySelector(".ph_save").addEventListener("click", async () => {
-      const g=(c)=>rowEl.querySelector(c);
-      await dbUpsert("protocol_phases", { id:pid, protocol_id:editingProtocolId,
-        title:g(".ph_title").value, type:g(".ph_type").value, duration_seconds:Number(g(".ph_dur").value)||0,
-        inhale_seconds:Number(g(".ph_in").value)||0, hold_seconds:Number(g(".ph_hold").value)||0,
-        exhale_seconds:Number(g(".ph_ex").value)||0, pause_seconds:Number(g(".ph_pause").value)||0,
-        visual_mode:g(".ph_vis").value||null, cue:g(".ph_cue").value||null, sort_order:Number(g(".ph_sort").value)||0,
-        cue_in:g(".ph_cuein").value||null, cue_out:g(".ph_cueout").value||null,
-        sub_in:g(".ph_subin").value||null, sub_out:g(".ph_subout").value||null,
-        instruction_text:g(".ph_instr").value });
-      renderPhases();
-    });
-    rowEl.querySelector(".ph_del").addEventListener("click", async () => { await dbDelete("protocol_phases", pid); renderPhases(); });
+    rowEl.querySelector(".ph_del").addEventListener("click", async () => { if(confirm("Deze fase verwijderen?")){ await dbDelete("protocol_phases", pid); renderPhases(); } });
   });
+}
+
+// Leest alle fase-rijen uit het formulier en slaat ze op (gebruikt door Opslaan + Fase toevoegen).
+async function savePhasesFromDom() {
+  if (!editingProtocolId) return;
+  const rows = document.querySelectorAll("#phasesWrap .phase-row");
+  for (const rowEl of rows) {
+    const g = (c) => rowEl.querySelector(c);
+    await dbUpsert("protocol_phases", { id: rowEl.dataset.ph, protocol_id: editingProtocolId,
+      title:g(".ph_title").value, type:g(".ph_type").value, duration_seconds:Number(g(".ph_dur").value)||0,
+      inhale_seconds:Number(g(".ph_in").value)||0, hold_seconds:Number(g(".ph_hold").value)||0,
+      exhale_seconds:Number(g(".ph_ex").value)||0, pause_seconds:Number(g(".ph_pause").value)||0,
+      visual_mode:g(".ph_vis").value||null, cue:g(".ph_cue").value||null, sort_order:Number(g(".ph_sort").value)||0,
+      cue_in:g(".ph_cuein").value||null, cue_out:g(".ph_cueout").value||null,
+      sub_in:g(".ph_subin").value||null, sub_out:g(".ph_subout").value||null,
+      instruction_text:g(".ph_instr").value });
+  }
 }
 
 // ---------- Audio ----------
