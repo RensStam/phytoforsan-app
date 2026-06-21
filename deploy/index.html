@@ -1547,7 +1547,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.3.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.3.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1829,6 +1829,34 @@ canvas {
       </div>
       <button class="deep-gate-secondary" id="authLogoutBtn" type="button" style="margin-top:8px;display:none">Uitloggen</button>
       <p class="deep-gate-msg" id="authMsg" style="display:none"></p>
+    </div>
+
+    <!-- Blok 1b: Mijn gegevens (alleen ingelogd) -->
+    <div class="deep-gate-block" id="profileBlock" style="display:none">
+      <h3 class="deep-gate-h">Mijn gegevens</h3>
+      <p class="deep-gate-note">Optioneel. Je gegevens worden veilig bewaard bij je account en volgen mee op je apparaten.</p>
+      <div style="display:flex;gap:8px">
+        <input class="deep-gate-input" id="pfFirst" type="text" placeholder="Voornaam" style="flex:1">
+        <input class="deep-gate-input" id="pfLast" type="text" placeholder="Achternaam" style="flex:1">
+      </div>
+      <div style="display:flex;gap:8px">
+        <select class="deep-gate-input" id="pfSex" style="flex:1">
+          <option value="">Geslacht…</option><option value="man">Man</option><option value="vrouw">Vrouw</option><option value="anders">Anders</option><option value="onbekend">Zeg ik liever niet</option>
+        </select>
+        <input class="deep-gate-input" id="pfBirth" type="date" placeholder="Geboortedatum" style="flex:1">
+      </div>
+      <input class="deep-gate-input" id="pfPhone" type="tel" placeholder="Telefoon (optioneel)">
+      <div style="display:flex;gap:8px">
+        <input class="deep-gate-input" id="pfStreet" type="text" placeholder="Straat" style="flex:2">
+        <input class="deep-gate-input" id="pfHouse" type="text" placeholder="Nr." style="flex:1">
+      </div>
+      <div style="display:flex;gap:8px">
+        <input class="deep-gate-input" id="pfZip" type="text" placeholder="Postcode" style="flex:1">
+        <input class="deep-gate-input" id="pfCity" type="text" placeholder="Woonplaats" style="flex:2">
+      </div>
+      <input class="deep-gate-input" id="pfCountry" type="text" placeholder="Land">
+      <button class="primary-session-button" id="pfSave" type="button" style="margin-top:6px">Gegevens opslaan</button>
+      <p class="deep-gate-msg" id="pfMsg" style="display:none"></p>
     </div>
 
     <!-- Blok 2: Toegangscode (Verdieping) -->
@@ -2719,6 +2747,7 @@ function logSession(seconds, completed) {
   // Bewaar maximaal 1000 sessies
   while (log.length > 1000) log.shift();
   localStorage.setItem(SESSION_LOG_KEY, JSON.stringify(log));
+  if (typeof userStatePush === "function") userStatePush();   // voortgang naar account
 }
 let running = false;
 let sessionState = "idle"; // idle | running | paused | completed
@@ -3284,6 +3313,7 @@ function saveRhythm() {
     pause: els.pauseInput.value
   };
   localStorage.setItem(key, JSON.stringify(data));
+  if (typeof userStatePush === "function") userStatePush();   // instellingen naar account
 }
 
 function restoreRhythm() {
@@ -4580,6 +4610,8 @@ function updateAccessUI() {
   if (logoutBtn) logoutBtn.style.display = appAuth.user ? "" : "none";
   const accBtn = document.getElementById("accountBtn");
   if (accBtn) accBtn.textContent = appAuth.user ? "Account" : "Inloggen";
+  const profBlock = document.getElementById("profileBlock");
+  if (profBlock) profBlock.style.display = appAuth.user ? "" : "none";
 }
 function afterAccessChange() { renderProtocols(); updateAccessUI(); }
 
@@ -4599,10 +4631,90 @@ async function initAppAuth() {
 async function loadAppProfile(user) {
   appAuth.user = { id: user.id, email: user.email };
   try {
-    const { data } = await appSb.from("profiles").select("access_level").eq("id", user.id).maybeSingle();
+    const { data } = await appSb.from("profiles").select("*").eq("id", user.id).maybeSingle();
     appAuth.accessLevel = (data && data.access_level) || "free";
+    appAuth.profile = data || {};
+    fillProfileForm(appAuth.profile);
   } catch { appAuth.accessLevel = "free"; }
   afterAccessChange();
+  userStatePull();           // voortgang + instellingen ophalen/samenvoegen
+}
+
+// ── Profielformulier ──
+const PF_FIELDS = { pfFirst:"first_name", pfLast:"last_name", pfSex:"sex", pfBirth:"birthdate", pfPhone:"phone", pfStreet:"street", pfHouse:"house_number", pfZip:"postal_code", pfCity:"city", pfCountry:"country" };
+function fillProfileForm(p) {
+  p = p || {};
+  for (const [el, col] of Object.entries(PF_FIELDS)) {
+    const node = document.getElementById(el);
+    if (node) node.value = p[col] || "";
+  }
+}
+async function saveProfileForm() {
+  if (!appSb || !appAuth.user) { setGateMsg("pfMsg", "Log eerst in.", "err"); return; }
+  const rec = { id: appAuth.user.id };
+  for (const [el, col] of Object.entries(PF_FIELDS)) {
+    const node = document.getElementById(el);
+    rec[col] = node && node.value ? node.value : null;
+  }
+  rec.consent_at = new Date().toISOString();
+  setGateMsg("pfMsg", "Opslaan…", "");
+  const { error } = await appSb.from("profiles").update(rec).eq("id", appAuth.user.id);
+  if (error) { setGateMsg("pfMsg", error.message, "err"); return; }
+  setGateMsg("pfMsg", "Gegevens opgeslagen.", "ok");
+}
+
+// ── Voortgang + instellingen synchroniseren (per gebruiker) ──
+const RHYTHM_PREFIX = "phyto_rhythm_";
+function collectLocalSettings() {
+  const rhythms = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(RHYTHM_PREFIX)) { try { rhythms[k] = JSON.parse(localStorage.getItem(k)); } catch {} }
+  }
+  return { rhythms, volume: localStorage.getItem("phytoforsan_volume") };
+}
+function applySettingsBundle(s) {
+  if (!s) return;
+  if (s.rhythms) for (const [k, v] of Object.entries(s.rhythms)) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  if (s.volume != null) localStorage.setItem("phytoforsan_volume", s.volume);
+}
+function mergeSessions(a, b) {
+  const seen = new Set(); const out = [];
+  for (const s of [...(a || []), ...(b || [])]) {
+    const key = `${s.p}|${s.d}|${s.s}|${s.c}`;
+    if (!seen.has(key)) { seen.add(key); out.push(s); }
+  }
+  out.sort((x, y) => String(x.d || "").localeCompare(String(y.d || "")));
+  return out.slice(-1000);
+}
+async function userStatePull() {
+  if (!appSb || !appAuth.user) return;
+  try {
+    const { data } = await appSb.from("user_state").select("sessions,settings").eq("user_id", appAuth.user.id).maybeSingle();
+    const merged = mergeSessions(getSessionLog(), (data && data.sessions) || []);
+    localStorage.setItem(SESSION_LOG_KEY, JSON.stringify(merged));
+    if (data && data.settings) applySettingsBundle(data.settings);
+    await userStatePush(true);                 // samengevoegde staat terugschrijven
+    if (typeof renderProgress === "function") renderProgress();
+    if (typeof applyPreset === "function") applyPreset(activePreset);
+  } catch (e) { console.info("PhytoForsan: voortgang ophalen", e); }
+}
+let _statePushTimer = null;
+function userStatePush(immediate) {
+  if (!appSb || !appAuth.user) return;
+  clearTimeout(_statePushTimer);
+  const doPush = async () => {
+    try {
+      await appSb.from("user_state").upsert({
+        user_id: appAuth.user.id,
+        sessions: getSessionLog(),
+        settings: collectLocalSettings(),
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) { console.info("PhytoForsan: voortgang opslaan", e); }
+  };
+  if (immediate) return doPush();
+  _statePushTimer = setTimeout(doPush, 900);
 }
 
 // Zet ruwe Supabase-foutteksten om naar begrijpelijke Nederlandse uitleg.
@@ -4631,6 +4743,7 @@ function friendlyAuthError(msg, context) {
 
 document.getElementById("deepGateClose")?.addEventListener("click", closeDeepAccessGate);
 document.getElementById("accountBtn")?.addEventListener("click", () => openDeepAccessGate(null, "deep"));
+document.getElementById("pfSave")?.addEventListener("click", saveProfileForm);
 
 document.getElementById("authLoginBtn")?.addEventListener("click", async () => {
   if (!appSb) { setGateMsg("authMsg", "Inloggen is hier niet beschikbaar.", "err"); return; }

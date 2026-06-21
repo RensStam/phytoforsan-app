@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.0.3</span>
+    <span class="env-badge" id="backendVersion">backend v1.0.4</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -729,12 +729,14 @@ async function renderUsers() {
   const sel=(v,opts)=>opts.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("");
   tabBody.innerHTML = `<div class="card"><h2>Gebruikers</h2>
     <p class="muted">${cfg.useBackend?"Wijzigingen worden via Supabase opgeslagen (alleen admin via RLS).":"Mock-modus: alleen lokaal."}</p>
-    <table><thead><tr><th>E-mail</th><th>Rol</th><th>Toegang</th><th class="actions"></th></tr></thead>
+    <table><thead><tr><th>E-mail</th><th>Naam</th><th>Geb.datum</th><th>Rol</th><th>Toegang</th><th class="actions"></th></tr></thead>
     <tbody>${users.map(u=>`<tr data-u="${u.id}">
       <td>${esc(u.email)}</td>
+      <td>${esc([u.first_name,u.last_name].filter(Boolean).join(" "))}</td>
+      <td>${esc(u.birthdate)}</td>
       <td><select class="u_role">${sel(u.role,["user","tester","admin"])}</select></td>
       <td><select class="u_access">${sel(u.access_level,["free","deep","premium","admin"])}</select></td>
-      <td class="actions"><div class="row-actions"><button class="btn small u_save">Opslaan</button>${(session && u.id===session.id) ? "" : `<button class="btn small danger u_del">Verwijderen</button>`}</div></td></tr>`).join("")||'<tr><td colspan="4" class="muted">Geen gebruikers.</td></tr>'}</tbody></table>
+      <td class="actions"><div class="row-actions"><button class="btn small u_save">Opslaan</button>${(session && u.id===session.id) ? "" : `<button class="btn small danger u_del">Verwijderen</button>`}</div></td></tr>`).join("")||'<tr><td colspan="6" class="muted">Geen gebruikers.</td></tr>'}</tbody></table>
     <p class="msg hidden" id="u_msg"></p></div>`;
   tabBody.querySelectorAll("tr[data-u]").forEach(row=>{
     row.querySelector(".u_save")?.addEventListener("click", async ()=>{
