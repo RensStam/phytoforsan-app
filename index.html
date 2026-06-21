@@ -1547,7 +1547,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.3.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.3.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2776,6 +2776,29 @@ const bgAudioGain = {
 const bgAudio = new Audio();
 bgAudio.loop = true;
 let bgFadeTimer = null;
+
+// Achtergrondmuziek uit het backend (per protocol gekoppelde track) — speelt de
+// hele sessie, los van de hum-/klanklogica.
+const sessionMusic = new Audio();
+sessionMusic.preload = "none";
+function sessionMusicVolume() {
+  const cfg = presets[activePreset]?.bgMusic;
+  if (!cfg) return 0;
+  const base = Math.max(0, Number(els.volumeInput.value) / 100);
+  return Math.min(1, base * (cfg.volume == null ? 0.35 : cfg.volume));
+}
+function startSessionMusic() {
+  const cfg = presets[activePreset]?.bgMusic;
+  if (!cfg || !cfg.url) return;
+  sessionMusic.loop = cfg.loop !== false;
+  if (!sessionMusic.src.endsWith(cfg.url) && sessionMusic.src !== cfg.url) { sessionMusic.src = cfg.url; }
+  sessionMusic.volume = sessionMusicVolume();
+  sessionMusic.play().catch(() => {});
+}
+function stopSessionMusic() {
+  if (!sessionMusic.src) return;
+  try { sessionMusic.pause(); sessionMusic.currentTime = 0; } catch {}
+}
 
 function bgAudioVolume() {
   const base = Math.max(0, Number(els.volumeInput.value) / 100);
@@ -4019,6 +4042,7 @@ function triggerPhaseCues(phase) {
 
 function updateLiveVolume() {
   if (bgAudio && !bgAudio.paused) bgAudio.volume = bgAudioVolume();
+  if (sessionMusic && !sessionMusic.paused) sessionMusic.volume = sessionMusicVolume();
   if (!audioCtx || !toneOn) return;
   gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
   gainNode.gain.linearRampToValueAtTime(targetGain(), audioCtx.currentTime + 0.08);
@@ -4123,6 +4147,7 @@ function completeSession() {
   stopDroneEngine();
   stopBgAudio(true);
   stopBreathAmbient();
+  stopSessionMusic();
   // Eenmalig registreren
   if (!sessionLogged) { logSession(sessionDuration(), true); sessionLogged = true; }
   // Rustige eindstand tekenen (geen ademsturing meer)
@@ -4191,6 +4216,7 @@ async function start() {
   // Als we hervatten tijdens de hum-fase, direct audio starten
   if (lastPhaseKey === "exhale" && activePreset in bgAudioFiles) startBgAudio(false);
   if (presets[activePreset]?.breathingOnly) startBreathAmbient();
+  startSessionMusic();
   tick();
 }
 
@@ -4205,6 +4231,7 @@ function pause() {
   stopDroneEngine();
   stopBgAudio();
   stopBreathAmbient();
+  stopSessionMusic();
   cancelAnimationFrame(raf);
   updatePhase(elapsedBefore);
 }
@@ -4224,6 +4251,7 @@ function reset() {
   stopDroneEngine();
   stopBgAudio();
   stopBreathAmbient();
+  stopSessionMusic();
   cancelAnimationFrame(raf);
   // Herstel standaard ritme van het preset
   const preset = presets[activePreset];
@@ -5135,21 +5163,23 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
 async function fetchBackendData() {
   const client = (typeof createSupabaseClient === "function") ? createSupabaseClient() : null;
   if (!client) return null;
-  const [{ data: cats }, { data: prot }, { data: phases }, { data: media }] = await Promise.all([
+  const [{ data: cats }, { data: prot }, { data: phases }, { data: media }, { data: pAudio }, { data: tracks }] = await Promise.all([
     client.from("categories").select("*"),
     client.from("protocols").select("*").eq("status","published"),
     client.from("protocol_phases").select("*"),
-    client.from("media_files").select("*")
+    client.from("media_files").select("*"),
+    client.from("protocol_audio").select("*"),
+    client.from("audio_tracks").select("*")
   ]);
   if (!prot) return null;
-  return { cats: cats || [], prot, phases: phases || [], media: media || [] };
+  return { cats: cats || [], prot, phases: phases || [], media: media || [], protocol_audio: pAudio || [], audio_tracks: tracks || [] };
 }
 // Leest de lokale backoffice-data (local_mock) uit dezelfde browseropslag als admin.html.
 function readLocalAdminData() {
   try {
     const db = JSON.parse(localStorage.getItem("phyto_admin_mock"));
     if (!db || !Array.isArray(db.protocols)) return null;
-    return { cats: db.categories || [], prot: db.protocols || [], phases: db.protocol_phases || [], media: db.media_files || [] };
+    return { cats: db.categories || [], prot: db.protocols || [], phases: db.protocol_phases || [], media: db.media_files || [], protocol_audio: db.protocol_audio || [], audio_tracks: db.audio_tracks || [] };
   } catch { return null; }
 }
 async function loadProtocolsFromBackend() {
@@ -5216,6 +5246,16 @@ function overlayProtocol(preset, row, phaseRows) {
 function applyAdminData(data) {
   const catSlug = Object.fromEntries(data.cats.map(c => [c.id, c.slug]));
   const mediaById = Object.fromEntries((data.media || []).map(m => [m.id, m]));
+  const trackById = Object.fromEntries((data.audio_tracks || []).map(t => [t.id, t]));
+  // Achtergrondmuziek per protocol-id (rol = background, ingeschakeld, geldige URL).
+  const bgByProtocol = {};
+  for (const l of (data.protocol_audio || [])) {
+    if (l.audio_role !== "background" || l.enabled === false) continue;
+    const tr = trackById[l.audio_track_id];
+    if (tr && tr.storage_path && /^https?:/.test(tr.storage_path)) {
+      bgByProtocol[l.protocol_id] = { url: tr.storage_path, volume: (l.volume == null ? 0.35 : Number(l.volume)), loop: l.loop !== false };
+    }
+  }
   // Bestaande preset-sleutel ongeacht hoofd-/kleine letters vinden (voorkomt kopieën
   // als een slug per ongeluk anders is geschreven, bv. longExhale vs longexhale).
   const keyByLower = {};
@@ -5227,17 +5267,21 @@ function applyAdminData(data) {
     const phs = data.phases.filter(x => x.protocol_id === row.id);
     const img = resolveMediaUrl(mediaById[row.image_id]);
     const matchKey = presets[row.slug] ? row.slug : keyByLower[(row.slug || "").toLowerCase()];
+    let target;
     if (matchKey && presets[matchKey]) {
       overlayProtocol(presets[matchKey], row, phs);
       if (img) presets[matchKey].image = img;
+      target = presets[matchKey];
       overlaid++;
     } else {
       const np = normalizeProtocol(row, phs, catSlug[row.category_id]);
       if (img) np.image = img;
       presets[row.slug] = np;
       keyByLower[(row.slug || "").toLowerCase()] = row.slug;
+      target = np;
       added++;
     }
+    target.bgMusic = bgByProtocol[row.id] || null;   // achtergrondmuziek koppelen (of wissen)
   }
   // Autoritatief: presets die niet (meer) gepubliceerd zijn in het backend verwijderen.
   let removed = 0;
