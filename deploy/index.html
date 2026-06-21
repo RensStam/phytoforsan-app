@@ -1546,7 +1546,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.2.7</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.2.8</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -4940,41 +4940,56 @@ async function loadProtocolsFromBackend() {
   }
   return out;
 }
-// Legt alleen de bewerkte teksten uit de backoffice over de lokale preset heen.
-// Timing, klank, humming en audio van de lokale preset blijven intact.
-// Lege backend-waarden vallen terug op de bestaande lokale tekst.
-function overlayProtocolTexts(preset, row, phaseRows) {
-  const set = (obj, key, val) => { if (val !== undefined && val !== null && String(val).trim() !== "") obj[key] = val; };
-  set(preset, "text", row.short_description);
-  set(preset, "productText", row.long_description);
-  set(preset, "label", row.title);
+// Legt de bewerkte velden uit het backend over de lokale preset heen: teksten,
+// metadata (nacht, toegang, groep) én timing (in/uit/hold/pauze, duur). De klank-/
+// humming-/audio-logica van de lokale preset blijft intact. Lege backend-waarden
+// vallen terug op de bestaande lokale waarde.
+function overlayProtocol(preset, row, phaseRows) {
+  const setStr = (o, k, v) => { if (v !== undefined && v !== null && String(v).trim() !== "") o[k] = v; };
+  const setNum = (o, k, v) => { const n = Number(v); if (Number.isFinite(n)) o[k] = n; };
+  setStr(preset, "text", row.short_description);
+  setStr(preset, "productText", row.long_description);
+  setStr(preset, "label", row.title);
+  preset.night = !!row.night;
+  if (row.access_tier) preset.accessTier = row.access_tier;
+  preset.requiresDeepAccess = !!row.requires_deep_access;
+  preset.requiresPremium = !!row.requires_premium;
+  preset.group = row.group_name || null;
   const phs = (phaseRows || []).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
   if (Array.isArray(preset.phases) && preset.phases.length) {
     preset.phases.forEach((lp, i) => {
       const bp = phs[i];
       if (!bp) return;
-      set(lp, "label", bp.title);
+      setStr(lp, "label", bp.title);
+      setNum(lp, "duration", bp.duration_seconds);
+      setNum(lp, "inhale", bp.inhale_seconds); setNum(lp, "hold", bp.hold_seconds);
+      setNum(lp, "exhale", bp.exhale_seconds); setNum(lp, "pause", bp.pause_seconds);
       if (lp.mode === "breath") {
-        set(lp, "cueIn", bp.cue_in); set(lp, "cueOut", bp.cue_out);
-        set(lp, "subIn", bp.sub_in); set(lp, "subOut", bp.sub_out);
+        setStr(lp, "cueIn", bp.cue_in); setStr(lp, "cueOut", bp.cue_out);
+        setStr(lp, "subIn", bp.sub_in); setStr(lp, "subOut", bp.sub_out);
       } else {
-        set(lp, "cue", bp.cue); set(lp, "sub", bp.instruction_text);
+        setStr(lp, "cue", bp.cue); setStr(lp, "sub", bp.instruction_text);
       }
     });
   } else {
-    // Enkelvoudig ritme: backend heeft één ademfase met in/uit-teksten.
+    // Enkelvoudig ritme: backend heeft één ademfase met in/uit-teksten en timing.
     const bp = phs.find(x => x.type === "breath") || phs[0];
     if (bp) {
-      set(preset, "inhaleCue", bp.cue_in); set(preset, "inhaleSub", bp.sub_in);
-      set(preset, "exhaleCue", bp.cue_out); set(preset, "exhaleSub", bp.sub_out);
-      set(preset, "exhaleLabel", bp.title);
+      setStr(preset, "inhaleCue", bp.cue_in); setStr(preset, "inhaleSub", bp.sub_in);
+      setStr(preset, "exhaleCue", bp.cue_out); setStr(preset, "exhaleSub", bp.sub_out);
+      setStr(preset, "exhaleLabel", bp.title);
+      setNum(preset, "inhale", bp.inhale_seconds); setNum(preset, "hold", bp.hold_seconds);
+      setNum(preset, "exhale", bp.exhale_seconds); setNum(preset, "pause", bp.pause_seconds);
+      const total = phs.reduce((s, p) => s + Number(p.duration_seconds || 0), 0);
+      if (total > 0) preset.minutes = Math.max(1, Math.round(total / 60));
     }
   }
 }
-// Past backoffice-data (Supabase of lokaal) toe op de presets:
-// - bestaand protocol → alleen teksten + afbeelding overschrijven (timing/klank blijft intact)
+// Past backoffice-data (Supabase of lokaal) toe op de presets. Het backend is
+// autoritatief: alleen GEPUBLICEERDE protocollen verschijnen. Protocollen die je
+// depubliceert, archiveert of verwijdert verdwijnen daardoor ook uit de app.
+// - bestaand protocol (zelfde slug) → velden overschrijven (klank/audio blijft intact)
 // - nieuw, gepubliceerd protocol → volledig toevoegen
-// Alleen gepubliceerde protocollen verschijnen; concepten blijven verborgen.
 function applyAdminData(data) {
   const catSlug = Object.fromEntries(data.cats.map(c => [c.id, c.slug]));
   const mediaById = Object.fromEntries((data.media || []).map(m => [m.id, m]));
@@ -4982,14 +4997,15 @@ function applyAdminData(data) {
   // als een slug per ongeluk anders is geschreven, bv. longExhale vs longexhale).
   const keyByLower = {};
   Object.keys(presets).forEach(k => { keyByLower[k.toLowerCase()] = k; });
+  const published = data.prot.filter(r => !r.status || r.status === "published");
+  const publishedLower = new Set(published.map(r => (r.slug || "").toLowerCase()));
   let overlaid = 0, added = 0;
-  for (const row of data.prot) {
-    if (row.status && row.status !== "published") continue; // concepten/gearchiveerd niet tonen
+  for (const row of published) {
     const phs = data.phases.filter(x => x.protocol_id === row.id);
     const img = resolveMediaUrl(mediaById[row.image_id]);
     const matchKey = presets[row.slug] ? row.slug : keyByLower[(row.slug || "").toLowerCase()];
     if (matchKey && presets[matchKey]) {
-      overlayProtocolTexts(presets[matchKey], row, phs);
+      overlayProtocol(presets[matchKey], row, phs);
       if (img) presets[matchKey].image = img;
       overlaid++;
     } else {
@@ -5000,7 +5016,12 @@ function applyAdminData(data) {
       added++;
     }
   }
-  return { overlaid, added };
+  // Autoritatief: presets die niet (meer) gepubliceerd zijn in het backend verwijderen.
+  let removed = 0;
+  for (const key of Object.keys(presets)) {
+    if (!publishedLower.has(key.toLowerCase())) { delete presets[key]; removed++; }
+  }
+  return { overlaid, added, removed };
 }
 async function bootstrapBackend() {
   try {
@@ -5010,7 +5031,7 @@ async function bootstrapBackend() {
     const res = applyAdminData(data);
     renderProtocols();
     applyPreset(activePreset && presets[activePreset] ? activePreset : Object.keys(presets)[0]);
-    console.info(`PhytoForsan: backoffice-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw).`);
+    console.info(`PhytoForsan: backend-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw, ${res.removed} verborgen).`);
   } catch (e) {
     console.info("PhytoForsan: backoffice-load mislukt, lokale protocollen blijven actief.", e);
   }

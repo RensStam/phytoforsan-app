@@ -32,6 +32,8 @@
   button.btn.small { padding:6px 10px; font-size:.78rem; }
   table { width:100%; border-collapse:collapse; font-size:.84rem; }
   th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); }
+  th.actions, td.actions { text-align:right; white-space:nowrap; }
+  .row-actions { display:inline-flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; }
   th { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .pill { font-size:.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(18,55,52,.08); }
   .pill.published { background:rgba(105,182,38,.18); color:#3f6b1f; }
@@ -286,17 +288,17 @@ async function renderProtocols() {
       <td>${esc(p.access_tier)}</td>
       <td>${fmtDur(totalSeconds(ph))} · ${ph.length} fases</td>
       <td><span class="pill ${p.status}">${p.status}</span></td>
-      <td><button class="btn small secondary" data-edit="${p.id}">Bewerken</button>${p.status === "archived" ? ` <button class="btn small secondary" data-restore="${p.id}">Herstellen</button> <button class="btn small danger" data-del="${p.id}">Verwijderen</button>` : ""}</td>
+      <td class="actions"><div class="row-actions"><button class="btn small secondary" data-edit="${p.id}">Bewerken</button>${p.status === "archived" ? `<button class="btn small secondary" data-restore="${p.id}">Herstellen</button><button class="btn small danger" data-del="${p.id}">Verwijderen</button>` : ""}</div></td>
     </tr>`;
   }).join("");
   tabBody.innerHTML = `<div class="card">
     <div class="toolbar"><h2 class="grow">Protocollen</h2>
       <button class="btn secondary" id="exportAll">Exporteer alles</button>
-      <button class="btn secondary" id="importBtn">Importeer…</button>
+      <button class="btn secondary" id="importBtn">Importeren</button>
       <input type="file" id="importFile" accept="application/json,.json" style="display:none">
       <button class="btn" id="newProtocol">+ Nieuw protocol</button></div>
     <div id="importMsg" class="muted" style="margin-bottom:8px"></div>
-    <table><thead><tr><th>Titel</th><th>Categorie</th><th>Toegang</th><th>Duur</th><th>Status</th><th></th></tr></thead>
+    <table><thead><tr><th>Titel</th><th>Categorie</th><th>Toegang</th><th>Duur</th><th>Status</th><th class="actions"></th></tr></thead>
     <tbody>${rows || '<tr><td colspan="6" class="muted">Nog geen protocollen.</td></tr>'}</tbody></table>
   </div>`;
   document.getElementById("newProtocol").addEventListener("click", () => editProtocol(null));
@@ -642,8 +644,8 @@ async function savePhasesFromDom() {
 async function renderAudio() {
   const tracks = await dbList("audio_tracks");
   tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Audio-tracks</h2><button class="btn" id="newAudio">+ Nieuwe track</button></div>
-    <table><thead><tr><th>Titel</th><th>Maker</th><th>Licentie</th><th>storage_path</th><th></th></tr></thead>
-    <tbody>${tracks.map(t=>`<tr><td>${esc(t.title)}</td><td>${esc(t.artist)}</td><td>${esc(t.license)}</td><td class="muted">${esc(t.storage_path)}</td><td><button class="btn small secondary" data-edit="${t.id}">Bewerken</button></td></tr>`).join("")||'<tr><td colspan="5" class="muted">Nog geen audio.</td></tr>'}</tbody></table></div>
+    <table><thead><tr><th>Titel</th><th>Maker</th><th>Licentie</th><th>storage_path</th><th class="actions"></th></tr></thead>
+    <tbody>${tracks.map(t=>`<tr><td>${esc(t.title)}</td><td>${esc(t.artist)}</td><td>${esc(t.license)}</td><td class="muted">${esc(t.storage_path)}</td><td class="actions"><div class="row-actions"><button class="btn small secondary" data-edit="${t.id}">Bewerken</button></div></td></tr>`).join("")||'<tr><td colspan="5" class="muted">Nog geen audio.</td></tr>'}</tbody></table></div>
     <div id="audioForm"></div>`;
   document.getElementById("newAudio").addEventListener("click", ()=>editAudio(null));
   tabBody.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAudio(b.dataset.edit)));
@@ -676,8 +678,8 @@ const mediaThumb = (m, size=40) => {
 async function renderMedia() {
   const media = await dbList("media_files");
   tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Media</h2><button class="btn" id="newMedia">+ Nieuw bestand</button></div>
-    <table><thead><tr><th></th><th>Bestand</th><th>Type</th><th>Bron/pad</th><th>Licentie</th><th></th></tr></thead>
-    <tbody>${media.map(m=>`<tr><td>${mediaThumb(m)}</td><td>${esc(m.filename)}</td><td>${esc(m.type)}</td><td class="muted">${esc(m.data_url ? "(geüpload)" : m.storage_path)}</td><td>${esc(m.license)}</td><td><button class="btn small secondary" data-edit="${m.id}">Bewerken</button> <button class="btn small danger" data-del="${m.id}">Verwijderen</button></td></tr>`).join("")||'<tr><td colspan="6" class="muted">Nog geen media.</td></tr>'}</tbody></table></div>
+    <table><thead><tr><th></th><th>Bestand</th><th>Type</th><th>Bron/pad</th><th>Licentie</th><th class="actions"></th></tr></thead>
+    <tbody>${media.map(m=>`<tr><td>${mediaThumb(m)}</td><td>${esc(m.filename)}</td><td>${esc(m.type)}</td><td class="muted">${esc(m.data_url ? "(geüpload)" : m.storage_path)}</td><td>${esc(m.license)}</td><td class="actions"><div class="row-actions"><button class="btn small secondary" data-edit="${m.id}">Bewerken</button><button class="btn small danger" data-del="${m.id}">Verwijderen</button></div></td></tr>`).join("")||'<tr><td colspan="6" class="muted">Nog geen media.</td></tr>'}</tbody></table></div>
     <div id="mediaForm"></div>`;
   document.getElementById("newMedia").addEventListener("click", ()=>editMedia(null));
   tabBody.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editMedia(b.dataset.edit)));
@@ -725,12 +727,12 @@ async function renderUsers() {
   const sel=(v,opts)=>opts.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("");
   tabBody.innerHTML = `<div class="card"><h2>Gebruikers</h2>
     <p class="muted">${cfg.useBackend?"Wijzigingen worden via Supabase opgeslagen (alleen admin via RLS).":"Mock-modus: alleen lokaal."}</p>
-    <table><thead><tr><th>E-mail</th><th>Rol</th><th>Toegang</th><th></th></tr></thead>
+    <table><thead><tr><th>E-mail</th><th>Rol</th><th>Toegang</th><th class="actions"></th></tr></thead>
     <tbody>${users.map(u=>`<tr data-u="${u.id}">
       <td>${esc(u.email)}</td>
       <td><select class="u_role">${sel(u.role,["user","tester","admin"])}</select></td>
       <td><select class="u_access">${sel(u.access_level,["free","deep","premium","admin"])}</select></td>
-      <td><button class="btn small u_save">Opslaan</button></td></tr>`).join("")||'<tr><td colspan="4" class="muted">Geen gebruikers.</td></tr>'}</tbody></table></div>`;
+      <td class="actions"><div class="row-actions"><button class="btn small u_save">Opslaan</button></div></td></tr>`).join("")||'<tr><td colspan="4" class="muted">Geen gebruikers.</td></tr>'}</tbody></table></div>`;
   tabBody.querySelectorAll("tr[data-u]").forEach(row=>{
     row.querySelector(".u_save")?.addEventListener("click", async ()=>{
       const id=row.dataset.u;
