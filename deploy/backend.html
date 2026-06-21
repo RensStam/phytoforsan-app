@@ -188,6 +188,9 @@ async function dbDelete(table, id) {
 // =====================================================================
 async function initAuth() {
   if (cfg.useBackend) {
+    // Supabase staat aan → geen mock-login tonen.
+    document.getElementById("mockLoginBtn").style.display = "none";
+    document.getElementById("mockNotice").classList.add("hidden");
     sb = createSupabaseClient();
     if (!sb) {
       showLoginMsg("Supabase niet geconfigureerd. Vul je URL/anon key in js/config.js, of laat ze leeg voor lokale testmodus.");
