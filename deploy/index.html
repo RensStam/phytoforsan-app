@@ -1546,7 +1546,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.1.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.1.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3176,7 +3176,9 @@ const defaultCardIllustration = `<svg viewBox="0 0 60 60" xmlns="http://www.w3.o
 
 function renderLibraryCard(id, item, experimental = false, locked = false) {
   const meta = presetMeta[id] || { duration: "", desc: "" };
-  const illus = cardIllustrations[id] || defaultCardIllustration;
+  const illus = item.image
+    ? `<img src="${item.image}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`
+    : (cardIllustrations[id] || defaultCardIllustration);
   // Duur afleiden uit de centrale functie; meditatie houdt vrije duur
   const totalSec = getSessionTotalSeconds(item);
   const durationText = item.meditationMode ? "vrij" : (totalSec > 0 ? formatDuration(totalSec) : meta.duration);
@@ -4869,6 +4871,15 @@ function canUserAccessProtocol(userProfile, p) {
   if (tier === "deep") return lvl === "deep" || lvl === "premium";
   return true;
 }
+// Map een categorie-slug naar de interne app-categorie.
+function appCategoryFromSlug(slug) {
+  return ({ ademhaling:"breathing", humming:"humming", klank:"klank", meditatie:"meditatie", verdieping:"verdieping" })[slug] || slug || "breathing";
+}
+// Bepaal een bruikbare afbeeldings-URL uit een media-rij (data-URL, URL of pad).
+function resolveMediaUrl(m) {
+  if (!m) return null;
+  return m.data_url || m.storage_path || null;
+}
 // Zet een Supabase-protocolrij (+fases) om naar de interne preset-vorm.
 function normalizeProtocol(row, phaseRows, categorySlug) {
   const phs = (phaseRows || []).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(ph => ({
@@ -4883,7 +4894,7 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
   }));
   return {
     id: row.slug, slug: row.slug, label: row.title,
-    category: categorySlug || "breathing",
+    category: appCategoryFromSlug(categorySlug),
     sessionType: phs.length ? "phasedBreath" : "simpleBreath",
     text: row.short_description || "", product: row.title, productText: row.long_description || "",
     accessTier: row.access_tier, requiresDeepAccess: !!row.requires_deep_access, requiresPremium: !!row.requires_premium,
@@ -4896,13 +4907,22 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
 async function fetchBackendData() {
   const client = (typeof createSupabaseClient === "function") ? createSupabaseClient() : null;
   if (!client) return null;
-  const [{ data: cats }, { data: prot }, { data: phases }] = await Promise.all([
+  const [{ data: cats }, { data: prot }, { data: phases }, { data: media }] = await Promise.all([
     client.from("categories").select("*"),
     client.from("protocols").select("*").eq("status","published"),
-    client.from("protocol_phases").select("*")
+    client.from("protocol_phases").select("*"),
+    client.from("media_files").select("*")
   ]);
   if (!prot) return null;
-  return { cats: cats || [], prot, phases: phases || [] };
+  return { cats: cats || [], prot, phases: phases || [], media: media || [] };
+}
+// Leest de lokale backoffice-data (local_mock) uit dezelfde browseropslag als admin.html.
+function readLocalAdminData() {
+  try {
+    const db = JSON.parse(localStorage.getItem("phyto_admin_mock"));
+    if (!db || !Array.isArray(db.protocols)) return null;
+    return { cats: db.categories || [], prot: db.protocols || [], phases: db.protocol_phases || [], media: db.media_files || [] };
+  } catch { return null; }
 }
 async function loadProtocolsFromBackend() {
   const data = await fetchBackendData();
@@ -4946,28 +4966,42 @@ function overlayProtocolTexts(preset, row, phaseRows) {
     }
   }
 }
+// Past backoffice-data (Supabase of lokaal) toe op de presets:
+// - bestaand protocol → alleen teksten + afbeelding overschrijven (timing/klank blijft intact)
+// - nieuw, gepubliceerd protocol → volledig toevoegen
+// Alleen gepubliceerde protocollen verschijnen; concepten blijven verborgen.
+function applyAdminData(data) {
+  const catSlug = Object.fromEntries(data.cats.map(c => [c.id, c.slug]));
+  const mediaById = Object.fromEntries((data.media || []).map(m => [m.id, m]));
+  let overlaid = 0, added = 0;
+  for (const row of data.prot) {
+    if (row.status && row.status !== "published") continue; // concepten/gearchiveerd niet tonen
+    const phs = data.phases.filter(x => x.protocol_id === row.id);
+    const img = resolveMediaUrl(mediaById[row.image_id]);
+    if (presets[row.slug]) {
+      overlayProtocolTexts(presets[row.slug], row, phs);
+      if (img) presets[row.slug].image = img;
+      overlaid++;
+    } else {
+      const np = normalizeProtocol(row, phs, catSlug[row.category_id]);
+      if (img) np.image = img;
+      presets[row.slug] = np;
+      added++;
+    }
+  }
+  return { overlaid, added };
+}
 async function bootstrapBackend() {
   try {
-    if (typeof getActiveConfig !== "function" || !getActiveConfig().useBackend) return; // standaard uit → lokaal
-    const data = await fetchBackendData();
-    if (!data || !data.prot.length) { console.info("PhytoForsan: backend leeg/onbereikbaar — lokale protocollen blijven actief."); return; }
-    const catSlug = Object.fromEntries(data.cats.map(c => [c.id, c.slug]));
-    let overlaid = 0, added = 0;
-    for (const row of data.prot) {
-      const phs = data.phases.filter(x => x.protocol_id === row.id);
-      if (presets[row.slug]) {
-        overlayProtocolTexts(presets[row.slug], row, phs); // bestaande preset: alleen teksten
-        overlaid++;
-      } else {
-        presets[row.slug] = normalizeProtocol(row, phs, catSlug[row.category_id]); // nieuw protocol
-        added++;
-      }
-    }
+    const cfg = (typeof getActiveConfig === "function") ? getActiveConfig() : null;
+    const data = (cfg && cfg.useBackend) ? await fetchBackendData() : readLocalAdminData();
+    if (!data || !data.prot.length) return; // geen backoffice-data → lokale protocollen blijven actief
+    const res = applyAdminData(data);
     renderProtocols();
     applyPreset(activePreset && presets[activePreset] ? activePreset : Object.keys(presets)[0]);
-    console.info(`PhytoForsan: teksten uit Supabase toegepast (${overlaid} bijgewerkt, ${added} nieuw).`);
+    console.info(`PhytoForsan: backoffice-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw).`);
   } catch (e) {
-    console.info("PhytoForsan: backend-load mislukt, lokale protocollen blijven actief.", e);
+    console.info("PhytoForsan: backoffice-load mislukt, lokale protocollen blijven actief.", e);
   }
 }
 // Exporteer de huidige lokale protocollen als Supabase-seed (console: exportLocalProtocolsAsJson()).

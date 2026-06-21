@@ -402,6 +402,7 @@ async function editProtocol(id) {
       <div><label>requires_premium</label><select id="f_prem"><option value="false" ${!p.requires_premium?"selected":""}>nee</option><option value="true" ${p.requires_premium?"selected":""}>ja</option></select></div>
       <div><label>Nacht-tint</label><select id="f_night"><option value="false" ${!p.night?"selected":""}>nee</option><option value="true" ${p.night?"selected":""}>ja</option></select></div>
     </div>
+    <div id="f_img_preview" style="margin-top:8px"></div>
     <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" id="saveProtocol">Opslaan</button>
       ${id?'<button class="btn secondary" id="archiveProtocol">Archiveren</button>':""}
@@ -410,6 +411,14 @@ async function editProtocol(id) {
     <div id="phasesWrap"></div>
   </div>`;
   document.getElementById("backList").addEventListener("click", renderProtocols);
+  const imgSel = document.getElementById("f_img");
+  const imgPrev = document.getElementById("f_img_preview");
+  const renderImgPrev = () => {
+    const mm = media.find(x => x.id === imgSel.value);
+    const src = mm && (mm.data_url || mm.storage_path);
+    imgPrev.innerHTML = src ? `<img src="${esc(src)}" style="max-width:160px;max-height:120px;border-radius:8px;border:1px solid #ddd">` : "";
+  };
+  imgSel.addEventListener("change", renderImgPrev); renderImgPrev();
   document.getElementById("saveProtocol").addEventListener("click", saveProtocolForm);
   if (id) document.getElementById("archiveProtocol").addEventListener("click", async () => {
     const cur = (await dbList("protocols")).find(x=>x.id===id); cur.status="archived"; await dbUpsert("protocols", cur); renderProtocols();
@@ -558,29 +567,53 @@ async function editAudio(id) {
 }
 
 // ---------- Media ----------
+const mediaThumb = (m, size=40) => {
+  const src = m.data_url || m.storage_path;
+  return (m.type === "image" && src)
+    ? `<img src="${esc(src)}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:6px;background:#eee" alt="">`
+    : `<span class="muted">—</span>`;
+};
 async function renderMedia() {
   const media = await dbList("media_files");
   tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Media</h2><button class="btn" id="newMedia">+ Nieuw bestand</button></div>
-    <table><thead><tr><th>Bestand</th><th>Type</th><th>storage_path</th><th>Licentie</th><th></th></tr></thead>
-    <tbody>${media.map(m=>`<tr><td>${esc(m.filename)}</td><td>${esc(m.type)}</td><td class="muted">${esc(m.storage_path)}</td><td>${esc(m.license)}</td><td><button class="btn small secondary" data-edit="${m.id}">Bewerken</button></td></tr>`).join("")||'<tr><td colspan="5" class="muted">Nog geen media.</td></tr>'}</tbody></table></div>
+    <table><thead><tr><th></th><th>Bestand</th><th>Type</th><th>Bron/pad</th><th>Licentie</th><th></th></tr></thead>
+    <tbody>${media.map(m=>`<tr><td>${mediaThumb(m)}</td><td>${esc(m.filename)}</td><td>${esc(m.type)}</td><td class="muted">${esc(m.data_url ? "(geüpload)" : m.storage_path)}</td><td>${esc(m.license)}</td><td><button class="btn small secondary" data-edit="${m.id}">Bewerken</button> <button class="btn small danger" data-del="${m.id}">Verwijderen</button></td></tr>`).join("")||'<tr><td colspan="6" class="muted">Nog geen media.</td></tr>'}</tbody></table></div>
     <div id="mediaForm"></div>`;
   document.getElementById("newMedia").addEventListener("click", ()=>editMedia(null));
   tabBody.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editMedia(b.dataset.edit)));
+  tabBody.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",async()=>{ if(confirm("Dit mediabestand verwijderen?")){ await dbDelete("media_files", b.dataset.del); renderMedia(); }}));
 }
 async function editMedia(id) {
-  let m = id ? (await dbList("media_files")).find(x=>x.id===id) : { filename:"", type:"image", storage_path:"", alt_text:"", source:"", license:"", notes:"" };
+  let m = id ? (await dbList("media_files")).find(x=>x.id===id) : { filename:"", type:"image", storage_path:"", data_url:"", alt_text:"", source:"", license:"", notes:"" };
   const typeOpt=(v)=>["image","audio","document","license_proof","other"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
+  let dataUrl = m.data_url || "";
+  const previewSrc = () => dataUrl || document.getElementById("m_storage_path").value;
   document.getElementById("mediaForm").innerHTML = `<div class="card"><h3>${id?"Media bewerken":"Nieuw bestand"}</h3>
     <label>Bestandsnaam</label><input id="m_filename" value="${esc(m.filename)}">
     <label>Type</label><select id="m_type">${typeOpt(m.type)}</select>
-    <label>storage_path</label><input id="m_storage_path" value="${esc(m.storage_path)}" placeholder="tegels/voorbeeld.webp of bucket/pad">
+    <label>Afbeelding uploaden</label><input id="m_file" type="file" accept="image/*">
+    <p class="muted" style="margin:2px 0 8px">Of geef hieronder een URL / pad op. Een upload heeft voorrang.</p>
+    <label>URL of pad</label><input id="m_storage_path" value="${esc(m.storage_path)}" placeholder="tegels/voorbeeld.webp of https://…">
+    <div id="m_preview" style="margin:8px 0">${ (m.type==="image" && (dataUrl||m.storage_path)) ? `<img src="${esc(dataUrl||m.storage_path)}" style="max-width:160px;max-height:120px;border-radius:8px;border:1px solid #ddd">` : "" }</div>
     <label>Alt-tekst</label><input id="m_alt_text" value="${esc(m.alt_text)}">
     <label>Bron</label><input id="m_source" value="${esc(m.source)}">
     <label>Licentie</label><input id="m_license" value="${esc(m.license)}">
     <label>Notities</label><textarea id="m_notes">${esc(m.notes)}</textarea>
+    <p class="msg hidden" id="m_msg"></p>
     <button class="btn" id="saveMedia" style="margin-top:8px">Opslaan</button></div>`;
+  const prev = document.getElementById("m_preview");
+  const renderPrev = () => { const s = previewSrc(); prev.innerHTML = s ? `<img src="${esc(s)}" style="max-width:160px;max-height:120px;border-radius:8px;border:1px solid #ddd">` : ""; };
+  document.getElementById("m_storage_path").addEventListener("input", renderPrev);
+  document.getElementById("m_file").addEventListener("change", (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const msg = document.getElementById("m_msg");
+    if (file.size > 1.5*1024*1024) { msg.className="msg err"; msg.textContent="Afbeelding is groter dan 1,5 MB. Kies een kleiner bestand of gebruik een URL."; msg.classList.remove("hidden"); return; }
+    const reader = new FileReader();
+    reader.onload = () => { dataUrl = reader.result; if(!document.getElementById("m_filename").value) document.getElementById("m_filename").value = file.name; renderPrev(); };
+    reader.readAsDataURL(file);
+  });
   document.getElementById("saveMedia").addEventListener("click", async () => {
-    const rec = { id, filename:document.getElementById("m_filename").value, type:document.getElementById("m_type").value, storage_path:document.getElementById("m_storage_path").value, alt_text:document.getElementById("m_alt_text").value, source:document.getElementById("m_source").value, license:document.getElementById("m_license").value, notes:document.getElementById("m_notes").value };
+    const rec = { id, filename:document.getElementById("m_filename").value, type:document.getElementById("m_type").value, storage_path:document.getElementById("m_storage_path").value, data_url: dataUrl || null, alt_text:document.getElementById("m_alt_text").value, source:document.getElementById("m_source").value, license:document.getElementById("m_license").value, notes:document.getElementById("m_notes").value };
     if (!rec.id) delete rec.id;
     await dbUpsert("media_files", rec); renderMedia();
   });

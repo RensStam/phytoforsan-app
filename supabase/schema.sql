@@ -58,7 +58,8 @@ create table if not exists public.media_files (
   id uuid primary key default gen_random_uuid(),
   filename text not null,
   type text not null default 'image' check (type in ('image','audio','document','license_proof','other')),
-  storage_path text,
+  storage_path text,    -- URL of pad (bv. tegels/x.webp of https://…)
+  data_url text,        -- optioneel: ge-uploade afbeelding als data-URL (base64)
   alt_text text,
   source text,
   license text,
@@ -66,6 +67,7 @@ create table if not exists public.media_files (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+alter table public.media_files add column if not exists data_url text;
 
 -- ---------- 3. protocols ----------
 create table if not exists public.protocols (
