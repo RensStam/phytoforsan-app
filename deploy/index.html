@@ -1547,7 +1547,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.3.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -4472,6 +4472,7 @@ for (const input of [els.inhaleInput, els.holdInput, els.exhaleInput, els.pauseI
   input.addEventListener("input", syncUI);
 }
 els.volumeInput.addEventListener("input", () => {
+  _userChangedVolume = true;   // gebruiker heeft zelf gekozen → backend-standaard niet meer toepassen
   if (bgAudio && !bgAudio.paused) bgAudio.volume = bgAudioVolume();
 });
 
@@ -5171,24 +5172,38 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
 async function fetchBackendData() {
   const client = (typeof createSupabaseClient === "function") ? createSupabaseClient() : null;
   if (!client) return null;
-  const [{ data: cats }, { data: prot }, { data: phases }, { data: media }, { data: pAudio }, { data: tracks }] = await Promise.all([
+  const [{ data: cats }, { data: prot }, { data: phases }, { data: media }, { data: pAudio }, { data: tracks }, { data: settings }] = await Promise.all([
     client.from("categories").select("*"),
     client.from("protocols").select("*").eq("status","published"),
     client.from("protocol_phases").select("*"),
     client.from("media_files").select("*"),
     client.from("protocol_audio").select("*"),
-    client.from("audio_tracks").select("*")
+    client.from("audio_tracks").select("*"),
+    client.from("app_settings").select("*")
   ]);
   if (!prot) return null;
-  return { cats: cats || [], prot, phases: phases || [], media: media || [], protocol_audio: pAudio || [], audio_tracks: tracks || [] };
+  return { cats: cats || [], prot, phases: phases || [], media: media || [], protocol_audio: pAudio || [], audio_tracks: tracks || [], app_settings: settings || [] };
 }
 // Leest de lokale backoffice-data (local_mock) uit dezelfde browseropslag als admin.html.
 function readLocalAdminData() {
   try {
     const db = JSON.parse(localStorage.getItem("phyto_admin_mock"));
     if (!db || !Array.isArray(db.protocols)) return null;
-    return { cats: db.categories || [], prot: db.protocols || [], phases: db.protocol_phases || [], media: db.media_files || [], protocol_audio: db.protocol_audio || [], audio_tracks: db.audio_tracks || [] };
+    return { cats: db.categories || [], prot: db.protocols || [], phases: db.protocol_phases || [], media: db.media_files || [], protocol_audio: db.protocol_audio || [], audio_tracks: db.audio_tracks || [], app_settings: db.app_settings || [] };
   } catch { return null; }
+}
+// Past het standaard geluidsvolume uit het backend toe (alleen als de gebruiker
+// het zelf nog niet heeft aangepast in deze sessie).
+let _userChangedVolume = false;
+function applyDefaultVolume(settings) {
+  if (_userChangedVolume) return;
+  const row = (settings || []).find(s => s.key === "default_audio_volume");
+  if (!row || row.value == null || row.value === "") return;
+  let pct = Number(row.value);
+  if (!Number.isFinite(pct)) return;
+  if (pct <= 1) pct = pct * 100;            // ondersteun fractie (0.35) én percentage (35)
+  pct = Math.max(0, Math.min(100, Math.round(pct)));
+  if (els.volumeInput) { els.volumeInput.value = pct; if (els.volumeOut) els.volumeOut.textContent = pct + "%"; updateLiveVolume(); }
 }
 async function loadProtocolsFromBackend() {
   const data = await fetchBackendData();
@@ -5304,6 +5319,7 @@ async function bootstrapBackend() {
     const data = (cfg && cfg.useBackend) ? await fetchBackendData() : readLocalAdminData();
     if (!data || !data.prot.length) return; // geen backoffice-data → lokale protocollen blijven actief
     const res = applyAdminData(data);
+    applyDefaultVolume(data.app_settings);
     renderProtocols();
     applyPreset(activePreset && presets[activePreset] ? activePreset : Object.keys(presets)[0]);
     console.info(`PhytoForsan: backend-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw, ${res.removed} verborgen).`);

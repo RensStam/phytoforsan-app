@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.1.0</span>
+    <span class="env-badge" id="backendVersion">backend v1.1.1</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -948,9 +948,26 @@ async function renderCodes() {
 async function renderSettings() {
   const s = await dbList("app_settings");
   const map = Object.fromEntries(s.map(x=>[x.key,x.value]));
-  const keys = ["app_name","default_closing_title","default_closing_text","maintenance_mode","deep_access_enabled","default_audio_enabled","default_audio_volume"];
+  const labels = {
+    app_name: "App-naam",
+    default_closing_title: "Standaard afsluittitel",
+    default_closing_text: "Standaard afsluittekst",
+    default_audio_volume: "Standaard geluidsvolume (%)",
+    maintenance_mode: "Onderhoudsmodus (true/false)",
+    deep_access_enabled: "Verdieping ingeschakeld (true/false)",
+    default_audio_enabled: "Achtergrondgeluid standaard aan (true/false)"
+  };
+  const keys = ["app_name","default_closing_title","default_closing_text","default_audio_volume","maintenance_mode","deep_access_enabled","default_audio_enabled"];
+  const fieldHtml = (k) => {
+    if (k === "default_audio_volume") {
+      const v = map[k] != null && map[k] !== "" ? Math.round(Number(map[k]) <= 1 ? Number(map[k])*100 : Number(map[k])) : 50;
+      return `<label>${labels[k]}</label><input data-key="${k}" type="number" min="0" max="100" value="${v}">`;
+    }
+    return `<label>${labels[k]||k}</label><input data-key="${k}" value="${esc(map[k]??"")}">`;
+  };
   tabBody.innerHTML = `<div class="card"><h2>App-instellingen</h2>
-    ${keys.map(k=>`<label>${k}</label><input data-key="${k}" value="${esc(map[k]??"")}">`).join("")}
+    ${keys.map(fieldHtml).join("")}
+    <p class="muted" style="margin-top:6px">Het geluidsvolume geldt als startwaarde voor nieuwe gebruikers; ze kunnen het zelf nog bijstellen.</p>
     <button class="btn" id="saveSettings" style="margin-top:10px">Opslaan</button><p class="msg hidden" id="setMsg"></p></div>`;
   document.getElementById("saveSettings").addEventListener("click", async ()=>{
     for (const el of tabBody.querySelectorAll("[data-key]")) await dbUpsert("app_settings", { key:el.dataset.key, value:el.value });
