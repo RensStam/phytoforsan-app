@@ -1547,7 +1547,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.1</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -4496,8 +4496,28 @@ els.droneToggle.addEventListener("change", () => {
   syncUI();
 });
 
+// Herstart de lopende sessie vanaf het begin (geluid synchroon met het protocol).
+function restartSessionFromStart() {
+  running = false;
+  cancelAnimationFrame(raf);
+  stopDroneEngine();
+  stopBgAudio(true);
+  stopBreathAmbient();
+  stopSessionMusic(true);
+  elapsedBefore = 0;
+  sessionState = "idle";
+  lastPhaseKey = "ready";
+  start();   // begint alles (protocol + geluid) gelijk op
+}
+
 // Achtergrondgeluid toggle
 els.breathSoundToggle.addEventListener("change", () => {
+  // Aanzetten tijdens een (lopende of gepauzeerde) sessie → protocol opnieuw starten
+  // zodat het geluid altijd synchroon met het protocol meeloopt.
+  if (els.breathSoundToggle.checked && (running || sessionState === "paused")) {
+    restartSessionFromStart();
+    return;
+  }
   if (els.breathSoundToggle.checked && running && presets[activePreset]?.breathingOnly && !presets[activePreset]?.bgMusic) {
     startBreathAmbient();
   } else {
