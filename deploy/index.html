@@ -1547,7 +1547,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.3.6</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.3.7</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2796,9 +2796,9 @@ function startSessionMusic() {
   sessionMusic.volume = sessionMusicVolume();
   sessionMusic.play().catch(() => {});
 }
-function stopSessionMusic() {
+function stopSessionMusic(reset = true) {
   if (!sessionMusic.src) return;
-  try { sessionMusic.pause(); sessionMusic.currentTime = 0; } catch {}
+  try { sessionMusic.pause(); if (reset) sessionMusic.currentTime = 0; } catch {}
 }
 
 function bgAudioVolume() {
@@ -4232,7 +4232,7 @@ function pause() {
   stopDroneEngine();
   stopBgAudio();
   stopBreathAmbient();
-  stopSessionMusic();
+  stopSessionMusic(false);   // pauze: positie behouden, geen herstart bij hervatten
   cancelAnimationFrame(raf);
   updatePhase(elapsedBefore);
 }

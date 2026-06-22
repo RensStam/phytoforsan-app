@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.0.9</span>
+    <span class="env-badge" id="backendVersion">backend v1.1.0</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -534,6 +534,7 @@ async function renderProtocolAudio() {
       <div><label>Track</label><select id="pa_track">${opt(link && link.audio_track_id)}</select></div>
       <div><label>Volume (0–100%)</label><input id="pa_vol" type="number" min="0" max="100" value="${link ? Math.round((link.volume??0.35)*100) : 35}"></div>
     </div>
+    <label class="switch-label" style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="pa_loop" type="checkbox" ${ (link ? link.loop !== false : true) ? "checked" : "" }> Herhalen tot het einde van de sessie (uit = één keer afspelen)</label>
     <div id="pa_preview" style="margin-top:8px">${track && track.storage_path ? `<audio controls src="${esc(track.storage_path)}" style="width:100%"></audio>` : ""}</div>
     <div style="margin-top:8px"><button class="btn small" id="pa_save">Muziek opslaan</button></div>
     <p class="msg hidden" id="pa_msg"></p>`;
@@ -550,7 +551,8 @@ async function renderProtocolAudio() {
     try {
       // bestaande background-koppeling(en) opruimen, dan eventueel nieuwe zetten
       for (const l of links) await dbDelete("protocol_audio", l.id);
-      if (trackId) await dbUpsert("protocol_audio", { protocol_id: editingProtocolId, audio_track_id: trackId, audio_role: "background", enabled: true, loop: true, volume: vol });
+      const loop = document.getElementById("pa_loop").checked;
+      if (trackId) await dbUpsert("protocol_audio", { protocol_id: editingProtocolId, audio_track_id: trackId, audio_role: "background", enabled: true, loop, volume: vol });
       msg.className="msg ok"; msg.textContent="Muziekkoppeling opgeslagen."; msg.classList.remove("hidden");
       renderProtocolAudio();
     } catch (e) { msg.className="msg err"; msg.textContent="Fout: "+(e.message||e); msg.classList.remove("hidden"); }
