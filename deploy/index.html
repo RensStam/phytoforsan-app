@@ -1547,7 +1547,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.3.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.3.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1710,6 +1710,10 @@ canvas {
         <section class="control-group" id="breathingControls" style="display:none">
           <p class="section-title">Geluid</p>
           <div class="switch-row">
+            <label class="switch-label" id="breathSoundRow">
+              <span>Achtergrondgeluid</span>
+              <span class="switch"><input id="breathSoundToggle" type="checkbox"><span class="switch-track"></span></span>
+            </label>
             <label class="switch-label">
               <span>Geluid bij ademfase</span>
               <span class="switch"><input id="inhaleCueToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
@@ -1725,10 +1729,6 @@ canvas {
             <label class="switch-label">
               <span>Trillen bij rust</span>
               <span class="switch"><input id="vibrateToggleBreath" type="checkbox"><span class="switch-track"></span></span>
-            </label>
-            <label class="switch-label" id="breathSoundRow">
-              <span>Achtergrondgeluid</span>
-              <span class="switch"><input id="breathSoundToggle" type="checkbox"><span class="switch-track"></span></span>
             </label>
           </div>
         </section>
@@ -2790,6 +2790,7 @@ function sessionMusicVolume() {
 function startSessionMusic() {
   const cfg = presets[activePreset]?.bgMusic;
   if (!cfg || !cfg.url) return;
+  if (!els.breathSoundToggle?.checked) return;   // gekoppeld aan de Achtergrondgeluid-toggle
   sessionMusic.loop = cfg.loop !== false;
   if (!sessionMusic.src.endsWith(cfg.url) && sessionMusic.src !== cfg.url) { sessionMusic.src = cfg.url; }
   sessionMusic.volume = sessionMusicVolume();
@@ -3389,9 +3390,9 @@ function applyPreset(id) {
   // Geluid-sectie (geluid/tril-cues): voor alle geluidsprotocollen, niet bij meditatie
   const breathingControls = document.getElementById("breathingControls");
   if (breathingControls) breathingControls.style.display = presets[id]?.meditationMode ? "none" : "";
-  // Achtergrondgeluid (ambient pad) hoort alleen bij ademhaling
+  // Achtergrondgeluid: bij ademhaling (ambient pad) of als er een track gekoppeld is.
   const breathSoundRow = document.getElementById("breathSoundRow");
-  if (breathSoundRow) breathSoundRow.style.display = isBreathing ? "" : "none";
+  if (breathSoundRow) breathSoundRow.style.display = (isBreathing || presets[id]?.bgMusic) ? "" : "none";
   const preset = presets[id];
   els.inhaleInput.value = preset.inhale;
   els.holdInput.value = preset.hold;
@@ -4499,6 +4500,12 @@ els.breathSoundToggle.addEventListener("change", () => {
     startBreathAmbient();
   } else {
     stopBreathAmbient();
+  }
+  // Gekoppelde achtergrondmuziek volgt dezelfde toggle
+  if (els.breathSoundToggle.checked && running) {
+    startSessionMusic();
+  } else {
+    stopSessionMusic();
   }
 });
 
