@@ -1493,7 +1493,7 @@ canvas {
         </button>
         <details class="profile-item profile-item-details">
           <summary><span class="profile-item-icon">&#128274;</span><span>Privacy</span><span class="profile-item-arrow">&#8250;</span></summary>
-          <p class="profile-item-body">Al je gegevens (sessies, voortgang, voorkeuren) worden uitsluitend lokaal op je eigen apparaat opgeslagen. Er wordt niets naar een server verstuurd en er worden geen accounts of trackers gebruikt.</p>
+          <p class="profile-item-body">Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen trackers gebruikt.</p>
         </details>
         <div class="profile-item profile-item-static">
           <span class="profile-item-icon">&#127760;</span><span>Taal</span><span class="profile-item-value">Nederlands</span>
@@ -1512,7 +1512,7 @@ canvas {
           <summary><span class="profile-item-icon">&#10067;</span><span>Veelgestelde vragen</span><span class="profile-item-arrow">&#8250;</span></summary>
           <div class="profile-item-body">
             <p><strong>Hoe installeer ik de app?</strong><br>Open het menu (&#8942;) in je browser en kies "App installeren" of "Toevoegen aan startscherm".</p>
-            <p><strong>Waar worden mijn gegevens opgeslagen?</strong><br>Alles blijft lokaal op je apparaat. Niets wordt gedeeld.</p>
+            <p><strong>Waar worden mijn gegevens opgeslagen?</strong><br>Zonder account lokaal op je apparaat. Met een account worden je profiel en voortgang veilig bewaard, zodat ze op al je apparaten beschikbaar zijn.</p>
             <p><strong>Wat is humming?</strong><br>Zacht neuri&euml;n tijdens de uitademing. De trilling en de verlengde uitademing bieden een lichamelijk anker en kunnen ondersteunen bij ontspanning.</p>
             <p><strong>Hoe vaak kan ik oefenen?</strong><br>Dagelijks. Begin met &eacute;&eacute;n korte sessie per dag en bouw rustig op.</p>
           </div>
@@ -1547,7 +1547,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -4670,7 +4670,11 @@ function updateAccessUI() {
   const profBlock = document.getElementById("profileBlock");
   if (profBlock) profBlock.style.display = appAuth.user ? "" : "none";
 }
-function afterAccessChange() { renderProtocols(); updateAccessUI(); }
+function afterAccessChange() {
+  renderProtocols(); updateAccessUI();
+  try { if (typeof renderProfile === "function") renderProfile(); } catch {}
+  try { if (typeof updateGreeting === "function") updateGreeting(); } catch {}
+}
 
 // Auth-initialisatie: bestaande sessie ophalen en op wijzigingen reageren.
 async function initAppAuth() {
@@ -4995,11 +4999,20 @@ function defaultRecommendations() {
   return ["sleepBreath", "longExhale", "lang"];
 }
 
+// Weergavenaam: ingelogd account (voornaam/achternaam → e-mail), anders de lokale naam.
+function accountDisplayName() {
+  if (typeof appAuth !== "undefined" && appAuth.user) {
+    const p = appAuth.profile || {};
+    const full = [p.first_name, p.last_name].filter(Boolean).join(" ").trim();
+    return full || appAuth.user.email || "";
+  }
+  try { return (JSON.parse(localStorage.getItem("phytoforsan_profile")) || {}).name || ""; } catch { return ""; }
+}
+
 function updateGreeting() {
   const h = new Date().getHours();
   const word = h < 6 ? "Goedenacht" : h < 12 ? "Goedemorgen" : h < 18 ? "Goedemiddag" : "Goedenavond";
-  let name = "";
-  try { name = (JSON.parse(localStorage.getItem("phytoforsan_profile")) || {}).name || ""; } catch {}
+  const name = accountDisplayName();
   const safeName = name ? ", " + name.replace(/[<>&]/g, "") : "";
   document.getElementById("homeGreeting").innerHTML = `${word}${safeName} <span class="home-leaf">&#127807;</span>`;
 }
@@ -5048,21 +5061,28 @@ function getProfile() {
 }
 
 function renderProfile() {
-  const prof = getProfile();
-  document.getElementById("profileName").textContent = prof.name || "Welkom";
   const months = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
-  const [y, m] = prof.since.split("-");
-  document.getElementById("profileSince").textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}`;
+  document.getElementById("profileName").textContent = accountDisplayName() || "Welkom";
+  const sinceEl = document.getElementById("profileSince");
+  const editBtn = document.getElementById("profileEditBtn");
+  if (typeof appAuth !== "undefined" && appAuth.user) {
+    // Ingelogd: toon e-mail + lid-sinds op basis van het account
+    let since = "";
+    const created = appAuth.profile && appAuth.profile.created_at;
+    if (created) { const d = new Date(created); since = ` · lid sinds ${months[d.getMonth()]} ${d.getFullYear()}`; }
+    sinceEl.textContent = appAuth.user.email + since;
+    if (editBtn) editBtn.textContent = "Account & gegevens";
+  } else {
+    const prof = getProfile();
+    const [y, m] = (prof.since || dateKey(new Date())).split("-");
+    sinceEl.textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}`;
+    if (editBtn) editBtn.textContent = "Inloggen / registreren";
+  }
 }
 
+// Profiel bewerken = account-/gegevensscherm (inloggen, registreren, Mijn gegevens).
 document.getElementById("profileEditBtn").addEventListener("click", () => {
-  const prof = getProfile();
-  const name = prompt("Hoe mogen we je noemen?", prof.name || "");
-  if (name === null) return;
-  prof.name = name.trim().slice(0, 30);
-  localStorage.setItem("phytoforsan_profile", JSON.stringify(prof));
-  renderProfile();
-  updateGreeting();
+  openDeepAccessGate(null, "deep");
 });
 
 // ── Mobiele tab-navigatie ──
