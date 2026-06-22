@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.0.7</span>
+    <span class="env-badge" id="backendVersion">backend v1.0.8</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -521,10 +521,12 @@ async function renderProtocolAudio() {
   const wrap = document.getElementById("audioWrap");
   if (!wrap) return;
   if (!editingProtocolId) { wrap.innerHTML = `<h3>Achtergrondmuziek</h3><p class="muted">Sla het protocol eerst op om muziek te koppelen.</p>`; return; }
-  const tracks = await dbList("audio_tracks");
+  const allTracks = await dbList("audio_tracks");
+  const tracks = allTracks.filter(t => t.storage_path); // alleen afspeelbare tracks
+  const trackLabel = (t) => t.title || t.original_filename || "(naamloze track)";
   const links = (await dbList("protocol_audio", { protocol_id: editingProtocolId })).filter(l => l.audio_role === "background");
   const link = links[0] || null;
-  const opt = (sel) => `<option value="">— geen —</option>` + tracks.map(t => `<option value="${t.id}" ${t.id===sel?"selected":""}>${esc(t.title)}</option>`).join("");
+  const opt = (sel) => `<option value="">— geen —</option>` + tracks.map(t => `<option value="${t.id}" ${t.id===sel?"selected":""}>${esc(trackLabel(t))}</option>`).join("");
   const track = link && tracks.find(t => t.id === link.audio_track_id);
   wrap.innerHTML = `<h3>Achtergrondmuziek</h3>
     <p class="muted">Speelt zacht mee tijdens de hele sessie. Upload eerst een track in het tabblad Audio.</p>
@@ -693,10 +695,11 @@ async function renderAudio() {
   const tracks = await dbList("audio_tracks");
   tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Audio-tracks</h2><button class="btn" id="newAudio">+ Nieuwe track</button></div>
     <table><thead><tr><th>Titel</th><th>Maker</th><th>Licentie</th><th>storage_path</th><th class="actions"></th></tr></thead>
-    <tbody>${tracks.map(t=>`<tr><td>${esc(t.title)}</td><td>${esc(t.artist)}</td><td>${esc(t.license)}</td><td class="muted">${esc(t.storage_path)}</td><td class="actions"><div class="row-actions"><button class="btn small secondary" data-edit="${t.id}">Bewerken</button></div></td></tr>`).join("")||'<tr><td colspan="5" class="muted">Nog geen audio.</td></tr>'}</tbody></table></div>
+    <tbody>${tracks.map(t=>`<tr><td>${esc(t.title)||'<span class="muted">(naamloos)</span>'}</td><td>${esc(t.artist)}</td><td>${esc(t.license)}</td><td class="muted">${t.storage_path?"✓ bestand":"—"}</td><td class="actions"><div class="row-actions"><button class="btn small secondary" data-edit="${t.id}">Bewerken</button><button class="btn small danger" data-del="${t.id}">Verwijderen</button></div></td></tr>`).join("")||'<tr><td colspan="5" class="muted">Nog geen audio.</td></tr>'}</tbody></table></div>
     <div id="audioForm"></div>`;
   document.getElementById("newAudio").addEventListener("click", ()=>editAudio(null));
   tabBody.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editAudio(b.dataset.edit)));
+  tabBody.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",async()=>{ if(confirm("Deze track verwijderen?")){ await dbDelete("audio_tracks", b.dataset.del); renderAudio(); }}));
 }
 async function editAudio(id) {
   let t = id ? (await dbList("audio_tracks")).find(x=>x.id===id) : { title:"", original_filename:"", internal_filename:"", artist:"", source:"", license:"", source_url:"", profile_url:"", duration_seconds:"", storage_path:"", claim_safe_description:"", notes:"" };
@@ -716,6 +719,7 @@ async function editAudio(id) {
     const msg = document.getElementById("a_msg");
     const btn = document.getElementById("saveAudio");
     try {
+      if (!document.getElementById("a_title").value.trim()) { msg.className="msg err"; msg.textContent="Geef de track een titel."; msg.classList.remove("hidden"); return; }
       const file = document.getElementById("a_file").files[0];
       let storagePath = document.getElementById("a_storage_path").value;
       if (file) {
