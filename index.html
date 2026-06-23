@@ -320,6 +320,15 @@ button { cursor: pointer; }
 /* Home */
 .home-panel { padding: 22px; }
 @media (min-width: 641px) { .home-panel { display: none; } }
+/* Profiel als overlay op desktop (mobiel gebruikt de tab-navigatie) */
+@media (min-width: 641px) {
+  body.profile-overlay::before { content:""; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:99997; }
+  body.profile-overlay #profilePanel {
+    display:block !important; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:min(540px,94vw); max-height:90vh; overflow:auto; z-index:99998;
+    box-shadow:0 24px 60px rgba(0,0,0,.3); border-radius:18px;
+  }
+}
 .home-greeting { font-size: 1.35rem; font-weight: 900; color: var(--deep); margin: 0 0 4px; }
 .home-leaf { font-size: 1.1rem; }
 .home-question { font-size: .92rem; font-weight: 700; color: rgba(18,55,52,.75); margin: 14px 0 10px; }
@@ -1474,7 +1483,7 @@ canvas {
 
     <!-- Profiel (alleen mobiel, via tandwiel op Home) -->
     <section class="surface home-panel mobile-hidden" id="profilePanel" aria-label="Profiel">
-      <button class="home-gear" onclick="switchMobileTab('home')" aria-label="Terug">
+      <button class="home-gear" onclick="closeProfile()" aria-label="Terug">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
       </button>
       <div class="profile-card">
@@ -1583,7 +1592,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1846,6 +1855,14 @@ canvas {
   </nav>
 
 </main>
+
+<!-- Aanmoediging na een sessie (alleen voor gasten) -->
+<div id="postSessionCta" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99990;width:min(420px,92vw);background:#fff;border:1px solid rgba(18,55,52,.14);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.18);padding:14px 16px">
+  <button id="postSessionCtaClose" aria-label="Sluiten" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:1.1rem;color:#999;cursor:pointer">&times;</button>
+  <strong style="display:block;font-size:.92rem;color:#002f2d">Mooi gedaan! 🌿</strong>
+  <span style="display:block;font-size:.83rem;color:#444;margin:4px 0 10px">Maak een gratis account om je voortgang te bewaren en op al je apparaten terug te zien.</span>
+  <button id="postSessionCtaBtn" class="primary-session-button" type="button" style="width:100%">Account aanmaken / inloggen</button>
+</div>
 
 <!-- Toegangsscherm Verdieping (fase 1: lokale testtoegang) -->
 <div id="deepAccessOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:99999;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
@@ -4177,6 +4194,15 @@ function completeSession() {
   els.droneStat.textContent = "UIT";
   setCueWord("AFGEROND");
   els.cueSub.textContent = "Neem de tijd om de ervaring een plek te geven.";
+  maybeShowPostSessionCta();
+}
+
+// Toon na een sessie een vriendelijke aanmoediging om in te loggen (alleen gasten).
+function maybeShowPostSessionCta() {
+  if (typeof appAuth !== "undefined" && appAuth.user) return;   // al ingelogd
+  if (localStorage.getItem("phyto_cta_dismissed") === "1") return; // gebruiker heeft 'm weggeklikt
+  const cta = document.getElementById("postSessionCta");
+  if (cta) setTimeout(() => { cta.style.display = "block"; }, 1200);
 }
 
 function tick() {
@@ -4810,7 +4836,7 @@ function friendlyAuthError(msg, context) {
 }
 
 document.getElementById("deepGateClose")?.addEventListener("click", closeDeepAccessGate);
-document.getElementById("accountBtn")?.addEventListener("click", () => openDeepAccessGate(null, "deep"));
+document.getElementById("accountBtn")?.addEventListener("click", () => openProfile());
 document.getElementById("pfSave")?.addEventListener("click", saveProfileForm);
 
 document.getElementById("authLoginBtn")?.addEventListener("click", async () => {
@@ -5099,6 +5125,18 @@ function renderProfile() {
   }
 }
 
+// Profiel openen/sluiten — mobiel via tab, desktop als overlay.
+function openProfile() {
+  if (typeof renderProfile === "function") renderProfile();
+  if (isMobile()) { switchMobileTab('profile'); }
+  else { document.body.classList.add('profile-overlay'); }
+}
+function closeProfile() {
+  if (isMobile()) { switchMobileTab('home'); }
+  else { document.body.classList.remove('profile-overlay'); }
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.body.classList.remove('profile-overlay'); });
+
 document.getElementById("profileLogoutBtn")?.addEventListener("click", async () => {
   if (appSb) { try { await appSb.auth.signOut(); } catch {} }
   appAuth.user = null; appAuth.accessLevel = "free";
@@ -5111,6 +5149,14 @@ document.getElementById("profileEditBtn").addEventListener("click", () => {
 });
 document.getElementById("stimulusLoginBtn")?.addEventListener("click", () => {
   openDeepAccessGate(null, "deep");
+});
+document.getElementById("postSessionCtaBtn")?.addEventListener("click", () => {
+  document.getElementById("postSessionCta").style.display = "none";
+  openDeepAccessGate(null, "deep");
+});
+document.getElementById("postSessionCtaClose")?.addEventListener("click", () => {
+  document.getElementById("postSessionCta").style.display = "none";
+  localStorage.setItem("phyto_cta_dismissed", "1");   // niet meer tonen na wegklikken
 });
 
 // ── Mobiele tab-navigatie ──
