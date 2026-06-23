@@ -1487,6 +1487,41 @@ canvas {
       <button class="profile-edit-btn" id="profileEditBtn">Profiel bewerken</button>
       <button class="profile-edit-btn" id="profileLogoutBtn" style="display:none;margin-top:8px;background:transparent;border:1.5px solid rgba(18,55,52,.18)">Uitloggen</button>
 
+      <!-- Guest-stimulans: aanmoediging om in te loggen -->
+      <div id="loginStimulus" class="profile-item profile-item-static" style="display:none;flex-direction:column;align-items:flex-start;gap:8px;background:rgba(105,182,38,.10);margin-top:16px">
+        <strong style="font-size:.95rem">Bewaar je voortgang</strong>
+        <span style="font-size:.85rem;opacity:.8">Maak gratis een account aan — dan blijven je sessies, voortgang en voorkeuren bewaard en volgen ze mee op al je apparaten.</span>
+        <button class="profile-edit-btn" id="stimulusLoginBtn" style="margin-top:4px">Account aanmaken / inloggen</button>
+      </div>
+
+      <!-- Mijn gegevens (alleen ingelogd) -->
+      <div id="profileBlock" style="display:none;margin-top:20px">
+        <p class="section-title">Mijn gegevens</p>
+        <p style="font-size:.82rem;opacity:.75;margin:0 0 10px">Optioneel. Veilig bewaard bij je account en beschikbaar op al je apparaten.</p>
+        <div style="display:flex;gap:8px">
+          <input class="deep-gate-input" id="pfFirst" type="text" placeholder="Voornaam" style="flex:1">
+          <input class="deep-gate-input" id="pfLast" type="text" placeholder="Achternaam" style="flex:1">
+        </div>
+        <div style="display:flex;gap:8px">
+          <select class="deep-gate-input" id="pfSex" style="flex:1">
+            <option value="">Geslacht…</option><option value="man">Man</option><option value="vrouw">Vrouw</option><option value="anders">Anders</option><option value="onbekend">Zeg ik liever niet</option>
+          </select>
+          <input class="deep-gate-input" id="pfBirth" type="date" placeholder="Geboortedatum" style="flex:1">
+        </div>
+        <input class="deep-gate-input" id="pfPhone" type="tel" placeholder="Telefoon (optioneel)">
+        <div style="display:flex;gap:8px">
+          <input class="deep-gate-input" id="pfStreet" type="text" placeholder="Straat" style="flex:2">
+          <input class="deep-gate-input" id="pfHouse" type="text" placeholder="Nr." style="flex:1">
+        </div>
+        <div style="display:flex;gap:8px">
+          <input class="deep-gate-input" id="pfZip" type="text" placeholder="Postcode" style="flex:1">
+          <input class="deep-gate-input" id="pfCity" type="text" placeholder="Woonplaats" style="flex:2">
+        </div>
+        <input class="deep-gate-input" id="pfCountry" type="text" placeholder="Land">
+        <button class="profile-edit-btn" id="pfSave" type="button" style="margin-top:8px">Gegevens opslaan</button>
+        <p class="deep-gate-msg" id="pfMsg" style="display:none"></p>
+      </div>
+
       <p class="section-title" style="margin-top:24px">Instellingen</p>
       <div class="profile-list">
         <button class="profile-item" onclick="switchMobileTab('settings')">
@@ -1548,7 +1583,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.4</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1830,34 +1865,6 @@ canvas {
       </div>
       <button class="deep-gate-secondary" id="authLogoutBtn" type="button" style="margin-top:8px;display:none">Uitloggen</button>
       <p class="deep-gate-msg" id="authMsg" style="display:none"></p>
-    </div>
-
-    <!-- Blok 1b: Mijn gegevens (alleen ingelogd) -->
-    <div class="deep-gate-block" id="profileBlock" style="display:none">
-      <h3 class="deep-gate-h">Mijn gegevens</h3>
-      <p class="deep-gate-note">Optioneel. Je gegevens worden veilig bewaard bij je account en volgen mee op je apparaten.</p>
-      <div style="display:flex;gap:8px">
-        <input class="deep-gate-input" id="pfFirst" type="text" placeholder="Voornaam" style="flex:1">
-        <input class="deep-gate-input" id="pfLast" type="text" placeholder="Achternaam" style="flex:1">
-      </div>
-      <div style="display:flex;gap:8px">
-        <select class="deep-gate-input" id="pfSex" style="flex:1">
-          <option value="">Geslacht…</option><option value="man">Man</option><option value="vrouw">Vrouw</option><option value="anders">Anders</option><option value="onbekend">Zeg ik liever niet</option>
-        </select>
-        <input class="deep-gate-input" id="pfBirth" type="date" placeholder="Geboortedatum" style="flex:1">
-      </div>
-      <input class="deep-gate-input" id="pfPhone" type="tel" placeholder="Telefoon (optioneel)">
-      <div style="display:flex;gap:8px">
-        <input class="deep-gate-input" id="pfStreet" type="text" placeholder="Straat" style="flex:2">
-        <input class="deep-gate-input" id="pfHouse" type="text" placeholder="Nr." style="flex:1">
-      </div>
-      <div style="display:flex;gap:8px">
-        <input class="deep-gate-input" id="pfZip" type="text" placeholder="Postcode" style="flex:1">
-        <input class="deep-gate-input" id="pfCity" type="text" placeholder="Woonplaats" style="flex:2">
-      </div>
-      <input class="deep-gate-input" id="pfCountry" type="text" placeholder="Land">
-      <button class="primary-session-button" id="pfSave" type="button" style="margin-top:6px">Gegevens opslaan</button>
-      <p class="deep-gate-msg" id="pfMsg" style="display:none"></p>
     </div>
 
     <!-- Blok 2: Toegangscode (Verdieping) -->
@@ -4668,8 +4675,6 @@ function updateAccessUI() {
   if (logoutBtn) logoutBtn.style.display = appAuth.user ? "" : "none";
   const accBtn = document.getElementById("accountBtn");
   if (accBtn) accBtn.textContent = appAuth.user ? "Account" : "Inloggen";
-  const profBlock = document.getElementById("profileBlock");
-  if (profBlock) profBlock.style.display = appAuth.user ? "" : "none";
 }
 function afterAccessChange() {
   renderProtocols(); updateAccessUI();
@@ -5067,22 +5072,29 @@ function renderProfile() {
   const sinceEl = document.getElementById("profileSince");
   const editBtn = document.getElementById("profileEditBtn");
   const logoutBtn = document.getElementById("profileLogoutBtn");
-  if (typeof appAuth !== "undefined" && appAuth.user) {
+  const block = document.getElementById("profileBlock");
+  const stimulus = document.getElementById("loginStimulus");
+  const loggedIn = typeof appAuth !== "undefined" && appAuth.user;
+  if (loggedIn) {
     // Ingelogd: e-mail + toegangsniveau + lid-sinds op basis van het account
     let since = "";
     const created = appAuth.profile && appAuth.profile.created_at;
     if (created) { const d = new Date(created); since = ` · lid sinds ${months[d.getMonth()]} ${d.getFullYear()}`; }
     const niveau = { free:"Gratis", deep:"Verdieping", premium:"Premium", admin:"Admin" }[effectiveLevel()] || effectiveLevel();
     sinceEl.textContent = `${appAuth.user.email} · ${niveau}${since}`;
-    if (editBtn) editBtn.textContent = "Account & gegevens";
+    if (editBtn) { editBtn.textContent = "Account & toegangscode"; editBtn.style.display = ""; }
     if (logoutBtn) logoutBtn.style.display = "";
+    if (block) { block.style.display = ""; fillProfileForm(appAuth.profile); }
+    if (stimulus) stimulus.style.display = "none";
   } else {
     const prof = getProfile();
     const [y, m] = (prof.since || dateKey(new Date())).split("-");
     const niveau = localCodeTier() ? " · " + ({deep:"Verdieping",premium:"Premium"}[effectiveLevel()]||"") : "";
     sinceEl.textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}${niveau}`;
-    if (editBtn) editBtn.textContent = "Inloggen / registreren";
+    if (editBtn) editBtn.style.display = "none";   // gast gebruikt de aanmoedig-knop
     if (logoutBtn) logoutBtn.style.display = "none";
+    if (block) block.style.display = "none";
+    if (stimulus) stimulus.style.display = "flex";
   }
 }
 
@@ -5092,8 +5104,11 @@ document.getElementById("profileLogoutBtn")?.addEventListener("click", async () 
   afterAccessChange();
 });
 
-// Profiel bewerken = account-/gegevensscherm (inloggen, registreren, Mijn gegevens).
+// Profiel bewerken / account = inlog-/toegangscodescherm.
 document.getElementById("profileEditBtn").addEventListener("click", () => {
+  openDeepAccessGate(null, "deep");
+});
+document.getElementById("stimulusLoginBtn")?.addEventListener("click", () => {
   openDeepAccessGate(null, "deep");
 });
 
