@@ -1583,7 +1583,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3381,7 +3381,7 @@ function lockRhythm(locked) {
   });
 }
 
-function applyPreset(id) {
+function applyPreset(id, userSelected = false) {
   stopBgAudio();
   activePreset = id;
   document.getElementById("omVersionRow").style.display = id === "om" ? "flex" : "none";
@@ -3459,8 +3459,9 @@ function applyPreset(id) {
   updateActiveCard();
   syncUI();
   reset();
-  // Op mobiel: na kaartselectie automatisch naar instellingen
-  if (isMobile()) switchMobileTab('settings');
+  // Op mobiel: alleen na een bewuste kaartselectie automatisch naar instellingen
+  // (niet bij het laden van de app, anders land je niet op de welkomstpagina).
+  if (isMobile() && userSelected) switchMobileTab('settings');
 }
 
 function syncUI() {
@@ -4458,7 +4459,7 @@ function handleLibraryClick(event) {
     return;
   }
   if (card) {
-    applyPreset(id);
+    applyPreset(id, true);   // bewuste kaartselectie → naar instellingen
   }
 }
 
