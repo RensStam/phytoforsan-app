@@ -1485,6 +1485,7 @@ canvas {
         </div>
       </div>
       <button class="profile-edit-btn" id="profileEditBtn">Profiel bewerken</button>
+      <button class="profile-edit-btn" id="profileLogoutBtn" style="display:none;margin-top:8px;background:transparent;border:1.5px solid rgba(18,55,52,.18)">Uitloggen</button>
 
       <p class="section-title" style="margin-top:24px">Instellingen</p>
       <div class="profile-list">
@@ -1547,7 +1548,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5065,20 +5066,31 @@ function renderProfile() {
   document.getElementById("profileName").textContent = accountDisplayName() || "Welkom";
   const sinceEl = document.getElementById("profileSince");
   const editBtn = document.getElementById("profileEditBtn");
+  const logoutBtn = document.getElementById("profileLogoutBtn");
   if (typeof appAuth !== "undefined" && appAuth.user) {
-    // Ingelogd: toon e-mail + lid-sinds op basis van het account
+    // Ingelogd: e-mail + toegangsniveau + lid-sinds op basis van het account
     let since = "";
     const created = appAuth.profile && appAuth.profile.created_at;
     if (created) { const d = new Date(created); since = ` · lid sinds ${months[d.getMonth()]} ${d.getFullYear()}`; }
-    sinceEl.textContent = appAuth.user.email + since;
+    const niveau = { free:"Gratis", deep:"Verdieping", premium:"Premium", admin:"Admin" }[effectiveLevel()] || effectiveLevel();
+    sinceEl.textContent = `${appAuth.user.email} · ${niveau}${since}`;
     if (editBtn) editBtn.textContent = "Account & gegevens";
+    if (logoutBtn) logoutBtn.style.display = "";
   } else {
     const prof = getProfile();
     const [y, m] = (prof.since || dateKey(new Date())).split("-");
-    sinceEl.textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}`;
+    const niveau = localCodeTier() ? " · " + ({deep:"Verdieping",premium:"Premium"}[effectiveLevel()]||"") : "";
+    sinceEl.textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}${niveau}`;
     if (editBtn) editBtn.textContent = "Inloggen / registreren";
+    if (logoutBtn) logoutBtn.style.display = "none";
   }
 }
+
+document.getElementById("profileLogoutBtn")?.addEventListener("click", async () => {
+  if (appSb) { try { await appSb.auth.signOut(); } catch {} }
+  appAuth.user = null; appAuth.accessLevel = "free";
+  afterAccessChange();
+});
 
 // Profiel bewerken = account-/gegevensscherm (inloggen, registreren, Mijn gegevens).
 document.getElementById("profileEditBtn").addEventListener("click", () => {

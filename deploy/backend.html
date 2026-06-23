@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.1.1</span>
+    <span class="env-badge" id="backendVersion">backend v1.1.2</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -276,14 +276,83 @@ function fmtDur(s){ const m=Math.floor(s/60), r=s%60; return r?`${m}:${String(r)
 async function renderDashboard() {
   const [prot, cats, phases] = await Promise.all([dbList("protocols"), dbList("categories"), dbList("protocol_phases")]);
   const pub = prot.filter(p=>p.status==="published").length;
+
+  // Gebruikers + voortgang ophalen (alleen in Supabase-modus; admin mag dit lezen)
+  let users = [], states = [];
+  try { users = await dbList("profiles"); } catch {}
+  if (cfg.useBackend && sb) {
+    try { const { data } = await sb.from("user_state").select("user_id,sessions,updated_at"); states = data || []; } catch {}
+  }
+  const titleBySlug = Object.fromEntries(prot.map(p => [p.slug, p.title]));
+  const emailById = Object.fromEntries(users.map(u => [u.id, u.email]));
+
+  // Aggregaties over alle sessies
+  let totalSessions = 0, totalSeconds = 0;
+  const perProtocol = {};        // slug -> aantal
+  const perUser = {};            // user_id -> { count, seconds, last }
+  for (const st of states) {
+    const list = Array.isArray(st.sessions) ? st.sessions : [];
+    for (const s of list) {
+      totalSessions++; totalSeconds += Number(s.s || 0);
+      perProtocol[s.p] = (perProtocol[s.p] || 0) + 1;
+      const u = (perUser[st.user_id] = perUser[st.user_id] || { count:0, seconds:0, last:"" });
+      u.count++; u.seconds += Number(s.s || 0);
+      if ((s.d || "") > u.last) u.last = s.d || "";
+    }
+  }
+  const totalMin = Math.round(totalSeconds / 60);
+  const activeUsers = Object.keys(perUser).length;
+
+  // Toegangsniveaus
+  const byLevel = {};
+  users.forEach(u => { byLevel[u.access_level||"free"] = (byLevel[u.access_level||"free"]||0) + 1; });
+
+  // Recent actieve gebruikers (op laatste sessiedatum)
+  const recent = Object.entries(perUser)
+    .map(([id,v]) => ({ email: emailById[id] || id.slice(0,8), ...v }))
+    .sort((a,b)=> (b.last||"").localeCompare(a.last||"")).slice(0,12);
+
+  // Meest gebruikte protocollen
+  const topProt = Object.entries(perProtocol)
+    .map(([slug,n]) => ({ title: titleBySlug[slug] || slug, n }))
+    .sort((a,b)=>b.n-a.n).slice(0,12);
+
+  const card = (val,label) => `<div class="card"><b style="font-size:1.4rem">${val}</b><div class="muted">${label}</div></div>`;
+  const levelTxt = ["free","deep","premium","admin"].filter(l=>byLevel[l]).map(l=>`${byLevel[l]}× ${l}`).join(" · ") || "—";
+
   tabBody.innerHTML = `<div class="card"><h2>Dashboard</h2>
     <p class="muted">Omgeving: <b>${APP_ENV}</b> · backend: <b>${cfg.useBackend ? "Supabase" : "lokaal (mock)"}</b></p>
-    <div class="row4" style="margin-top:10px">
-      <div class="card"><b style="font-size:1.4rem">${prot.length}</b><div class="muted">protocollen</div></div>
-      <div class="card"><b style="font-size:1.4rem">${pub}</b><div class="muted">gepubliceerd</div></div>
-      <div class="card"><b style="font-size:1.4rem">${cats.length}</b><div class="muted">categorieën</div></div>
-      <div class="card"><b style="font-size:1.4rem">${phases.length}</b><div class="muted">fases</div></div>
-    </div></div>`;
+    <p class="section-title" style="font-weight:800;margin:10px 0 6px">Gebruikers &amp; gebruik</p>
+    <div class="row4">
+      ${card(users.length, "gebruikers")}
+      ${card(activeUsers, "actief (≥1 sessie)")}
+      ${card(totalSessions, "sessies totaal")}
+      ${card(totalMin, "minuten totaal")}
+    </div>
+    <p class="muted" style="margin-top:8px">Toegangsniveaus: ${levelTxt}</p>
+    ${(cfg.useBackend && sb) ? "" : '<p class="msg err" style="margin-top:8px">Statistieken vereisen Supabase (en de user_state-tabel). In testmodus zijn ze leeg.</p>'}
+
+    <p class="section-title" style="font-weight:800;margin:16px 0 6px">Protocollen</p>
+    <div class="row4">
+      ${card(prot.length, "protocollen")}
+      ${card(pub, "gepubliceerd")}
+      ${card(cats.length, "categorieën")}
+      ${card(phases.length, "fases")}
+    </div>
+
+    <div class="row" style="margin-top:16px;align-items:start">
+      <div>
+        <p class="section-title" style="font-weight:800;margin:0 0 6px">Recent actieve gebruikers</p>
+        <table><thead><tr><th>Gebruiker</th><th>Sessies</th><th>Min</th><th>Laatst</th></tr></thead>
+        <tbody>${recent.map(r=>`<tr><td>${esc(r.email)}</td><td>${r.count}</td><td>${Math.round(r.seconds/60)}</td><td>${esc(r.last||"—")}</td></tr>`).join("") || '<tr><td colspan="4" class="muted">Nog geen activiteit.</td></tr>'}</tbody></table>
+      </div>
+      <div>
+        <p class="section-title" style="font-weight:800;margin:0 0 6px">Meest gebruikte protocollen</p>
+        <table><thead><tr><th>Protocol</th><th>Keer gestart</th></tr></thead>
+        <tbody>${topProt.map(t=>`<tr><td>${esc(t.title)}</td><td>${t.n}</td></tr>`).join("") || '<tr><td colspan="2" class="muted">Nog geen sessies.</td></tr>'}</tbody></table>
+      </div>
+    </div>
+  </div>`;
 }
 
 // ---------- Protocollen ----------
