@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.1.3</span>
+    <span class="env-badge" id="backendVersion">backend v1.1.4</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1027,18 +1027,81 @@ async function renderSettings() {
     default_audio_enabled: "Achtergrondgeluid standaard aan (true/false)",
     about_text: "Tekst: Over PhytoForsan Relax App",
     privacy_text: "Tekst: Privacy",
-    contact_text: "Tekst: Contact- en bedrijfsgegevens"
+    contact_text: "Tekst: Contact- en bedrijfsgegevens",
+    faq_text: "Tekst: Veelgestelde vragen"
   };
+  // Huidige standaardteksten — worden voorgevuld zodat de velden niet leeg zijn.
+  const DEFAULTS = {
+    app_name: "PhytoForsan Relax App",
+    default_closing_title: "AFGEROND",
+    default_closing_text: "Neem de tijd om de ervaring een plek te geven.",
+    default_audio_enabled: "false",
+    deep_access_enabled: "true",
+    maintenance_mode: "false",
+    about_text:
+`De weg naar binnen begint met een klank
+
+Nog voordat er woorden waren, was er adem.
+
+Nog voordat er gedachten waren, was er trilling.
+
+Humming & Resonantie nodigt je uit om terug te keren naar iets eenvoudigs: de ontmoeting tussen adem, klank en aandacht.
+
+Door zacht te neuriën ontstaat een subtiele trilling. Je voelt haar misschien in je borst, je keel, je hoofd of ergens dieper in je lichaam. Niet om iets te bereiken. Niet om iets op te lossen. Maar om te vertragen en te luisteren.
+
+Naar je adem.
+
+Naar de stilte onder je gedachten.
+
+Naar het ritme dat er al was voordat je begon te zoeken.
+
+Deze app begeleidt je met ademhaling, humming, tonen en resonantie-oefeningen. De eenvoudige sessies helpen je om rustiger te worden, je lichaam beter te voelen en stap voor stap naar binnen te keren. Wie zich verder wil verdiepen, vindt daarnaast verdiepende sessies voor gevorderden.
+
+Geen prestatiedruk.
+Geen ingewikkelde theorie.
+Geen afleiding.
+Alleen adem, klank en aandacht.
+
+Deze app is ontstaan vanuit de wens om rust, adem en klank op een eenvoudige manier toegankelijk te maken.
+
+PhytoForsan Relax App
+Een initiatief van Rens Stam voor PhytoForsan.nl.`,
+    privacy_text:
+"Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen trackers gebruikt.",
+    contact_text:
+`Contact- en bedrijfsgegevens
+
+PhytoForsan.nl
+Staverdenseweg 94
+8075 AS Elspeet
+E-mail: info@phytoforsan.nl
+
+KVK: 92370802
+BTW-id: NL004949180B47`,
+    faq_text:
+`Hoe installeer ik de app?
+Open het menu in je browser en kies "App installeren" of "Toevoegen aan startscherm".
+
+Waar worden mijn gegevens opgeslagen?
+Zonder account lokaal op je apparaat. Met een account worden je profiel en voortgang veilig bewaard, zodat ze op al je apparaten beschikbaar zijn.
+
+Wat is humming?
+Zacht neuriën tijdens de uitademing. De trilling en de verlengde uitademing bieden een lichamelijk anker en kunnen ondersteunen bij ontspanning.
+
+Hoe vaak kan ik oefenen?
+Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
+  };
+  const val = (k) => (map[k] != null && map[k] !== "") ? map[k] : (DEFAULTS[k] ?? "");
   const keys = ["app_name","default_closing_title","default_closing_text","default_audio_volume","maintenance_mode","deep_access_enabled","default_audio_enabled"];
-  const textKeys = ["about_text","privacy_text","contact_text"];
+  const textKeys = ["about_text","privacy_text","contact_text","faq_text"];
   const fieldHtml = (k) => {
     if (k === "default_audio_volume") {
       const v = map[k] != null && map[k] !== "" ? Math.round(Number(map[k]) <= 1 ? Number(map[k])*100 : Number(map[k])) : 50;
       return `<label>${labels[k]}</label><input data-key="${k}" type="number" min="0" max="100" value="${v}">`;
     }
-    return `<label>${labels[k]||k}</label><input data-key="${k}" value="${esc(map[k]??"")}">`;
+    return `<label>${labels[k]||k}</label><input data-key="${k}" value="${esc(val(k))}">`;
   };
-  const textareaHtml = (k) => `<label>${labels[k]||k}</label><textarea data-key="${k}" style="min-height:120px">${esc(map[k]??"")}</textarea>`;
+  const textareaHtml = (k) => `<label>${labels[k]||k}</label><textarea data-key="${k}" style="min-height:120px">${esc(val(k))}</textarea>`;
   tabBody.innerHTML = `<div class="card"><h2>App-instellingen</h2>
     ${keys.map(fieldHtml).join("")}
     <p class="muted" style="margin-top:6px">Het geluidsvolume geldt als startwaarde voor nieuwe gebruikers; ze kunnen het zelf nog bijstellen.</p>

@@ -1571,7 +1571,7 @@ canvas {
         </details>
         <details class="profile-item profile-item-details">
           <summary><span class="profile-item-icon">&#10067;</span><span>Veelgestelde vragen</span><span class="profile-item-arrow">&#8250;</span></summary>
-          <div class="profile-item-body">
+          <div class="profile-item-body" id="faqBody">
             <p><strong>Hoe installeer ik de app?</strong><br>Open het menu (&#8942;) in je browser en kies "App installeren" of "Toevoegen aan startscherm".</p>
             <p><strong>Waar worden mijn gegevens opgeslagen?</strong><br>Zonder account lokaal op je apparaat. Met een account worden je profiel en voortgang veilig bewaard, zodat ze op al je apparaten beschikbaar zijn.</p>
             <p><strong>Wat is humming?</strong><br>Zacht neuri&euml;n tijdens de uitademing. De trilling en de verlengde uitademing bieden een lichamelijk anker en kunnen ondersteunen bij ontspanning.</p>
@@ -1608,7 +1608,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.1</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -4208,8 +4208,8 @@ function completeSession() {
   els.phaseStat.textContent = "Afgerond";
   els.toneStat.textContent = "—";
   els.droneStat.textContent = "UIT";
-  setCueWord("AFGEROND");
-  els.cueSub.textContent = "Neem de tijd om de ervaring een plek te geven.";
+  setCueWord((appSettingsMap.default_closing_title && appSettingsMap.default_closing_title.trim()) || "AFGEROND");
+  els.cueSub.textContent = (appSettingsMap.default_closing_text && appSettingsMap.default_closing_text.trim()) || "Neem de tijd om de ervaring een plek te geven.";
   maybeShowPostSessionCta();
 }
 
@@ -5336,13 +5336,20 @@ function applyDefaultVolume(settings) {
   if (els.volumeInput) { els.volumeInput.value = pct; if (els.volumeOut) els.volumeOut.textContent = pct + "%"; updateLiveVolume(); }
 }
 // Maakt van platte tekst veilige HTML: lege regel = nieuwe alinea, enkele regel = <br>.
+// E-mailadressen en http(s)-links worden klikbaar gemaakt.
 function textToHtml(text) {
   const esc = (s) => String(s).replace(/[&<>]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
-  return String(text).split(/\n\s*\n/).map(p => `<p>${esc(p.trim()).replace(/\n/g, "<br>")}</p>`).join("");
+  const linkify = (s) => s
+    .replace(/\b([\w.+-]+@[\w-]+\.[\w.-]+)\b/g, '<a href="mailto:$1">$1</a>')
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  return String(text).split(/\n\s*\n/).map(p => `<p>${linkify(esc(p.trim())).replace(/\n/g, "<br>")}</p>`).join("");
 }
+// Instellingen die de app globaal nodig heeft (bv. afsluittekst).
+let appSettingsMap = {};
 // Past bewerkbare teksten uit het backend toe op het profiel-/instellingenscherm.
 function applyContentSettings(settings) {
-  const map = Object.fromEntries((settings || []).map(s => [s.key, s.value]));
+  appSettingsMap = Object.fromEntries((settings || []).map(s => [s.key, s.value]));
+  const map = appSettingsMap;
   const set = (id, key) => {
     const el = document.getElementById(id);
     if (el && map[key] && String(map[key]).trim() !== "") el.innerHTML = textToHtml(map[key]);
@@ -5350,6 +5357,7 @@ function applyContentSettings(settings) {
   set("aboutBody", "about_text");
   set("privacyBody", "privacy_text");
   set("contactBody", "contact_text");
+  set("faqBody", "faq_text");
 }
 async function loadProtocolsFromBackend() {
   const data = await fetchBackendData();
