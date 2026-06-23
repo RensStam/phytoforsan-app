@@ -1535,7 +1535,7 @@ canvas {
       <div class="profile-list">
         <details class="profile-item profile-item-details">
           <summary><span class="profile-item-icon">&#128274;</span><span>Privacy</span><span class="profile-item-arrow">&#8250;</span></summary>
-          <p class="profile-item-body">Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen trackers gebruikt.</p>
+          <p class="profile-item-body" id="privacyBody">Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen trackers gebruikt.</p>
         </details>
         <div class="profile-item profile-item-static">
           <span class="profile-item-icon">&#127760;</span><span>Taal</span><span class="profile-item-value">Nederlands</span>
@@ -1546,7 +1546,7 @@ canvas {
       <div class="profile-list">
         <details class="profile-item profile-item-details">
           <summary><span class="profile-item-icon">&#8505;&#65039;</span><span>Over PhytoForsan Relax App</span><span class="profile-item-arrow">&#8250;</span></summary>
-          <div class="profile-item-body" style="line-height:1.7">
+          <div class="profile-item-body" id="aboutBody" style="line-height:1.7">
             <p style="font-size:1rem;font-weight:800;color:var(--deep)">De weg naar binnen begint met een klank</p>
             <p>Nog voordat er woorden waren, was er adem.</p>
             <p>Nog voordat er gedachten waren, was er trilling.</p>
@@ -1563,7 +1563,7 @@ canvas {
         </details>
         <details class="profile-item profile-item-details">
           <summary><span class="profile-item-icon">&#9993;&#65039;</span><span>Contact</span><span class="profile-item-arrow">&#8250;</span></summary>
-          <div class="profile-item-body" style="font-size:.86rem">
+          <div class="profile-item-body" id="contactBody" style="font-size:.86rem">
             <p style="font-weight:800;color:var(--deep);margin:0 0 6px">Contact- en bedrijfsgegevens</p>
             <p style="margin:0;line-height:1.7">PhytoForsan.nl<br>Staverdenseweg 94<br>8075 AS Elspeet<br>E-mail: <a href="mailto:info@phytoforsan.nl">info@phytoforsan.nl</a></p>
             <p style="margin:10px 0 0;line-height:1.7">KVK: 92370802<br>BTW-id: NL004949180B47</p>
@@ -1608,7 +1608,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.4.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5335,6 +5335,22 @@ function applyDefaultVolume(settings) {
   pct = Math.max(0, Math.min(100, Math.round(pct)));
   if (els.volumeInput) { els.volumeInput.value = pct; if (els.volumeOut) els.volumeOut.textContent = pct + "%"; updateLiveVolume(); }
 }
+// Maakt van platte tekst veilige HTML: lege regel = nieuwe alinea, enkele regel = <br>.
+function textToHtml(text) {
+  const esc = (s) => String(s).replace(/[&<>]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
+  return String(text).split(/\n\s*\n/).map(p => `<p>${esc(p.trim()).replace(/\n/g, "<br>")}</p>`).join("");
+}
+// Past bewerkbare teksten uit het backend toe op het profiel-/instellingenscherm.
+function applyContentSettings(settings) {
+  const map = Object.fromEntries((settings || []).map(s => [s.key, s.value]));
+  const set = (id, key) => {
+    const el = document.getElementById(id);
+    if (el && map[key] && String(map[key]).trim() !== "") el.innerHTML = textToHtml(map[key]);
+  };
+  set("aboutBody", "about_text");
+  set("privacyBody", "privacy_text");
+  set("contactBody", "contact_text");
+}
 async function loadProtocolsFromBackend() {
   const data = await fetchBackendData();
   if (!data) return null;
@@ -5450,6 +5466,7 @@ async function bootstrapBackend() {
     if (!data || !data.prot.length) return; // geen backoffice-data → lokale protocollen blijven actief
     const res = applyAdminData(data);
     applyDefaultVolume(data.app_settings);
+    applyContentSettings(data.app_settings);
     renderProtocols();
     applyPreset(activePreset && presets[activePreset] ? activePreset : Object.keys(presets)[0]);
     console.info(`PhytoForsan: backend-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw, ${res.removed} verborgen).`);
