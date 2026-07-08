@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.1.6</span>
+    <span class="env-badge" id="backendVersion">backend v1.1.7</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -565,6 +565,7 @@ async function editProtocol(id) {
     </div>
     <p class="msg hidden" id="protMsg"></p>
     <div id="audioWrap"></div>
+    <div id="soundWordsWrap"></div>
     <div id="phasesWrap"></div>
   </div>`;
   document.getElementById("backList").addEventListener("click", renderProtocols);
@@ -583,6 +584,68 @@ async function editProtocol(id) {
   });
   renderPhases();
   renderProtocolAudio();
+  renderSoundWords();
+}
+
+// ---------- Klankwoorden in de sessiecirkel (MAEN/AMEN/OM) ----------
+// De timing en klanklogica van deze protocollen staat vast in de app; hier
+// zijn alleen de woorden en onderteksten aanpasbaar. Opslag: app_settings-
+// sleutel sound_words_<slug> als JSON [{cue, sub}], de app leest die bij het laden.
+const SOUND_WORD_DEFAULTS = {
+  maen: [
+    { cue: "MMMM", sub: "begin gesloten en laat de trilling zacht starten" },
+    { cue: "AAAA", sub: "open de klank rustig" },
+    { cue: "EEEE", sub: "maak de klank smaller en lichter" },
+    { cue: "NNNN", sub: "sluit zacht en laat de resonantie uitklinken" }
+  ],
+  amen: [
+    { cue: "AAAA", sub: "open de klank rustig" },
+    { cue: "MMMM", sub: "sluit zacht naar M" },
+    { cue: "EEEE", sub: "laat de klank lichter naar E gaan" },
+    { cue: "NNNN", sub: "eindig zacht met N-resonantie" }
+  ],
+  om: [
+    { cue: "AAAA", sub: "open de klank rustig" },
+    { cue: "OOOO", sub: "vorm de resonantieruimte" },
+    { cue: "MMMM", sub: "sluit zacht, laat de trilling uitklinken" }
+  ]
+};
+async function renderSoundWords() {
+  const wrap = document.getElementById("soundWordsWrap");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  if (!editingProtocolId) return;
+  const prot = (await dbList("protocols")).find(x => x.id === editingProtocolId);
+  const defaults = prot && SOUND_WORD_DEFAULTS[(prot.slug || "").toLowerCase()];
+  if (!defaults) return;
+  const key = "sound_words_" + prot.slug;
+  const row = (await dbList("app_settings")).find(s => s.key === key);
+  let words = defaults;
+  try {
+    const parsed = JSON.parse(row?.value || "");
+    if (Array.isArray(parsed) && parsed.length) {
+      words = defaults.map((d, i) => ({ cue: parsed[i]?.cue || d.cue, sub: parsed[i]?.sub || d.sub }));
+    }
+  } catch {}
+  wrap.innerHTML = `<h3>Klankwoorden in de sessiecirkel</h3>
+    <p class="muted">De woorden die tijdens de uitademing in de cirkel verschijnen (met hun ondertekst). De timing en de klank zelf veranderen niet mee.</p>
+    ${words.map((w, i) => `<div class="row" data-sw="${i}">
+      <div><label>Woord ${i + 1}</label><input class="sw_cue" value="${esc(w.cue)}"></div>
+      <div><label>Ondertekst ${i + 1}</label><input class="sw_sub" value="${esc(w.sub)}"></div>
+    </div>`).join("")}
+    <div style="margin-top:8px"><button class="btn small" id="sw_save">Klankwoorden opslaan</button></div>
+    <p class="msg hidden" id="sw_msg"></p>`;
+  document.getElementById("sw_save").addEventListener("click", async () => {
+    const out = [...wrap.querySelectorAll("[data-sw]")].map(r => ({
+      cue: r.querySelector(".sw_cue").value.trim(),
+      sub: r.querySelector(".sw_sub").value.trim()
+    }));
+    const msg = document.getElementById("sw_msg");
+    try {
+      await dbUpsert("app_settings", { key, value: JSON.stringify(out) });
+      msg.className = "msg ok"; msg.textContent = "Klankwoorden opgeslagen."; msg.classList.remove("hidden");
+    } catch (e) { msg.className = "msg err"; msg.textContent = "Fout: " + (e.message || e); msg.classList.remove("hidden"); }
+  });
 }
 
 // Achtergrondmuziek koppelen aan dit protocol (1 track, rol = background).
@@ -723,16 +786,25 @@ async function renderPhases() {
   const phases = (await dbList("protocol_phases", { protocol_id: editingProtocolId })).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
   const curProt = (await dbList("protocols")).find(x => x.id === editingProtocolId);
   const meditatie = curProt ? await isMeditatieProtocol(curProt) : false;
-  // Meditatieprotocol zonder fases: geen fasebeheer tonen. De vrije timer
-  // gebruikt geen fases; de gebruiker kiest de duur in de app.
-  if (meditatie && !phases.length) {
-    wrap.innerHTML = `<h3>Fases</h3><p class="muted">De meditatietimer werkt zonder fases: de gebruiker kiest de duur in de app. Hier hoef je niets in te stellen.</p>`;
+  // Meditatieprotocol: geen fasebeheer tonen. De vrije timer gebruikt geen
+  // fases; de gebruiker kiest de duur in de app. Verdwaalde fases (ooit per
+  // ongeluk toegevoegd) zijn met één knop op te ruimen.
+  if (meditatie) {
+    wrap.innerHTML = `<h3>Fases</h3>
+      <p class="muted">De meditatietimer werkt zonder fases: de gebruiker kiest de duur in de app. Hier hoef je niets in te stellen.</p>
+      ${phases.length ? `<p class="muted">Er ${phases.length === 1 ? "staat nog 1 ongebruikte fase" : "staan nog " + phases.length + " ongebruikte fases"} in de database; deze ${phases.length === 1 ? "doet" : "doen"} niets in de app.</p>
+      <button class="btn small danger" id="cleanMedPhases">Ongebruikte fase${phases.length === 1 ? "" : "s"} verwijderen</button>` : ""}`;
+    const cleanBtn = document.getElementById("cleanMedPhases");
+    if (cleanBtn) cleanBtn.addEventListener("click", async () => {
+      if (!confirm("Ongebruikte fases van dit meditatieprotocol verwijderen?")) return;
+      for (const ph of phases) await dbDelete("protocol_phases", ph.id);
+      renderPhases();
+    });
     return;
   }
   const typeOpt = (v)=>["breath","free","humming","sound","silence","integration","warning"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
   const invalid = phases.some(f=>Number(f.duration_seconds)<=0);
   wrap.innerHTML = `<h3>Fases — totale duur ${fmtDur(totalSeconds(phases))} · ${phases.length} fases ${invalid?'<span class="pill archived">ongeldige fase</span>':''}</h3>
-    ${meditatie ? '<p class="muted">Let op: een meditatieprotocol gebruikt geen fases in de app. Je kunt deze fases veilig verwijderen.</p>' : ''}
     ${phases.map(f=>`<div class="phase-row" data-ph="${f.id}">
       <div class="row"><div><label>Titel</label><input class="ph_title" value="${esc(f.title)}"></div>
       <div><label>Type</label><select class="ph_type">${typeOpt(f.type)}</select></div></div>
@@ -758,7 +830,7 @@ async function renderPhases() {
       <label>Instructietekst (rustfase)</label><textarea class="ph_instr">${esc(f.instruction_text)}</textarea>
       <div style="margin-top:8px;display:flex;gap:8px"><button class="btn small danger ph_del">Fase verwijderen</button></div>
     </div>`).join("")}
-    ${meditatie ? '' : '<button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>'}
+    <button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>
     <p class="muted" style="margin-top:6px">Wijzigingen in de fases worden mee opgeslagen met de knop <b>Opslaan</b> bovenaan.</p>`;
   const addPhaseBtn = document.getElementById("addPhase");
   if (addPhaseBtn) addPhaseBtn.addEventListener("click", async () => {
@@ -1051,7 +1123,12 @@ async function renderSettings() {
     about_text: "Tekst: Over PhytoForsan Relax App",
     privacy_text: "Tekst: Privacy",
     contact_text: "Tekst: Contact- en bedrijfsgegevens",
-    faq_text: "Tekst: Veelgestelde vragen"
+    faq_text: "Tekst: Veelgestelde vragen",
+    rest_cue_word: "Cue-woord bij rustmomenten",
+    rest_sub_hold: "Ondertekst rust na inademing",
+    rest_sub_pause: "Ondertekst rust na uitademing",
+    meditation_cue_word: "Cue-woord meditatietimer",
+    meditation_cue_sub: "Ondertekst meditatietimer"
   };
   // Huidige standaardteksten — worden voorgevuld zodat de velden niet leeg zijn.
   const DEFAULTS = {
@@ -1061,6 +1138,11 @@ async function renderSettings() {
     default_audio_enabled: "false",
     deep_access_enabled: "true",
     maintenance_mode: "false",
+    rest_cue_word: "RUST",
+    rest_sub_hold: "pauzeer zacht na de inademing",
+    rest_sub_pause: "blijf even in rust",
+    meditation_cue_word: "MEDITATIE",
+    meditation_cue_sub: "vrije aandacht",
     about_text:
 `De weg naar binnen begint met een klank
 
@@ -1125,9 +1207,13 @@ Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
     return `<label>${labels[k]||k}</label><input data-key="${k}" value="${esc(val(k))}">`;
   };
   const textareaHtml = (k) => `<label>${labels[k]||k}</label><textarea data-key="${k}" style="min-height:120px">${esc(val(k))}</textarea>`;
+  const cueKeys = ["rest_cue_word","rest_sub_hold","rest_sub_pause","meditation_cue_word","meditation_cue_sub"];
   tabBody.innerHTML = `<div class="card"><h2>App-instellingen</h2>
     ${keys.map(fieldHtml).join("")}
     <p class="muted" style="margin-top:6px">Het geluidsvolume geldt als startwaarde voor nieuwe gebruikers; ze kunnen het zelf nog bijstellen.</p>
+    <h3 style="margin-top:18px">Woorden in de sessiecirkel</h3>
+    <p class="muted">Deze woorden gelden voor de hele app. De IN/UIT-woorden en subteksten per ademfase stel je per protocol in bij de fases; de klankwoorden van MAEN, AMEN en OM bij het protocol zelf.</p>
+    ${cueKeys.map(fieldHtml).join("")}
     <h3 style="margin-top:18px">Teksten op het profiel-/instellingenscherm</h3>
     <p class="muted">Laat een veld leeg om de standaardtekst van de app te gebruiken. Een lege regel begint een nieuwe alinea.</p>
     ${textKeys.map(textareaHtml).join("")}

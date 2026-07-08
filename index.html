@@ -1617,7 +1617,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2813,6 +2813,14 @@ let meditationDuration = 10;
 let lastMedIntervalIdx = 0;   // laatst gespeelde intervaltoon (meditatietimer)
 let sessionLogged = false;
 
+// Instellingen uit het backend (app_settings); gevuld in applyContentSettings().
+let appSettingsMap = {};
+// Leest een backend-instelling met fallback op de ingebouwde standaardtekst.
+function appSetting(key, fallback) {
+  const v = appSettingsMap[key];
+  return (v != null && String(v).trim() !== "") ? String(v).trim() : fallback;
+}
+
 // ── Sessieregistratie ──
 const SESSION_LOG_KEY = "phytoforsan_sessions";
 
@@ -3281,9 +3289,9 @@ function phases() {
     : `hum mee met de drone op ${p.tone} Hz`);
   return [
     { key: "inhale", label: p.inhaleLabel || "Neus in", cue: p.inhaleCue || "IN", sub: p.inhaleSub || "adem rustig door de neus in", dur: p.inhale },
-    { key: "hold", label: p.holdLabel || "Rust", cue: p.holdCue || "RUST", sub: p.holdSub || "pauzeer zacht na de inademing", dur: p.hold },
+    { key: "hold", label: p.holdLabel || "Rust", cue: p.holdCue || appSetting("rest_cue_word", "RUST"), sub: p.holdSub || appSetting("rest_sub_hold", "pauzeer zacht na de inademing"), dur: p.hold },
     { key: "exhale", label: p.exhaleLabel, cue: p.exhaleCue, sub: humText, dur: p.exhale },
-    { key: "pause", label: p.pauseLabel || "Rust", cue: p.pauseCue || "RUST", sub: p.pauseSub || "blijf even in rust", dur: p.pause }
+    { key: "pause", label: p.pauseLabel || "Rust", cue: p.pauseCue || appSetting("rest_cue_word", "RUST"), sub: p.pauseSub || appSetting("rest_sub_pause", "blijf even in rust"), dur: p.pause }
   ];
 }
 
@@ -3590,7 +3598,7 @@ function breathGuideAt(time) {
     const total = sessionDuration();
     const progress = total > 0 ? Math.min(time / total, 1) : 0;
     const breath = 0.5 + 0.35 * Math.sin(time * Math.PI / 8);
-    const medPhase = { key: "meditation", dur: total, cue: "MEDITATIE", label: "Meditatie", sub: "" };
+    const medPhase = { key: "meditation", dur: total, cue: appSetting("meditation_cue_word", "MEDITATIE"), label: "Meditatie", sub: "" };
     return { phase: medPhase, within: time, total, progress, breath, cycleProgress: 0 };
   }
   // Meerfasige preset: free fase krijgt zachte sinus-puls, breath fase normale logica
@@ -3620,9 +3628,9 @@ function breathGuideAt(time) {
     let acc = 0;
     const subPhases = [
       { key: "inhale", dur: ph.inhale, cue: ph.cueIn,  label: "Inademing",  sub: ph.subIn },
-      { key: "hold",   dur: ph.hold,   cue: "RUST",    label: "Rust",       sub: "" },
+      { key: "hold",   dur: ph.hold,   cue: appSetting("rest_cue_word", "RUST"), label: "Rust", sub: "" },
       { key: "exhale", dur: ph.exhale, cue: ph.cueOut, label: "Uitademing", sub: ph.subOut },
-      { key: "pause",  dur: ph.pause,  cue: "RUST",    label: "Rust",       sub: "" }
+      { key: "pause",  dur: ph.pause,  cue: appSetting("rest_cue_word", "RUST"), label: "Rust", sub: "" }
     ].filter(s => s.dur > 0);
     let activeSubPhase = subPhases[0];
     let within = 0;
@@ -4159,8 +4167,8 @@ function updatePhase(time) {
   if (presets[activePreset]?.meditationMode) {
     els.cue.classList.remove("hum", "sound");
     const inSession = time > 0 && (sessionState === "running" || sessionState === "paused");
-    setCueWord(inSession ? fmtClock(remaining) : "MEDITATIE");
-    els.cueSub.textContent = "vrije aandacht";
+    setCueWord(inSession ? fmtClock(remaining) : appSetting("meditation_cue_word", "MEDITATIE"));
+    els.cueSub.textContent = appSetting("meditation_cue_sub", "vrije aandacht");
     els.phaseStat.textContent = "Meditatie";
     if (running) maybePlayMeditationIntervalTone(time);
     els.toneStat.textContent  = "—";
@@ -5529,9 +5537,9 @@ function textToHtml(text) {
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
   return String(text).split(/\n\s*\n/).map(p => `<p>${linkify(esc(p.trim())).replace(/\n/g, "<br>")}</p>`).join("");
 }
-// Instellingen die de app globaal nodig heeft (bv. afsluittekst).
-let appSettingsMap = {};
 // Past bewerkbare teksten uit het backend toe op het profiel-/instellingenscherm.
+// (appSettingsMap zelf staat bij de sessie-state bovenin, zodat ook de
+// cirkelwoorden er vroeg bij kunnen.)
 function applyContentSettings(settings) {
   appSettingsMap = Object.fromEntries((settings || []).map(s => [s.key, s.value]));
   const map = appSettingsMap;
@@ -5543,6 +5551,26 @@ function applyContentSettings(settings) {
   set("privacyBody", "privacy_text");
   set("contactBody", "contact_text");
   set("faqBody", "faq_text");
+}
+// Klankwoorden (cirkel) per klankprotocol uit het backend: de app_settings-
+// sleutel sound_words_<slug> bevat [{cue, sub}] en overschrijft alleen de
+// woorden/onderteksten van de klankstappen — niet de timing of klanklogica.
+function applySoundWords() {
+  for (const [key, preset] of Object.entries(presets)) {
+    if (!Array.isArray(preset.exhaleFlow) || !preset.exhaleFlow.length) continue;
+    const raw = appSettingsMap["sound_words_" + key];
+    if (!raw) continue;
+    try {
+      const words = JSON.parse(raw);
+      if (!Array.isArray(words)) continue;
+      preset.exhaleFlow.forEach((step, i) => {
+        const w = words[i];
+        if (!w) return;
+        if (w.cue != null && String(w.cue).trim() !== "") step.cue = String(w.cue).trim();
+        if (w.sub != null && String(w.sub).trim() !== "") step.sub = String(w.sub).trim();
+      });
+    } catch {}
+  }
 }
 async function loadProtocolsFromBackend() {
   const data = await fetchBackendData();
@@ -5661,6 +5689,7 @@ async function bootstrapBackend() {
     applyDefaultVolume(data.app_settings);
     applyContentSettings(data.app_settings);
     applyMeditationToneSettings(data.app_settings);
+    applySoundWords();
     renderProtocols();
     applyPreset(activePreset && presets[activePreset] ? activePreset : Object.keys(presets)[0]);
     console.info(`PhytoForsan: backend-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw, ${res.removed} verborgen).`);
