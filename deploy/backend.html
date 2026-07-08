@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.1.4</span>
+    <span class="env-badge" id="backendVersion">backend v1.1.5</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -652,6 +652,15 @@ function readProtocolForm() {
   };
 }
 
+// Meditatieprotocollen (vrije timer) hebben bewust géén fases: de gebruiker
+// kiest de duur in de app. De fase-eisen gelden daar dus niet — anders wordt
+// het protocol bij elke tekstwijziging naar concept teruggezet en verdwijnt
+// het uit de app.
+async function isMeditatieProtocol(p) {
+  const cat = (await dbList("categories")).find(c => c.id === p.category_id);
+  return !!cat && cat.slug === "meditatie";
+}
+
 async function validateForPublish(p, phases) {
   const errs = [];
   if (!p.slug) errs.push("Slug verplicht.");
@@ -659,9 +668,13 @@ async function validateForPublish(p, phases) {
   if (!p.category_id) errs.push("Categorie verplicht.");
   const all = await dbList("protocols");
   if (p.slug && all.some(x=>x.slug===p.slug && x.id!==p.id)) errs.push("Slug is niet uniek.");
-  if (!phases.length) errs.push("Minimaal één fase nodig.");
+  const meditatie = await isMeditatieProtocol(p);
+  if (!meditatie) {
+    if (!phases.length) errs.push("Minimaal één fase nodig.");
+    if (totalSeconds(phases) <= 0) errs.push("Totale duur moet > 0 zijn.");
+  }
+  // Als er fases zijn, moeten ze wel geldig zijn (ook bij meditatie).
   if (phases.some(f=>Number(f.duration_seconds)<=0)) errs.push("Iedere fase moet duur > 0 hebben.");
-  if (totalSeconds(phases) <= 0) errs.push("Totale duur moet > 0 zijn.");
   return errs;
 }
 
@@ -708,9 +721,12 @@ async function renderPhases() {
   const wrap = document.getElementById("phasesWrap");
   if (!editingProtocolId) { wrap.innerHTML = `<p class="muted" style="margin-top:16px">Sla het protocol eerst op om fases toe te voegen.</p>`; return; }
   const phases = (await dbList("protocol_phases", { protocol_id: editingProtocolId })).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+  const curProt = (await dbList("protocols")).find(x => x.id === editingProtocolId);
+  const meditatie = curProt ? await isMeditatieProtocol(curProt) : false;
   const typeOpt = (v)=>["breath","free","humming","sound","silence","integration","warning"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
   const invalid = phases.some(f=>Number(f.duration_seconds)<=0);
   wrap.innerHTML = `<h3>Fases — totale duur ${fmtDur(totalSeconds(phases))} · ${phases.length} fases ${invalid?'<span class="pill archived">ongeldige fase</span>':''}</h3>
+    ${meditatie && !phases.length ? '<p class="muted">Dit is een meditatieprotocol zonder fases — dat hoort zo. De gebruiker kiest de duur in de app; het protocol kan gewoon gepubliceerd blijven.</p>' : ''}
     ${phases.map(f=>`<div class="phase-row" data-ph="${f.id}">
       <div class="row"><div><label>Titel</label><input class="ph_title" value="${esc(f.title)}"></div>
       <div><label>Type</label><select class="ph_type">${typeOpt(f.type)}</select></div></div>

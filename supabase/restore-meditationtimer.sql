@@ -11,9 +11,15 @@ on conflict (slug) do nothing;
 insert into public.protocols (slug, title, category_id, short_description, long_description, access_tier, status, sort_order, night)
 select 'meditationTimer', 'Meditatietimer',
        (select id from public.categories where slug = 'meditatie' limit 1),
-       'Een vrije meditatie zonder ademsturing of klank. Alleen tijd, ruimte en aandacht.',
-       'Gebruik de meditatietimer voor een stille sessie op je eigen manier. De app stuurt je ademhaling niet en gebruikt geen humming of klankprotocol. De cirkel toont alleen het verloop van de sessie.',
+       'Een vrije meditatie zonder ademsturing. Tijd, stilte en optioneel zachte klankmarkeringen.',
+       'Gebruik de meditatietimer voor een vrije sessie in stilte of met zachte klankmarkeringen. De app stuurt je ademhaling niet. Je bepaalt zelf hoe je zit, ademt of luistert. De cirkel toont alleen het verloop van de tijd.',
        'free', 'published', 16, false
 on conflict (slug) do nothing;
+
+-- Bestaat de rij al maar staat hij op concept (bijv. door de oude fase-validatie
+-- bij het opslaan van teksten)? Zet hem dan terug op published.
+update public.protocols
+set status = 'published'
+where slug = 'meditationTimer' and status <> 'published';
 
 select slug, title, status from public.protocols where slug = 'meditationTimer';
