@@ -1617,7 +1617,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.4</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1747,6 +1747,10 @@ canvas {
             <label class="switch-label">
               <span>Intervaltoon</span>
               <span class="switch"><input id="medIntervalToneToggle" type="checkbox"><span class="switch-track"></span></span>
+            </label>
+            <label class="switch-label" id="medBgSoundRow" style="display:none">
+              <span>Achtergrondgeluid</span>
+              <span class="switch"><input id="medBgSoundToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
             </label>
           </div>
           <div class="editor" id="medIntervalRow" style="display:none">
@@ -2880,7 +2884,12 @@ function sessionMusicVolume() {
 function startSessionMusic() {
   const cfg = presets[activePreset]?.bgMusic;
   if (!cfg || !cfg.url) return;
-  if (!els.breathSoundToggle?.checked) return;   // gekoppeld aan de Achtergrondgeluid-toggle
+  // Gekoppeld aan de Achtergrondgeluid-toggle: de meditatietimer heeft een
+  // eigen schakelaar (in Signalen), overige protocollen de gewone toggle.
+  const toggle = presets[activePreset]?.meditationMode
+    ? document.getElementById("medBgSoundToggle")
+    : els.breathSoundToggle;
+  if (!toggle?.checked) return;
   sessionMusic.loop = cfg.loop !== false;
   if (!sessionMusic.src.endsWith(cfg.url) && sessionMusic.src !== cfg.url) { sessionMusic.src = cfg.url; }
   sessionMusic.volume = sessionMusicVolume();
@@ -4495,8 +4504,10 @@ function draw(time) {
   ctx.stroke();
 
   if (!restPhase) {
-    const isFreePhase = guide.phase.key === "free";
-    const arcProgress = isFreePhase ? (1 - guide.progress) : guide.progress;
+    // Vrije fases en de meditatietimer tellen af (ring loopt leeg);
+    // ademfases lopen juist op met de fase mee.
+    const isCountdown = guide.phase.key === "free" || guide.phase.key === "meditation";
+    const arcProgress = isCountdown ? (1 - guide.progress) : guide.progress;
     ctx.beginPath();
     ctx.arc(cx, cy, progressRadius, -Math.PI / 2, -Math.PI / 2 + arcProgress * Math.PI * 2);
     ctx.strokeStyle = `rgba(${phaseColor},.68)`;
@@ -4645,13 +4656,18 @@ function updateMeditationSoundUI() {
     b.classList.toggle("med-dur-active", parseInt(b.dataset.min, 10) === meditationDuration));
   if (intervalRow) intervalRow.style.display = intervalToggle?.checked ? "" : "none";
   if (intervalOut && intervalInput) intervalOut.textContent = `elke ${intervalInput.value} ${Number(intervalInput.value) === 1 ? "minuut" : "minuten"}`;
+  // Achtergrondgeluid: alleen tonen als het backend een track heeft gekoppeld
+  const hasBgMusic = Boolean(presets[activePreset]?.bgMusic?.url);
+  const bgRow = document.getElementById("medBgSoundRow");
+  if (bgRow) bgRow.style.display = hasBgMusic ? "" : "none";
+  const bgActive = hasBgMusic && document.getElementById("medBgSoundToggle")?.checked;
   // Volume alleen tonen als er daadwerkelijk geluid actief is (meditatiemodus)
   const volumeSection = document.getElementById("volumeSection");
   if (volumeSection) {
     const isMeditation = Boolean(presets[activePreset]?.meditationMode);
     const anyTone = ["medStartToneToggle", "medEndToneToggle", "medIntervalToneToggle"]
       .some(id => document.getElementById(id)?.checked);
-    volumeSection.style.display = (isMeditation && !anyTone) ? "none" : "";
+    volumeSection.style.display = (isMeditation && !anyTone && !bgActive) ? "none" : "";
   }
   if (typeof updateSliderFill === "function") {
     updateSliderFill(durInput);
@@ -4684,6 +4700,13 @@ for (const id of ["medStartToneToggle", "medEndToneToggle", "medIntervalToneTogg
 document.getElementById("medIntervalInput").addEventListener("input", () => {
   _userChangedMedTones = true;
   updateMeditationSoundUI();
+});
+// Achtergrondgeluid meditatietimer: direct mee starten/stoppen tijdens de sessie.
+document.getElementById("medBgSoundToggle").addEventListener("change", e => {
+  updateMeditationSoundUI();
+  if (!running) return;
+  if (e.target.checked) startSessionMusic();
+  else stopSessionMusic(false);
 });
 
 // Backend-voorbereiding: standaardinstellingen voor de meditatietonen uit
