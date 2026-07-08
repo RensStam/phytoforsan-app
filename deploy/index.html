@@ -304,6 +304,12 @@ button { cursor: pointer; }
   margin-top: 6px;
 }
 
+.med-note {
+  font-size: .8rem;
+  color: rgba(18,55,52,.6);
+  margin: 2px 0 10px;
+}
+
 .med-dur-btn {
   border: 1.5px solid rgba(18,55,52,.22);
   border-radius: 999px;
@@ -493,6 +499,9 @@ select:focus, input[type="number"]:focus {
   gap: 10px;
   align-items: center;
 }
+
+.value-line--wide { grid-template-columns: 1fr auto; }
+.value-line--wide output { white-space: nowrap; }
 
 .value-line output {
   color: var(--deep);
@@ -1608,7 +1617,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1704,16 +1713,47 @@ canvas {
     </button>
     <div class="mobile-preset-header" id="mobilePresetHeader" style="display:none"></div>
     <div class="controls-grid">
-        <!-- Duurkeuze: alleen zichtbaar bij meditationMode -->
+        <!-- Meditatietimer: sessieduur via slider (alleen zichtbaar bij meditationMode) -->
         <section class="control-group" id="meditationDurationSection" style="display:none">
           <p class="section-title">Sessieduur</p>
+          <div class="editor">
+            <label>
+              Duur
+              <div class="value-line value-line--wide"><input id="medDurationInput" type="range" min="2" max="60" step="1" value="10"><output id="medDurationOut">10 minuten</output></div>
+            </label>
+          </div>
           <div class="meditation-duration-btns" id="meditationDurationBtns">
-            <button class="med-dur-btn" data-min="2">2 min</button>
-            <button class="med-dur-btn" data-min="5">5 min</button>
-            <button class="med-dur-btn med-dur-active" data-min="10">10 min</button>
-            <button class="med-dur-btn" data-min="15">15 min</button>
-            <button class="med-dur-btn" data-min="20">20 min</button>
-            <button class="med-dur-btn" data-min="30">30 min</button>
+            <button class="med-dur-btn" data-min="2" type="button">2 min</button>
+            <button class="med-dur-btn" data-min="5" type="button">5 min</button>
+            <button class="med-dur-btn" data-min="10" type="button">10 min</button>
+            <button class="med-dur-btn" data-min="15" type="button">15 min</button>
+            <button class="med-dur-btn" data-min="20" type="button">20 min</button>
+            <button class="med-dur-btn" data-min="30" type="button">30 min</button>
+          </div>
+        </section>
+        <!-- Meditatietimer: zachte klankmarkeringen (start-, eind- en intervaltoon) -->
+        <section class="control-group" id="meditationSignalsSection" style="display:none">
+          <p class="section-title">Signalen</p>
+          <p class="med-note">Zachte toon als rustige markering. De app stuurt je ademhaling niet.</p>
+          <div class="switch-row">
+            <label class="switch-label">
+              <span>Starttoon</span>
+              <span class="switch"><input id="medStartToneToggle" type="checkbox"><span class="switch-track"></span></span>
+            </label>
+            <label class="switch-label">
+              <span>Eindtoon</span>
+              <span class="switch"><input id="medEndToneToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
+            </label>
+            <label class="switch-label">
+              <span>Intervaltoon</span>
+              <span class="switch"><input id="medIntervalToneToggle" type="checkbox"><span class="switch-track"></span></span>
+            </label>
+          </div>
+          <div class="editor" id="medIntervalRow" style="display:none">
+            <label>
+              Herinnering tijdens meditatie
+              <div class="value-line value-line--wide"><input id="medIntervalInput" type="range" min="1" max="15" step="1" value="5"><output id="medIntervalOut">elke 5 minuten</output></div>
+            </label>
           </div>
         </section>
         <section class="control-group" id="rhythmSection">
@@ -1740,7 +1780,7 @@ canvas {
           </div>
         </section>
 
-        <section class="control-group">
+        <section class="control-group" id="volumeSection">
           <div class="editor">
             <label>
               Volume
@@ -2487,9 +2527,9 @@ const presets = {
     sessionType: "meditation",
     label: "Meditatietimer",
     category: "meditatie",
-    text: "Een vrije meditatie zonder ademsturing of klank. Alleen tijd, ruimte en aandacht.",
+    text: "Een vrije meditatie zonder ademsturing. Tijd, stilte en optioneel zachte klankmarkeringen.",
     product: "Meditatietimer",
-    productText: "Gebruik de meditatietimer voor een stille sessie op je eigen manier. De app stuurt je ademhaling niet en gebruikt geen humming of klankprotocol. De cirkel toont alleen het verloop van de sessie.",
+    productText: "Gebruik de meditatietimer voor een vrije sessie in stilte of met zachte klankmarkeringen. De app stuurt je ademhaling niet. Je bepaalt zelf hoe je zit, ademt of luistert. De cirkel toont alleen het verloop van de tijd.",
     minutes: 10,
     durationOptions: [2, 5, 10, 15, 20, 30],
     inhale: 0, hold: 0, exhale: 0, pause: 0,
@@ -2770,6 +2810,7 @@ const els = {
 
 let activePreset = "longExhale";
 let meditationDuration = 10;
+let lastMedIntervalIdx = 0;   // laatst gespeelde intervaltoon (meditatietimer)
 let sessionLogged = false;
 
 // ── Sessieregistratie ──
@@ -3421,13 +3462,14 @@ function applyPreset(id, userSelected = false) {
   const locked = Boolean(presets[id]?.exhaleFlow) && !Boolean(presets[id]?.breathingOnly);
   lockRhythm(locked);
   const isBreathing = Boolean(presets[id]?.breathingOnly);
-  // Klankbegeleiding: alleen voor humming/klank
+  const isMeditationPreset = Boolean(presets[id]?.meditationMode);
+  // Klankbegeleiding: alleen voor humming/klank — nooit bij ademhaling of meditatie
   const klankSection = document.querySelector("section.control-group:has(#guideToggle)") ||
     (() => { const el = document.getElementById("guideToggle"); return el ? el.closest("section.control-group") : null; })();
-  if (klankSection) klankSection.style.display = isBreathing ? "none" : "";
-  // Grondtoon: verberg bij ademhaling
+  if (klankSection) klankSection.style.display = (isBreathing || isMeditationPreset) ? "none" : "";
+  // Grondtoon: verberg bij ademhaling en meditatie
   const grondtoonPanel = document.getElementById("grondtoonPanel");
-  if (grondtoonPanel) grondtoonPanel.style.display = isBreathing ? "none" : "";
+  if (grondtoonPanel) grondtoonPanel.style.display = (isBreathing || isMeditationPreset) ? "none" : "";
   // Geluid-sectie (geluid/tril-cues): voor alle geluidsprotocollen, niet bij meditatie
   const breathingControls = document.getElementById("breathingControls");
   if (breathingControls) breathingControls.style.display = presets[id]?.meditationMode ? "none" : "";
@@ -3477,12 +3519,15 @@ function applyPreset(id, userSelected = false) {
   // Fase-bolletjes: alleen IN/UIT tonen bij presets met vaste phases of meditationMode
   els.dotHold.style.display  = isPhasedOrMeditation ? "none" : "";
   els.dotPause.style.display = isPhasedOrMeditation ? "none" : "";
-  // Meditatiemodus: toon duurknoppen, verberg ademritme-sliders
+  // Meditatiemodus: toon duur- en signaalinstellingen, verberg ademritme-sliders
   const isMeditation = Boolean(preset.meditationMode);
   const meditationDurationSection = document.getElementById("meditationDurationSection");
+  const meditationSignalsSection = document.getElementById("meditationSignalsSection");
   const rhythmSectionEl = document.getElementById("rhythmSection");
   if (meditationDurationSection) meditationDurationSection.style.display = isMeditation ? "" : "none";
+  if (meditationSignalsSection) meditationSignalsSection.style.display = isMeditation ? "" : "none";
   if (rhythmSectionEl) rhythmSectionEl.style.display = isPhasedOrMeditation ? "none" : "";
+  updateMeditationSoundUI();
   // Fase-overzicht bij de uitleg (desktop: onder de productomschrijving)
   const practiceOverview = document.getElementById("practicePhaseOverview");
   if (practiceOverview) practiceOverview.innerHTML = phaseOverviewHTML(preset);
@@ -4109,12 +4154,15 @@ function updatePhase(time) {
   els.timeStat.textContent = fmtClock(remaining);
   els.cue.style.setProperty("--breath-scale", String(lerp(0.9, 1.08, guide.breath).toFixed(3)));
 
-  // Meditatiemodus: geen fase-cycling, enkel voortgang en stilte
+  // Meditatiemodus: geen fase-cycling, enkel voortgang en stilte.
+  // Idle: MEDITATIE / vrije aandacht — tijdens de sessie: resterende tijd.
   if (presets[activePreset]?.meditationMode) {
     els.cue.classList.remove("hum", "sound");
-    setCueWord("MEDITATIE");
-    els.cueSub.textContent = "Adem vrij";
+    const inSession = time > 0 && (sessionState === "running" || sessionState === "paused");
+    setCueWord(inSession ? fmtClock(remaining) : "MEDITATIE");
+    els.cueSub.textContent = "vrije aandacht";
     els.phaseStat.textContent = "Meditatie";
+    if (running) maybePlayMeditationIntervalTone(time);
     els.toneStat.textContent  = "—";
     els.droneStat.textContent = "UIT";
     els.dotIn.classList.remove("active");
@@ -4191,6 +4239,10 @@ function completeSession() {
   stopBgAudio(true);
   stopBreathAmbient();
   stopSessionMusic();
+  // Meditatietimer: optionele zachte eindtoon markeert de afronding
+  if (presets[activePreset]?.meditationMode && document.getElementById("medEndToneToggle")?.checked) {
+    playMeditationBell("end");
+  }
   // Eenmalig registreren
   if (!sessionLogged) { logSession(sessionDuration(), true); sessionLogged = true; }
   // Rustige eindstand tekenen (geen ademsturing meer)
@@ -4262,6 +4314,11 @@ async function start() {
   // (start → eerste inademing) wél als wisseling telt en de eerste cue klinkt.
   // (Bij hervatten na pauze is elapsedBefore > 0, dan blijft de fase intact.)
   if (elapsedBefore === 0) { sessionLogged = false; lastPhaseKey = "ready"; }
+  // Meditatietimer: verse start → intervalteller terug en optionele zachte starttoon
+  if (elapsedBefore === 0 && presets[activePreset]?.meditationMode) {
+    lastMedIntervalIdx = 0;
+    if (document.getElementById("medStartToneToggle")?.checked) playMeditationBell("start");
+  }
   startTime = performance.now();
   els.startBtn.textContent = "II";
   els.breathVisual.classList.add("running");
@@ -4299,6 +4356,7 @@ function reset() {
   releaseWakeLock();
   elapsedBefore = 0;
   lastPhaseKey = "ready";
+  lastMedIntervalIdx = 0;
   els.startBtn.textContent = "▶";
   els.breathVisual.classList.remove("running");
   stopDroneEngine();
@@ -4510,13 +4568,140 @@ els.protocolList.addEventListener("click", handleLibraryClick);
 document.getElementById("soundList").addEventListener("click", handleLibraryClick);
 document.getElementById("meditationList").addEventListener("click", handleLibraryClick);
 
+// ── Meditatietimer: duur, signalen en zachte klankmarkeringen ──
+// Geluid is bewust géén klankgenerator: alleen korte, zachte beltonen als
+// markering (start/einde/interval). Standaardwaarden kunnen later via het
+// backend (app_settings) worden beheerd, zie applyMeditationToneSettings().
+
+// Zachte belklank voor de meditatietimer. Volume volgt de gewone volumeslider.
+function playMeditationBell(kind = "interval") {
+  if (!audioCtx) return;
+  const base = 240;                     // rustige, lage belklank
+  const soft = kind === "interval";     // intervaltoon nóg iets zachter
+  const level = Math.max(0.012, Math.min(0.09, Number(els.volumeInput.value) / 100 * 0.09)) * (soft ? 0.65 : 1);
+  const decay = soft ? 2.6 : 3.4;
+  const strikes = kind === "end" ? [0, 1.9] : [0];   // eindtoon: twee zachte aanslagen
+  for (const offset of strikes) {
+    const start = audioCtx.currentTime + offset;
+    [[1, 1], [2.005, 0.32], [3.01, 0.1]].forEach(([ratio, share]) => {
+      const osc = audioCtx.createOscillator();
+      const bellFilter = audioCtx.createBiquadFilter();
+      const bellGain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(base * ratio, start);
+      bellFilter.type = "lowpass";
+      bellFilter.frequency.setValueAtTime(1600, start);
+      bellFilter.Q.setValueAtTime(0.3, start);
+      bellGain.gain.setValueAtTime(0.0001, start);
+      bellGain.gain.linearRampToValueAtTime(level * share, start + 0.025);
+      bellGain.gain.exponentialRampToValueAtTime(0.0001, start + decay);
+      osc.connect(bellFilter);
+      bellFilter.connect(bellGain);
+      bellGain.connect(audioCtx.destination);
+      osc.start(start);
+      osc.stop(start + decay + 0.1);
+      window.setTimeout(() => {
+        try { osc.disconnect(); bellFilter.disconnect(); bellGain.disconnect(); } catch {}
+      }, (offset + decay + 0.3) * 1000);
+    });
+  }
+}
+
+// Speelt de intervaltoon zodra een volgende intervalgrens is gepasseerd.
+function maybePlayMeditationIntervalTone(elapsed) {
+  const toggle = document.getElementById("medIntervalToneToggle");
+  const input = document.getElementById("medIntervalInput");
+  if (!toggle?.checked || !input) return;
+  const step = (parseInt(input.value, 10) || 5) * 60;
+  const idx = Math.floor(elapsed / step);
+  if (idx <= lastMedIntervalIdx) return;
+  lastMedIntervalIdx = idx;
+  // Vlak voor het einde geen intervaltoon meer; de eindtoon rondt de sessie af.
+  if (sessionDuration() - idx * step < 20) return;
+  playMeditationBell("interval");
+}
+
+// Houdt de meditatie-instellingen in de interface synchroon:
+// duurlabel, snelkeuzes, intervalregel en of de volumesectie nodig is.
+function updateMeditationSoundUI() {
+  const durInput = document.getElementById("medDurationInput");
+  const durOut = document.getElementById("medDurationOut");
+  const intervalToggle = document.getElementById("medIntervalToneToggle");
+  const intervalRow = document.getElementById("medIntervalRow");
+  const intervalInput = document.getElementById("medIntervalInput");
+  const intervalOut = document.getElementById("medIntervalOut");
+  if (!durInput) return;
+  if (Number(durInput.value) !== meditationDuration) durInput.value = meditationDuration;
+  if (durOut) durOut.textContent = `${meditationDuration} minuten`;
+  document.querySelectorAll(".med-dur-btn").forEach(b =>
+    b.classList.toggle("med-dur-active", parseInt(b.dataset.min, 10) === meditationDuration));
+  if (intervalRow) intervalRow.style.display = intervalToggle?.checked ? "" : "none";
+  if (intervalOut && intervalInput) intervalOut.textContent = `elke ${intervalInput.value} ${Number(intervalInput.value) === 1 ? "minuut" : "minuten"}`;
+  // Volume alleen tonen als er daadwerkelijk geluid actief is (meditatiemodus)
+  const volumeSection = document.getElementById("volumeSection");
+  if (volumeSection) {
+    const isMeditation = Boolean(presets[activePreset]?.meditationMode);
+    const anyTone = ["medStartToneToggle", "medEndToneToggle", "medIntervalToneToggle"]
+      .some(id => document.getElementById(id)?.checked);
+    volumeSection.style.display = (isMeditation && !anyTone) ? "none" : "";
+  }
+  if (typeof updateSliderFill === "function") {
+    updateSliderFill(durInput);
+    if (intervalInput) updateSliderFill(intervalInput);
+  }
+}
+
+// Nieuwe sessieduur toepassen (slider én snelkeuzes gebruiken dit pad).
+function setMeditationDuration(minutes) {
+  meditationDuration = Math.max(2, Math.min(60, parseInt(minutes, 10) || 10));
+  updateMeditationSoundUI();
+  if (sessionState === "idle") { updatePhase(0); draw(0); }
+  else reset();   // lopende/gepauzeerde sessie: opnieuw beginnen met de nieuwe duur
+}
+
+document.getElementById("medDurationInput").addEventListener("input", e => setMeditationDuration(e.target.value));
 document.getElementById("meditationDurationBtns").addEventListener("click", e => {
   const btn = e.target.closest(".med-dur-btn");
-  if (!btn) return;
-  meditationDuration = parseInt(btn.dataset.min, 10);
-  document.querySelectorAll(".med-dur-btn").forEach(b => b.classList.toggle("med-dur-active", b === btn));
-  reset();
+  if (btn) setMeditationDuration(btn.dataset.min);
 });
+
+// Gebruikerskeuze wint van backend-standaarden (alleen binnen deze sessie).
+let _userChangedMedTones = false;
+for (const id of ["medStartToneToggle", "medEndToneToggle", "medIntervalToneToggle"]) {
+  document.getElementById(id).addEventListener("change", () => {
+    _userChangedMedTones = true;
+    updateMeditationSoundUI();
+  });
+}
+document.getElementById("medIntervalInput").addEventListener("input", () => {
+  _userChangedMedTones = true;
+  updateMeditationSoundUI();
+});
+
+// Backend-voorbereiding: standaardinstellingen voor de meditatietonen uit
+// app_settings (key/value). Ondersteunde sleutels:
+//   meditation_start_tone      → "1"/"0" (starttoon aan/uit)
+//   meditation_end_tone        → "1"/"0" (eindtoon aan/uit)
+//   meditation_interval_tone   → "1"/"0" (intervaltoon aan/uit)
+//   meditation_interval_minutes→ 1..15   (interval in minuten)
+// Het standaardvolume loopt mee met de bestaande sleutel default_audio_volume.
+function applyMeditationToneSettings(settings) {
+  if (_userChangedMedTones) return;
+  const map = Object.fromEntries((settings || []).map(s => [s.key, s.value]));
+  const isOff = v => /^(0|false|uit|nee|off)$/i.test(String(v).trim());
+  const setToggle = (id, key) => {
+    const el = document.getElementById(id);
+    if (el && map[key] != null && String(map[key]).trim() !== "") el.checked = !isOff(map[key]);
+  };
+  setToggle("medStartToneToggle", "meditation_start_tone");
+  setToggle("medEndToneToggle", "meditation_end_tone");
+  setToggle("medIntervalToneToggle", "meditation_interval_tone");
+  const minutes = Number(map.meditation_interval_minutes);
+  if (Number.isFinite(minutes) && minutes >= 1) {
+    document.getElementById("medIntervalInput").value = Math.max(1, Math.min(15, Math.round(minutes)));
+  }
+  updateMeditationSoundUI();
+}
 document.getElementById("verdiepingList").addEventListener("click", handleLibraryClick);
 
 for (const input of [els.inhaleInput, els.holdInput, els.exhaleInput, els.pauseInput, els.volumeInput]) {
@@ -5475,6 +5660,7 @@ async function bootstrapBackend() {
     const res = applyAdminData(data);
     applyDefaultVolume(data.app_settings);
     applyContentSettings(data.app_settings);
+    applyMeditationToneSettings(data.app_settings);
     renderProtocols();
     applyPreset(activePreset && presets[activePreset] ? activePreset : Object.keys(presets)[0]);
     console.info(`PhytoForsan: backend-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw, ${res.removed} verborgen).`);
