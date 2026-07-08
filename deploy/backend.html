@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.1.5</span>
+    <span class="env-badge" id="backendVersion">backend v1.1.6</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -723,10 +723,16 @@ async function renderPhases() {
   const phases = (await dbList("protocol_phases", { protocol_id: editingProtocolId })).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
   const curProt = (await dbList("protocols")).find(x => x.id === editingProtocolId);
   const meditatie = curProt ? await isMeditatieProtocol(curProt) : false;
+  // Meditatieprotocol zonder fases: geen fasebeheer tonen. De vrije timer
+  // gebruikt geen fases; de gebruiker kiest de duur in de app.
+  if (meditatie && !phases.length) {
+    wrap.innerHTML = `<h3>Fases</h3><p class="muted">De meditatietimer werkt zonder fases: de gebruiker kiest de duur in de app. Hier hoef je niets in te stellen.</p>`;
+    return;
+  }
   const typeOpt = (v)=>["breath","free","humming","sound","silence","integration","warning"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
   const invalid = phases.some(f=>Number(f.duration_seconds)<=0);
   wrap.innerHTML = `<h3>Fases — totale duur ${fmtDur(totalSeconds(phases))} · ${phases.length} fases ${invalid?'<span class="pill archived">ongeldige fase</span>':''}</h3>
-    ${meditatie && !phases.length ? '<p class="muted">Dit is een meditatieprotocol zonder fases — dat hoort zo. De gebruiker kiest de duur in de app; het protocol kan gewoon gepubliceerd blijven.</p>' : ''}
+    ${meditatie ? '<p class="muted">Let op: een meditatieprotocol gebruikt geen fases in de app. Je kunt deze fases veilig verwijderen.</p>' : ''}
     ${phases.map(f=>`<div class="phase-row" data-ph="${f.id}">
       <div class="row"><div><label>Titel</label><input class="ph_title" value="${esc(f.title)}"></div>
       <div><label>Type</label><select class="ph_type">${typeOpt(f.type)}</select></div></div>
@@ -752,9 +758,10 @@ async function renderPhases() {
       <label>Instructietekst (rustfase)</label><textarea class="ph_instr">${esc(f.instruction_text)}</textarea>
       <div style="margin-top:8px;display:flex;gap:8px"><button class="btn small danger ph_del">Fase verwijderen</button></div>
     </div>`).join("")}
-    <button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>
+    ${meditatie ? '' : '<button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>'}
     <p class="muted" style="margin-top:6px">Wijzigingen in de fases worden mee opgeslagen met de knop <b>Opslaan</b> bovenaan.</p>`;
-  document.getElementById("addPhase").addEventListener("click", async () => {
+  const addPhaseBtn = document.getElementById("addPhase");
+  if (addPhaseBtn) addPhaseBtn.addEventListener("click", async () => {
     await savePhasesFromDom(); // bestaande wijzigingen niet verliezen
     await dbUpsert("protocol_phases", { protocol_id:editingProtocolId, sort_order:phases.length, title:"Nieuwe fase", type:"free", duration_seconds:60, inhale_seconds:0,hold_seconds:0,exhale_seconds:0,pause_seconds:0, instruction_text:"", visual_mode:"slowBreath", cue:"" });
     renderPhases();
