@@ -770,6 +770,28 @@ select:focus, input[type="number"]:focus {
   border-radius: 999px;
 }
 
+/* Draai-hint: standaard verborgen; alleen op telefoons (aanraakscherm,
+   weinig hoogte) in liggende stand als rustige overlay over de app. */
+#rotateHint { display: none; }
+@media (orientation: landscape) and (max-height: 500px) and (hover: none) and (pointer: coarse) {
+  #rotateHint {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 100002;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    padding: 24px;
+    background: linear-gradient(180deg, #fff, var(--page));
+    color: var(--deep);
+  }
+  #rotateHint strong { font-size: 1.15rem; font-weight: 900; }
+  #rotateHint span:last-child { font-size: .9rem; opacity: .75; }
+}
+
 /* Admin-scrubber: balk is klikbaar om door de sessie te springen */
 .stage-progress.admin-scrub {
   cursor: pointer;
@@ -1646,7 +1668,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1944,6 +1966,13 @@ canvas {
   </nav>
 
 </main>
+
+<!-- Draai-hint: alleen op telefoons in liggende stand (CSS regelt de zichtbaarheid) -->
+<div id="rotateHint" aria-hidden="true">
+  <span style="font-size:2.2rem">📱</span>
+  <strong>Draai je scherm terug</strong>
+  <span>De app werkt het prettigst rechtop (staand).</span>
+</div>
 
 <!-- Melding: nieuwe versie beschikbaar (compact pilletje, boven de mobiele navigatie) -->
 <div id="updateBanner" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:100000;align-items:center;gap:10px;background:#002f2d;color:#fff;border-radius:999px;padding:5px 5px 5px 14px;box-shadow:0 8px 20px rgba(0,0,0,.2);font-size:.78rem;white-space:nowrap;max-width:94vw">
