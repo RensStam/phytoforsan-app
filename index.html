@@ -1632,7 +1632,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.1</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5212,7 +5212,9 @@ els.breathVisual.addEventListener("click", () => {
 
 // ── Admin-scrubber op de voortgangsbalk ──
 // Alleen voor admins: klik of sleep op de balk om snel door het protocol te
-// springen (links = begin, rechts = einde). Handig om sessies na te lopen.
+// springen. De balk toont de RESTERENDE tijd (loopt leeg naar links), dus de
+// gekleurde rand landt precies op de klikpositie — dat voelt als de rand
+// verslepen. Volle balk (rechts) = begin, lege balk (links) = einde.
 function isAdminUser() {
   return effectiveLevel() === "admin";
 }
@@ -5223,10 +5225,11 @@ function updateAdminScrub() {
   bar.classList.toggle("admin-scrub", on);
   bar.title = on ? "Spring naar een punt in de sessie (admin)" : "";
 }
-function seekSessionTo(fraction) {
+function seekSessionTo(remainingFraction) {
   const total = sessionDuration();
   if (!total) return;
-  const target = clamp(fraction, 0, 1) * Math.max(0, total - 0.2);
+  // Klikpositie = nieuwe rand van de balk = resterende tijd
+  const target = (1 - clamp(remainingFraction, 0, 1)) * Math.max(0, total - 0.2);
   // Lopende klank stopt; de engine pikt vanzelf weer op bij de volgende fasewissel
   stopDroneEngine();
   stopBgAudio();
