@@ -1425,22 +1425,19 @@ canvas {
 }
 .primary-session-button {
   width: 100%;
-  min-height: 56px;
+  min-height: 46px;
   border: none;
   border-radius: 999px;
   background: var(--deep);
   color: #fff;
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(0, 63, 58, 0.18);
-  transition: transform 120ms, box-shadow 120ms;
+  box-shadow: none;
+  transition: opacity 120ms;
 }
-.primary-session-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 6px 16px rgba(0, 63, 58, 0.16);
-}
+.primary-session-button:active { opacity: .85; }
 /* Verdieping-slotje + toegangsscherm */
 .protocol-card.locked { opacity: .82; }
 .card-lock { font-size: 1.1rem; opacity: .55; align-self: center; padding: 0 6px; }
@@ -1456,7 +1453,12 @@ canvas {
 .deep-gate-input { width: 100%; box-sizing: border-box; border: 1.5px solid rgba(18,55,52,.22); border-radius: 12px; padding: 11px 14px; font-size: .9rem; font-family: inherit; margin-bottom: 10px; }
 .deep-gate-check { display: flex; gap: 10px; align-items: flex-start; font-size: .82rem; line-height: 1.45; color: #333; margin-bottom: 10px; cursor: pointer; }
 .deep-gate-check input { margin-top: 3px; flex-shrink: 0; }
-.deep-gate-secondary { width: 100%; background: transparent; color: #555; border: 1.5px solid #ccc; border-radius: 12px; padding: 11px 20px; font-size: .85rem; font-weight: 700; cursor: pointer; }
+.deep-gate-secondary { width: 100%; background: transparent; color: #555; border: 1.5px solid #d5d5d5; border-radius: 999px; padding: 11px 20px; font-size: .85rem; font-weight: 600; cursor: pointer; box-shadow: none; }
+/* Scrollbalk in overlays verbergen (scrollen blijft werken) */
+#profilePanel, #deepAccessOverlay, .deep-gate-card { scrollbar-width: none; -ms-overflow-style: none; }
+#profilePanel::-webkit-scrollbar, #deepAccessOverlay::-webkit-scrollbar, .deep-gate-card::-webkit-scrollbar { width: 0; height: 0; }
+/* Links in profielteksten duidelijk klikbaar */
+.profile-item-body a { color: var(--deep); text-decoration: underline; }
 .deep-gate-msg { font-size: .82rem; line-height: 1.5; border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; }
 .deep-gate-msg.ok { background: rgba(18,55,52,.08); color: var(--deep); }
 .deep-gate-msg.warn { background: rgba(212,155,63,.14); color: #8a5a00; }
@@ -1617,7 +1619,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5551,14 +5553,24 @@ function applyDefaultVolume(settings) {
   pct = Math.max(0, Math.min(100, Math.round(pct)));
   if (els.volumeInput) { els.volumeInput.value = pct; if (els.volumeOut) els.volumeOut.textContent = pct + "%"; updateLiveVolume(); }
 }
-// Maakt van platte tekst veilige HTML: lege regel = nieuwe alinea, enkele regel = <br>.
-// E-mailadressen en http(s)-links worden klikbaar gemaakt.
+// Maakt van tekst veilige HTML met lichte opmaak:
+//   lege regel = nieuwe alinea, enkele regel = <br>
+//   **vet**  *schuin*  [kleur=#e08c2a]gekleurd[/kleur]
+//   e-mail en http(s)-links worden klikbaar.
 function textToHtml(text) {
   const esc = (s) => String(s).replace(/[&<>]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
   const linkify = (s) => s
     .replace(/\b([\w.+-]+@[\w-]+\.[\w.-]+)\b/g, '<a href="mailto:$1">$1</a>')
     .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-  return String(text).split(/\n\s*\n/).map(p => `<p>${linkify(esc(p.trim())).replace(/\n/g, "<br>")}</p>`).join("");
+  const inline = (raw) => {
+    let s = esc(raw);
+    s = s.replace(/\[kleur=([#\w(),.%\s-]+)\]([\s\S]*?)\[\/kleur\]/gi, (m, c, t) => `<span style="color:${c.replace(/["';]/g, "").trim()}">${t}</span>`);
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+    s = linkify(s);
+    return s;
+  };
+  return String(text).split(/\n\s*\n/).map(p => `<p>${inline(p.trim()).replace(/\n/g, "<br>")}</p>`).join("");
 }
 // Past bewerkbare teksten uit het backend toe op het profiel-/instellingenscherm.
 // (appSettingsMap zelf staat bij de sessie-state bovenin, zodat ook de

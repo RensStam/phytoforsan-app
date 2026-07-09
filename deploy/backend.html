@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.1.7</span>
+    <span class="env-badge" id="backendVersion">backend v1.1.8</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1215,7 +1215,7 @@ Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
     <p class="muted">Deze woorden gelden voor de hele app. De IN/UIT-woorden en subteksten per ademfase stel je per protocol in bij de fases; de klankwoorden van MAEN, AMEN en OM bij het protocol zelf.</p>
     ${cueKeys.map(fieldHtml).join("")}
     <h3 style="margin-top:18px">Teksten op het profiel-/instellingenscherm</h3>
-    <p class="muted">Laat een veld leeg om de standaardtekst van de app te gebruiken. Een lege regel begint een nieuwe alinea.</p>
+    <p class="muted">Laat een veld leeg om de standaardtekst van de app te gebruiken. Een lege regel begint een nieuwe alinea.<br>Opmaak: <b>**vet**</b>, <i>*schuin*</i>, en <code>[kleur=#e08c2a]gekleurde tekst[/kleur]</code>. E-mail en links worden automatisch klikbaar.</p>
     ${textKeys.map(textareaHtml).join("")}
     <button class="btn" id="saveSettings" style="margin-top:10px">Opslaan</button><p class="msg hidden" id="setMsg"></p></div>`;
   document.getElementById("saveSettings").addEventListener("click", async ()=>{

@@ -1,4 +1,4 @@
-const CACHE = "relax-breathing-humming-v121";
+const CACHE = "relax-breathing-humming-v122";
 
 self.addEventListener("install", e => {
   self.skipWaiting();
