@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.1.8</span>
+    <span class="env-badge" id="backendVersion">backend v1.1.9</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -565,6 +565,7 @@ async function editProtocol(id) {
     </div>
     <p class="msg hidden" id="protMsg"></p>
     <div id="audioWrap"></div>
+    <div id="cueWordsWrap"></div>
     <div id="soundWordsWrap"></div>
     <div id="phasesWrap"></div>
   </div>`;
@@ -584,7 +585,45 @@ async function editProtocol(id) {
   });
   renderPhases();
   renderProtocolAudio();
+  renderCueWords();
   renderSoundWords();
+}
+
+// ---------- Woorden in de sessiecirkel (bij het protocol) ----------
+// Meditatieprotocol: cue-woord + ondertekst hier bewerkbaar (opslag in
+// app_settings, want de app leest ze app-breed). Andere protocollen: de
+// woorden staan bij de fases; klankprotocollen hebben hun eigen sectie.
+async function renderCueWords() {
+  const wrap = document.getElementById("cueWordsWrap");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  if (!editingProtocolId) return;
+  const prot = (await dbList("protocols")).find(x => x.id === editingProtocolId);
+  if (!prot) return;
+  if (!(await isMeditatieProtocol(prot))) {
+    if (!SOUND_WORD_DEFAULTS[(prot.slug || "").toLowerCase()]) {
+      wrap.innerHTML = `<p class="muted" style="margin-top:14px">De woorden in de sessiecirkel stel je hieronder per fase in (cue-woorden en subteksten). Het algemene rustwoord staat bij Instellingen.</p>`;
+    }
+    return;
+  }
+  const s = await dbList("app_settings");
+  const val = (k, d) => { const r = s.find(x => x.key === k); return (r && r.value != null && String(r.value).trim() !== "") ? r.value : d; };
+  wrap.innerHTML = `<h3>Woorden in de sessiecirkel</h3>
+    <p class="muted">Het woord in de cirkel vóór de start en de ondertekst eronder. Tijdens de sessie toont de cirkel de resterende tijd met dezelfde ondertekst.</p>
+    <div class="row">
+      <div><label>Cue-woord</label><input id="cw_word" value="${esc(val("meditation_cue_word", "MEDITATIE"))}"></div>
+      <div><label>Ondertekst</label><input id="cw_sub" value="${esc(val("meditation_cue_sub", "vrije aandacht"))}"></div>
+    </div>
+    <div style="margin-top:8px"><button class="btn small" id="cw_save">Woorden opslaan</button></div>
+    <p class="msg hidden" id="cw_msg"></p>`;
+  document.getElementById("cw_save").addEventListener("click", async () => {
+    const msg = document.getElementById("cw_msg");
+    try {
+      await dbUpsert("app_settings", { key: "meditation_cue_word", value: document.getElementById("cw_word").value.trim() });
+      await dbUpsert("app_settings", { key: "meditation_cue_sub", value: document.getElementById("cw_sub").value.trim() });
+      msg.className = "msg ok"; msg.textContent = "Woorden opgeslagen."; msg.classList.remove("hidden");
+    } catch (e) { msg.className = "msg err"; msg.textContent = "Fout: " + (e.message || e); msg.classList.remove("hidden"); }
+  });
 }
 
 // ---------- Klankwoorden in de sessiecirkel (MAEN/AMEN/OM) ----------
@@ -1207,12 +1246,12 @@ Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
     return `<label>${labels[k]||k}</label><input data-key="${k}" value="${esc(val(k))}">`;
   };
   const textareaHtml = (k) => `<label>${labels[k]||k}</label><textarea data-key="${k}" style="min-height:120px">${esc(val(k))}</textarea>`;
-  const cueKeys = ["rest_cue_word","rest_sub_hold","rest_sub_pause","meditation_cue_word","meditation_cue_sub"];
+  const cueKeys = ["rest_cue_word","rest_sub_hold","rest_sub_pause"];
   tabBody.innerHTML = `<div class="card"><h2>App-instellingen</h2>
     ${keys.map(fieldHtml).join("")}
     <p class="muted" style="margin-top:6px">Het geluidsvolume geldt als startwaarde voor nieuwe gebruikers; ze kunnen het zelf nog bijstellen.</p>
-    <h3 style="margin-top:18px">Woorden in de sessiecirkel</h3>
-    <p class="muted">Deze woorden gelden voor de hele app. De IN/UIT-woorden en subteksten per ademfase stel je per protocol in bij de fases; de klankwoorden van MAEN, AMEN en OM bij het protocol zelf.</p>
+    <h3 style="margin-top:18px">Woorden in de sessiecirkel (app-breed)</h3>
+    <p class="muted">Het rustwoord geldt voor alle protocollen tegelijk. Alle andere cirkelwoorden stel je bij het protocol zelf in: de IN/UIT-woorden en subteksten bij de fases, de woorden van de meditatietimer en de klankwoorden van MAEN, AMEN en OM in het protocolformulier.</p>
     ${cueKeys.map(fieldHtml).join("")}
     <h3 style="margin-top:18px">Teksten op het profiel-/instellingenscherm</h3>
     <p class="muted">Laat een veld leeg om de standaardtekst van de app te gebruiken. Een lege regel begint een nieuwe alinea.<br>Opmaak: <b>**vet**</b>, <i>*schuin*</i>, en <code>[kleur=#e08c2a]gekleurde tekst[/kleur]</code>. E-mail en links worden automatisch klikbaar.</p>
