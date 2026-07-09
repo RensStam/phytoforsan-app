@@ -1619,7 +1619,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.6</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.7</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1917,6 +1917,12 @@ canvas {
   </nav>
 
 </main>
+
+<!-- Melding: nieuwe versie beschikbaar -->
+<div id="updateBanner" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:100000;align-items:center;gap:12px;background:#002f2d;color:#fff;border-radius:999px;padding:10px 12px 10px 18px;box-shadow:0 12px 30px rgba(0,0,0,.25);font-size:.86rem">
+  <span>Er is een nieuwe versie.</span>
+  <button id="updateReloadBtn" type="button" style="background:#69b626;color:#002f2d;border:none;border-radius:999px;padding:8px 16px;font-weight:800;font-size:.82rem;cursor:pointer">Herladen</button>
+</div>
 
 <!-- Aanmoediging na een sessie (alleen voor gasten) -->
 <div id="postSessionCta" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99990;width:min(420px,92vw);background:#fff;border:1px solid rgba(18,55,52,.14);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.18);padding:14px 16px">
@@ -5798,21 +5804,37 @@ const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
 const manifestUrl = URL.createObjectURL(blob);
 document.getElementById("pwa-manifest").setAttribute("href", manifestUrl);
 
-// ── Service Worker ──
-// Automatisch verversen zodra er een nieuwe versie live staat (geen cache-gedoe meer).
-// Alleen herladen bij een échte update (er was al een actieve worker), niet bij de
-// allereerste keer laden.
+// ── Service Worker + update-melding ──
+// Bij een nieuwe versie verschijnt een discrete "Herladen"-melding; de gebruiker
+// kiest zelf wanneer (geen onverwachte herlaad tijdens een sessie).
+function showUpdateBanner(worker) {
+  const banner = document.getElementById("updateBanner");
+  const btn = document.getElementById("updateReloadBtn");
+  if (!banner || !btn || !worker) return;
+  banner.style.display = "flex";
+  btn.onclick = () => { btn.textContent = "Bezig…"; worker.postMessage("skipWaiting"); };
+}
 if ("serviceWorker" in navigator) {
   const hadController = !!navigator.serviceWorker.controller;
   let swReloaded = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (swReloaded || !hadController) return;
+    if (swReloaded || !hadController) return;   // niet herladen bij de eerste installatie
     swReloaded = true;
     window.location.reload();
   });
-  navigator.serviceWorker.register("sw.js")
-    .then(reg => { reg.update?.(); })
-    .catch(err => console.log("SW fout:", err));
+  navigator.serviceWorker.register("sw.js").then(reg => {
+    reg.update?.();
+    if (reg.waiting && navigator.serviceWorker.controller) showUpdateBanner(reg.waiting);
+    reg.addEventListener("updatefound", () => {
+      const nw = reg.installing;
+      nw?.addEventListener("statechange", () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller) showUpdateBanner(nw);
+      });
+    });
+    // Elk uur en bij terugkeren naar de app op updates controleren.
+    setInterval(() => reg.update?.(), 60 * 60 * 1000);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update?.(); });
+  }).catch(err => console.log("SW fout:", err));
 }
 
 // ── Installatie knop ──

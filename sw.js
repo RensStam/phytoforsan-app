@@ -1,7 +1,13 @@
-const CACHE = "relax-breathing-humming-v123";
+const CACHE = "relax-breathing-humming-v124";
 
 self.addEventListener("install", e => {
-  self.skipWaiting();
+  // Niet automatisch skipWaiting: de nieuwe versie wacht tot de gebruiker
+  // op "Herladen" klikt (zie de update-melding in de app).
+});
+
+// De app vraagt om over te schakelen naar de nieuwe versie.
+self.addEventListener("message", e => {
+  if (e.data === "skipWaiting") self.skipWaiting();
 });
 
 self.addEventListener("activate", e => {
