@@ -1619,7 +1619,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5799,8 +5799,20 @@ const manifestUrl = URL.createObjectURL(blob);
 document.getElementById("pwa-manifest").setAttribute("href", manifestUrl);
 
 // ── Service Worker ──
+// Automatisch verversen zodra er een nieuwe versie live staat (geen cache-gedoe meer).
+// Alleen herladen bij een échte update (er was al een actieve worker), niet bij de
+// allereerste keer laden.
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(err => console.log("SW fout:", err));
+  const hadController = !!navigator.serviceWorker.controller;
+  let swReloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (swReloaded || !hadController) return;
+    swReloaded = true;
+    window.location.reload();
+  });
+  navigator.serviceWorker.register("sw.js")
+    .then(reg => { reg.update?.(); })
+    .catch(err => console.log("SW fout:", err));
 }
 
 // ── Installatie knop ──
