@@ -1632,7 +1632,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2911,14 +2911,36 @@ function startSessionMusic() {
     ? document.getElementById("medBgSoundToggle")
     : els.breathSoundToggle;
   if (!toggle?.checked) return;
+  // Een lopende fade-out annuleren: we starten (opnieuw) op vol volume
+  if (sessionMusicFadeTimer) { clearInterval(sessionMusicFadeTimer); sessionMusicFadeTimer = null; }
   sessionMusic.loop = cfg.loop !== false;
   if (!sessionMusic.src.endsWith(cfg.url) && sessionMusic.src !== cfg.url) { sessionMusic.src = cfg.url; }
   sessionMusic.volume = sessionMusicVolume();
   sessionMusic.play().catch(() => {});
 }
-function stopSessionMusic(reset = true) {
+// Muziek stopt nooit abrupt: standaard een rustige fade-out (fadeSeconds=0 → direct,
+// bv. bij een herstart waar de muziek meteen opnieuw begint).
+let sessionMusicFadeTimer = null;
+function stopSessionMusic(reset = true, fadeSeconds = 2.5) {
   if (!sessionMusic.src) return;
-  try { sessionMusic.pause(); if (reset) sessionMusic.currentTime = 0; } catch {}
+  if (sessionMusicFadeTimer) { clearInterval(sessionMusicFadeTimer); sessionMusicFadeTimer = null; }
+  const finish = () => {
+    try { sessionMusic.pause(); if (reset) sessionMusic.currentTime = 0; } catch {}
+  };
+  if (!fadeSeconds || sessionMusic.paused) { finish(); return; }
+  const startVol = sessionMusic.volume;
+  const steps = Math.max(10, Math.round(fadeSeconds * 20));
+  let i = 0;
+  sessionMusicFadeTimer = setInterval(() => {
+    i++;
+    sessionMusic.volume = Math.max(0, startVol * (1 - i / steps));
+    if (i >= steps) {
+      clearInterval(sessionMusicFadeTimer);
+      sessionMusicFadeTimer = null;
+      finish();
+      sessionMusic.volume = startVol;   // volgende start weer op normaal volume
+    }
+  }, fadeSeconds * 1000 / steps);
 }
 
 function bgAudioVolume() {
@@ -2957,7 +2979,7 @@ function startBgAudio(reset = true) {
   bgAudio.play().catch(() => {});
 }
 
-function stopBgAudio(immediate = false) {
+function stopBgAudio(immediate = false, fadeSeconds = 0.6) {
   if (bgAudio.paused) return;
   if (bgFadeTimer) { clearInterval(bgFadeTimer); bgFadeTimer = null; }
   if (immediate) {
@@ -2968,7 +2990,7 @@ function stopBgAudio(immediate = false) {
     return;
   }
   const startVol = bgAudio.volume;
-  const steps = 20;
+  const steps = Math.max(20, Math.round(fadeSeconds * 25));
   let i = 0;
   bgFadeTimer = setInterval(() => {
     i++;
@@ -2980,7 +3002,7 @@ function stopBgAudio(immediate = false) {
       bgAudio.currentTime = 0;
       bgAudio.volume = startVol;
     }
-  }, 600 / steps);
+  }, fadeSeconds * 1000 / steps);
 }
 let toneNodes = [];
 let toneOn = false;
@@ -4167,8 +4189,9 @@ function triggerPhaseCues(phase) {
 }
 
 function updateLiveVolume() {
-  if (bgAudio && !bgAudio.paused) bgAudio.volume = bgAudioVolume();
-  if (sessionMusic && !sessionMusic.paused) sessionMusic.volume = sessionMusicVolume();
+  // Tijdens een fade-out het volume niet terug omhoog zetten
+  if (bgAudio && !bgAudio.paused && !bgFadeTimer) bgAudio.volume = bgAudioVolume();
+  if (sessionMusic && !sessionMusic.paused && !sessionMusicFadeTimer) sessionMusic.volume = sessionMusicVolume();
   if (!audioCtx || !toneOn) return;
   gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
   gainNode.gain.linearRampToValueAtTime(targetGain(), audioCtx.currentTime + 0.08);
@@ -4272,11 +4295,12 @@ function completeSession() {
   elapsedBefore = sessionDuration();
   releaseWakeLock();
   cancelAnimationFrame(raf);
-  // Stop alle sessie-audio; klank (OM/AMEN) direct zodat het met AFGEROND samenvalt
+  // Stop alle sessie-audio; muziek en klanktracks faden rustig uit zodat het
+  // einde van de sessie niet abrupt klinkt.
   stopDroneEngine();
-  stopBgAudio(true);
+  stopBgAudio(false, 2.2);
   stopBreathAmbient();
-  stopSessionMusic();
+  stopSessionMusic(true, 2.5);
   // Meditatietimer: optionele zachte eindtoon markeert de afronding
   if (presets[activePreset]?.meditationMode && document.getElementById("medEndToneToggle")?.checked) {
     playMeditationBell("end");
@@ -4379,7 +4403,7 @@ function pause() {
   stopDroneEngine();
   stopBgAudio();
   stopBreathAmbient();
-  stopSessionMusic(false);   // pauze: positie behouden, geen herstart bij hervatten
+  stopSessionMusic(false, 1.8);   // pauze: rustig uitfaden, positie behouden
   cancelAnimationFrame(raf);
   updatePhase(elapsedBefore);
 }
@@ -4791,7 +4815,7 @@ function restartSessionFromStart() {
   stopDroneEngine();
   stopBgAudio(true);
   stopBreathAmbient();
-  stopSessionMusic(true);
+  stopSessionMusic(true, 0);   // direct: de muziek start meteen opnieuw
   elapsedBefore = 0;
   sessionState = "idle";
   lastPhaseKey = "ready";
