@@ -1632,7 +1632,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -4219,6 +4219,7 @@ function updatePhase(time) {
   // Idle: MEDITATIE / vrije aandacht — tijdens de sessie: resterende tijd.
   if (presets[activePreset]?.meditationMode) {
     els.cue.classList.remove("hum", "sound");
+    els.soundRail.classList.remove("visible");   // geen klankletters van een vorig protocol
     const inSession = time > 0 && (sessionState === "running" || sessionState === "paused");
     setCueWord(inSession ? fmtClock(remaining) : appSetting("meditation_cue_word", "MEDITATIE"));
     els.cueSub.textContent = appSetting("meditation_cue_sub", "vrije aandacht");
@@ -4240,6 +4241,7 @@ function updatePhase(time) {
     const phaseKey = ph.mode === "free" ? `free_${ph.id}` : guide.phase.key;
     const phaseChanged = lastPhaseKey !== phaseKey;
     els.cue.classList.remove("hum", "sound");
+    els.soundRail.classList.remove("visible");   // geen klankletters van een vorig protocol
     setCueWord(guide.phase.cue || ph.cue);
     els.cueSub.textContent  = guide.phase.sub  || ph.sub;
     els.phaseStat.textContent = guide.phase.label || ph.label;
@@ -4313,6 +4315,7 @@ function completeSession() {
   draw(elapsedBefore);
   // Visuele eindstatus
   els.cue.classList.remove("hum", "sound");
+  els.soundRail.classList.remove("visible");
   els.dotIn.classList.remove("active");
   els.dotHold.classList.remove("active");
   els.dotOut.classList.remove("active");
