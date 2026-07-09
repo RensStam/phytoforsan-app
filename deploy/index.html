@@ -762,6 +762,13 @@ select:focus, input[type="number"]:focus {
   border-radius: 999px;
 }
 
+/* Admin-scrubber: balk is klikbaar om door de sessie te springen */
+.stage-progress.admin-scrub {
+  cursor: pointer;
+  height: 10px;
+  touch-action: none;
+}
+
 .session-controls {
   padding: 14px 22px 16px;
   display: flex;
@@ -1625,7 +1632,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.8</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.5.9</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5179,6 +5186,66 @@ els.breathVisual.addEventListener("click", () => {
   if (running) pause(); else start();
 });
 
+// ── Admin-scrubber op de voortgangsbalk ──
+// Alleen voor admins: klik of sleep op de balk om snel door het protocol te
+// springen (links = begin, rechts = einde). Handig om sessies na te lopen.
+function isAdminUser() {
+  return effectiveLevel() === "admin";
+}
+function updateAdminScrub() {
+  const bar = document.getElementById("stageProgress");
+  if (!bar) return;
+  const on = isAdminUser();
+  bar.classList.toggle("admin-scrub", on);
+  bar.title = on ? "Spring naar een punt in de sessie (admin)" : "";
+}
+function seekSessionTo(fraction) {
+  const total = sessionDuration();
+  if (!total) return;
+  const target = clamp(fraction, 0, 1) * Math.max(0, total - 0.2);
+  // Lopende klank stopt; de engine pikt vanzelf weer op bij de volgende fasewissel
+  stopDroneEngine();
+  stopBgAudio();
+  lastPhaseKey = "seek";
+  elapsedBefore = target;
+  // Intervalteller meditatie bijzetten zodat er geen inhaaltonen klinken
+  if (presets[activePreset]?.meditationMode) {
+    const step = (parseInt(document.getElementById("medIntervalInput")?.value, 10) || 5) * 60;
+    lastMedIntervalIdx = Math.floor(target / step);
+  }
+  if (running) {
+    startTime = performance.now();
+  } else {
+    // Vanuit idle/afgerond: als gepauzeerd verdergaan vanaf het gekozen punt
+    if (sessionState === "idle" || sessionState === "completed") sessionState = "paused";
+    els.startBtn.textContent = "▶";
+    updatePhase(elapsedBefore);
+    draw(elapsedBefore);
+  }
+}
+(() => {
+  const bar = document.getElementById("stageProgress");
+  if (!bar) return;
+  let scrubbing = false;
+  const fractionFromEvent = (e) => {
+    const r = bar.getBoundingClientRect();
+    return (e.clientX - r.left) / Math.max(1, r.width);
+  };
+  bar.addEventListener("pointerdown", e => {
+    if (!isAdminUser()) return;
+    scrubbing = true;
+    try { bar.setPointerCapture(e.pointerId); } catch {}
+    seekSessionTo(fractionFromEvent(e));
+    e.preventDefault();
+  });
+  bar.addEventListener("pointermove", e => {
+    if (scrubbing) seekSessionTo(fractionFromEvent(e));
+  });
+  const endScrub = () => { scrubbing = false; };
+  bar.addEventListener("pointerup", endScrub);
+  bar.addEventListener("pointercancel", endScrub);
+})();
+
 function updateSliderFill(input) {
   const min = Number(input.min) || 0;
   const max = Number(input.max) || 100;
@@ -5340,6 +5407,7 @@ function getProfile() {
 }
 
 function renderProfile() {
+  updateAdminScrub();   // admin-scrubber op de voortgangsbalk aan/uit
   const months = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
   document.getElementById("profileName").textContent = accountDisplayName() || "Welkom";
   const sinceEl = document.getElementById("profileSince");
