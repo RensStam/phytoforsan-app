@@ -1721,7 +1721,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2057,7 +2057,7 @@ canvas {
     <!-- Blok 1: Inloggen / registreren -->
     <div class="deep-gate-block">
       <h3 class="deep-gate-h">Inloggen of registreren</h3>
-      <p class="deep-gate-note">Gratis sessies werken zonder account. Premium-toegang is gekoppeld aan je account.</p>
+      <p class="deep-gate-note">Gratis sessies werken zonder account. Nieuw account? Je krijgt automatisch 30 dagen gratis toegang tot alle extra protocollen.</p>
       <input class="deep-gate-input" id="authEmail" type="email" placeholder="E-mailadres" autocomplete="username">
       <input class="deep-gate-input" id="authPass" type="password" placeholder="Wachtwoord" autocomplete="current-password">
       <div style="display:flex;gap:8px;margin-top:6px">
@@ -2068,18 +2068,26 @@ canvas {
       <p class="deep-gate-msg" id="authMsg" style="display:none"></p>
     </div>
 
-    <!-- Blok 2: Toegangscode (Verdieping) -->
+    <!-- Blok 2: PhytoForsan Relax Plus (alleen ingelogd) -->
+    <div class="deep-gate-block" id="plusBlock" style="display:none">
+      <h3 class="deep-gate-h">PhytoForsan Relax Plus</h3>
+      <p class="deep-gate-note">Plus geeft een jaar lang toegang tot alle protocollen, inclusief de verdiepingssessies. Betalen gaat veilig via Mollie (o.a. iDEAL).</p>
+      <button class="primary-session-button" id="plusActivateBtn" type="button">Plus activeren</button>
+      <p class="deep-gate-msg" id="plusMsg" style="display:none"></p>
+    </div>
+
+    <!-- Blok 3: Rustcode verzilveren -->
     <div class="deep-gate-block" id="deepInviteBlock">
-      <h3 class="deep-gate-h">Toegangscode (Verdieping)</h3>
-      <p class="deep-gate-note">Heb je een code? Daarmee ontgrendel je de Verdieping-sessies op dit apparaat, ook zonder account.</p>
+      <h3 class="deep-gate-h">Rustcode verzilveren</h3>
+      <p class="deep-gate-note">Heb je een rustcode, bijvoorbeeld bij een product of actie? Ingelogd wordt de extra toegang aan je account gekoppeld; zonder account ontgrendelt de code de Verdieping op dit apparaat.</p>
       <details class="deep-gate-safety">
         <summary>Veiligheidsinformatie</summary>
         <p>Gebruik deze sessies niet tijdens autorijden, fietsen, zwemmen, baden of het bedienen van machines.</p>
         <p>Gebruik deze sessies niet bij zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, psychosegevoeligheid, ernstige paniekklachten of wanneer je snel flauwvalt of dissocieert.</p>
         <p>Stop direct bij druk op de borst, sterke duizeligheid, paniek, misselijkheid, hevige tintelingen, kramp, verwarring of een gevoel van controleverlies.</p>
       </details>
-      <input class="deep-gate-input" id="accessCodeInput" type="text" placeholder="Vul je code in" autocapitalize="characters">
-      <button class="primary-session-button" id="accessCodeSubmit" type="button" style="margin-top:6px">Ontgrendel met code</button>
+      <input class="deep-gate-input" id="accessCodeInput" type="text" placeholder="Vul je rustcode in" autocapitalize="characters">
+      <button class="primary-session-button" id="accessCodeSubmit" type="button" style="margin-top:6px">Rustcode verzilveren</button>
       <p class="deep-gate-msg" id="accessCodeMsg" style="display:none"></p>
     </div>
 
@@ -2160,11 +2168,14 @@ function updateUserProfile(partial) {
 // Bron 1: ingelogde gebruiker (Supabase profiel.access_level)
 // Bron 2: lokale code-ontgrendeling (los van account, alleen 'deep'/'premium')
 const TIER_ORDER = { free: 0, deep: 1, premium: 2, admin: 3 };
-let appAuth = { user: null, accessLevel: "free" };
+let appAuth = { user: null, accessLevel: "free", access: null, entitlements: [] };
 function localCodeTier() { return localStorage.getItem("phyto_code_tier") || null; }
 function setLocalCodeTier(t) { if (t) localStorage.setItem("phyto_code_tier", t); }
 function effectiveLevel() {
-  let lvl = appAuth.accessLevel || "free";
+  // Centrale toegang: user_entitlements via get_user_access() is leidend
+  // (proefperiode, rustcode, Plus). Valt terug op het profielveld
+  // (handmatig/admin) en de lokale apparaatcode voor gasten.
+  let lvl = (appAuth.access && appAuth.access.level) || appAuth.accessLevel || "free";
   const code = localCodeTier();
   if (code && (TIER_ORDER[code] || 0) > (TIER_ORDER[lvl] || 0)) lvl = code;
   return lvl;
@@ -5120,19 +5131,42 @@ function closeDeepAccessGate() {
   const overlay = document.getElementById("deepAccessOverlay");
   if (overlay) overlay.style.display = "none";
 }
+// Statustekst voor de accountomgeving, op basis van de centrale toegang.
+function accessStatusText() {
+  const fmtDatum = (iso) => iso ? new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }) : "";
+  if (!appAuth.user) {
+    return localCodeTier()
+      ? "Je gebruikt de app als gast met een rustcode op dit apparaat."
+      : "Je gebruikt de app als gast (gratis sessies).";
+  }
+  if (effectiveLevel() === "admin") return `Ingelogd als ${appAuth.user.email} — beheerder (volledige toegang).`;
+  const acc = appAuth.access;
+  if (acc && acc.level === "premium") {
+    const dagen = acc.ends_at ? Math.max(0, Math.ceil((new Date(acc.ends_at) - Date.now()) / 86400000)) : null;
+    if (acc.source === "trial") return `Je proefperiode loopt nog ${dagen} ${dagen === 1 ? "dag" : "dagen"}.`;
+    if (acc.source === "rustcode") return `Je rustcode geeft toegang tot extra protocollen tot ${fmtDatum(acc.ends_at)}.`;
+    if (acc.source === "mollie_payment") return `PhytoForsan Relax Plus is actief tot ${fmtDatum(acc.ends_at)}.`;
+    return acc.ends_at ? `Plus is actief tot ${fmtDatum(acc.ends_at)}.` : "Plus is actief.";
+  }
+  if (acc && acc.level === "deep") return `Ingelogd als ${appAuth.user.email} — toegang tot de Verdieping.`;
+  const trialGehad = (appAuth.entitlements || []).some(e => e.source === "trial");
+  if (trialGehad) return "Je proefperiode is verlopen. Activeer Plus of verzilver een rustcode om extra protocollen te blijven gebruiken.";
+  return "Je gebruikt de basisversie. Activeer Plus of verzilver een rustcode voor extra protocollen.";
+}
 // Werk statusregel + knoppen bij aan de hand van de huidige toegang.
 function updateAccessUI() {
-  const lvl = effectiveLevel();
   const line = document.getElementById("accessStatusLine");
-  if (line) {
-    if (appAuth.user) line.textContent = `Ingelogd als ${appAuth.user.email} — toegangsniveau: ${lvl}.`;
-    else if (localCodeTier()) line.textContent = `Gast met code — toegangsniveau: ${lvl}.`;
-    else line.textContent = "Je gebruikt de app als gast (gratis sessies).";
-  }
+  if (line) line.textContent = accessStatusText();
   const logoutBtn = document.getElementById("authLogoutBtn");
   if (logoutBtn) logoutBtn.style.display = appAuth.user ? "" : "none";
   const accBtn = document.getElementById("accountBtn");
   if (accBtn) accBtn.textContent = appAuth.user ? "Account" : "Inloggen";
+  // Plus-blok: alleen voor ingelogde gebruikers; knop wordt "verlengen" bij actieve Plus
+  const plusBlock = document.getElementById("plusBlock");
+  if (plusBlock) plusBlock.style.display = appAuth.user ? "" : "none";
+  const plusBtn = document.getElementById("plusActivateBtn");
+  if (plusBtn) plusBtn.textContent = (appAuth.access && appAuth.access.source === "mollie_payment")
+    ? "Plus verlengen (+1 jaar)" : "Plus activeren";
 }
 function afterAccessChange() {
   renderProtocols(); updateAccessUI();
@@ -5148,7 +5182,7 @@ async function initAppAuth() {
     if (data?.session?.user) await loadAppProfile(data.session.user);
     appSb.auth.onAuthStateChange((_e, sess) => {
       if (sess?.user) loadAppProfile(sess.user);
-      else { appAuth.user = null; appAuth.accessLevel = "free"; afterAccessChange(); }
+      else { appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = []; afterAccessChange(); }
     });
   } catch (e) { console.info("PhytoForsan: auth-init", e); }
   updateAccessUI();
@@ -5161,8 +5195,26 @@ async function loadAppProfile(user) {
     appAuth.profile = data || {};
     fillProfileForm(appAuth.profile);
   } catch { appAuth.accessLevel = "free"; }
+  await refreshUserAccess();   // centrale toegang (entitlements) ophalen
   afterAccessChange();
   userStatePull();           // voortgang + instellingen ophalen/samenvoegen
+}
+
+// Centrale toegangscontrole: haalt via get_user_access() op wat de gebruiker
+// mag (niveau, bron, einddatum) plus de eigen entitlements voor de statustekst.
+async function refreshUserAccess() {
+  appAuth.access = null;
+  appAuth.entitlements = [];
+  if (!appSb || !appAuth.user) return;
+  try {
+    const { data } = await appSb.rpc("get_user_access");
+    if (data && data.level) appAuth.access = data;
+  } catch {}
+  try {
+    const { data } = await appSb.from("user_entitlements")
+      .select("source,status,starts_at,ends_at").eq("user_id", appAuth.user.id);
+    appAuth.entitlements = data || [];
+  } catch {}
 }
 
 // ── Profielformulier ──
@@ -5292,21 +5344,46 @@ document.getElementById("authRegisterBtn")?.addEventListener("click", async () =
   const redirectTo = window.location.href.split("#")[0].split("?")[0];
   const { data, error } = await appSb.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
   if (error) { setGateMsg("authMsg", friendlyAuthError(error.message, "register"), "err"); return; }
-  if (data.session?.user) { await loadAppProfile(data.session.user); setGateMsg("authMsg", "Account aangemaakt en ingelogd. Je kunt direct beginnen.", "ok"); }
+  if (data.session?.user) { await loadAppProfile(data.session.user); setGateMsg("authMsg", "Account aangemaakt en ingelogd. Je hebt nu 30 dagen gratis toegang tot alle extra protocollen.", "ok"); }
   else { setGateMsg("authMsg", "Account aangemaakt! We hebben een bevestigingsmail gestuurd naar " + email + ". Klik de link in die mail; je komt daarna terug op deze pagina en kunt inloggen. (Geen mail? Kijk in spam.)", "ok"); }
 });
 
 document.getElementById("authLogoutBtn")?.addEventListener("click", async () => {
   if (appSb) { try { await appSb.auth.signOut(); } catch {} }
-  appAuth.user = null; appAuth.accessLevel = "free";
+  appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = [];
   afterAccessChange();
   setGateMsg("authMsg", "Uitgelogd.", "ok");
 });
 
 document.getElementById("accessCodeSubmit")?.addEventListener("click", async () => {
   const code = (document.getElementById("accessCodeInput").value || "").trim();
-  if (!code) { setGateMsg("accessCodeMsg", "Vul een code in.", "err"); return; }
-  // Eerst de online code-controle (Supabase). Valt terug op de lokale testcode.
+  if (!code) { setGateMsg("accessCodeMsg", "Vul een rustcode in.", "err"); return; }
+  // Ingelogd: rustcode wordt als entitlement aan het account gekoppeld.
+  if (appSb && appAuth.user) {
+    setGateMsg("accessCodeMsg", "Rustcode controleren…", "");
+    try {
+      const { data, error } = await appSb.rpc("redeem_rest_code", { p_code: code });
+      if (!error && data && data.ok) {
+        await refreshUserAccess();
+        afterAccessChange();
+        setGateMsg("accessCodeMsg", `Rustcode verzilverd! Je hebt extra toegang tot ${new Date(data.ends_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}.`, "ok");
+        setTimeout(closeDeepAccessGate, 2000);
+        return;
+      }
+      if (!error && data && !data.ok) {
+        const uitleg = {
+          al_gebruikt: "Je hebt deze rustcode al eerder verzilverd.",
+          verlopen: "Deze rustcode is verlopen.",
+          op: "Deze rustcode is al het maximale aantal keren gebruikt.",
+          ongeldig: "Deze rustcode is niet geldig."
+        };
+        setGateMsg("accessCodeMsg", uitleg[data.reason] || "Deze rustcode is niet geldig.", "err");
+        return;
+      }
+      // Bij een fout (bv. functie nog niet aangemaakt) door naar de apparaat-flow.
+    } catch { /* val terug op de apparaat-flow */ }
+  }
+  // Gast (of terugval): code ontgrendelt dit apparaat, zoals voorheen.
   if (appSb) {
     setGateMsg("accessCodeMsg", "Code controleren…", "");
     try {
@@ -5327,9 +5404,54 @@ document.getElementById("accessCodeSubmit")?.addEventListener("click", async () 
     afterAccessChange();
     setTimeout(closeDeepAccessGate, 1400);
   } else {
-    setGateMsg("accessCodeMsg", "Deze code is niet geldig.", "err");
+    setGateMsg("accessCodeMsg", "Deze rustcode is niet geldig.", "err");
   }
 });
+
+// ── PhytoForsan Relax Plus: betaling via Mollie ──
+// De app kent geen betaalgegevens of API-keys; de Edge Function
+// mollie-create-payment maakt de betaling aan en geeft de checkout-URL terug.
+document.getElementById("plusActivateBtn")?.addEventListener("click", async () => {
+  if (!appSb || !appAuth.user) { setGateMsg("plusMsg", "Log eerst in om Plus te activeren.", "err"); return; }
+  setGateMsg("plusMsg", "Betaling voorbereiden…", "");
+  try {
+    const { data, error } = await appSb.functions.invoke("mollie-create-payment", { body: {} });
+    if (error || !data || !data.checkoutUrl) throw new Error(error?.message || (data && data.error) || "geen checkout-URL");
+    setGateMsg("plusMsg", "Je wordt doorgestuurd naar de beveiligde betaalpagina…", "ok");
+    window.location.href = data.checkoutUrl;
+  } catch (e) {
+    console.info("PhytoForsan: Plus activeren", e);
+    setGateMsg("plusMsg", "Betalen is op dit moment niet beschikbaar. Probeer het later opnieuw of mail info@phytoforsan.nl.", "err");
+  }
+});
+
+// Terugkeer van de Mollie-betaalpagina (?plus=return): betaling wordt door de
+// webhook verwerkt; we controleren enkele keren of Plus inmiddels actief is.
+(function handlePlusReturn() {
+  if (!new URLSearchParams(location.search).has("plus")) return;
+  history.replaceState({}, "", location.pathname);
+  let pogingen = 0;
+  const check = async () => {
+    pogingen++;
+    await refreshUserAccess();
+    afterAccessChange();
+    const acc = appAuth.access;
+    if (acc && acc.level === "premium" && acc.source === "mollie_payment") {
+      openDeepAccessGate();
+      setGateMsg("plusMsg", `Gelukt! PhytoForsan Relax Plus is actief tot ${new Date(acc.ends_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}.`, "ok");
+      return;
+    }
+    if (pogingen === 1) {
+      openDeepAccessGate();
+      setGateMsg("plusMsg", "We controleren je betaling…", "");
+    }
+    if (pogingen < 7) setTimeout(check, 2000);
+    else setGateMsg("plusMsg", "We hebben je betaling nog niet bevestigd gekregen. Is er betaald, dan wordt Plus binnen enkele minuten actief — herlaad de app dan even.", "err");
+  };
+  // Wachten tot de inlogsessie is geladen voordat we controleren
+  const wachtOpLogin = () => (appAuth.user || !appSb) ? check() : setTimeout(wachtOpLogin, 600);
+  setTimeout(wachtOpLogin, 1200);
+})();
 
 
 els.startBtn.addEventListener("click", () => {
@@ -5602,7 +5724,7 @@ function renderProfile() {
     let since = "";
     const created = appAuth.profile && appAuth.profile.created_at;
     if (created) { const d = new Date(created); since = ` · lid sinds ${months[d.getMonth()]} ${d.getFullYear()}`; }
-    const niveau = { free:"Gratis", deep:"Verdieping", premium:"Premium", admin:"Admin" }[effectiveLevel()] || effectiveLevel();
+    const niveau = { free:"Gratis", deep:"Verdieping", premium:"Plus", admin:"Admin" }[effectiveLevel()] || effectiveLevel();
     sinceEl.textContent = `${appAuth.user.email} · ${niveau}${since}`;
     if (editBtn) { editBtn.textContent = "Account & toegangscode"; editBtn.style.display = ""; }
     if (logoutBtn) logoutBtn.style.display = "";
@@ -5611,7 +5733,7 @@ function renderProfile() {
   } else {
     const prof = getProfile();
     const [y, m] = (prof.since || dateKey(new Date())).split("-");
-    const niveau = localCodeTier() ? " · " + ({deep:"Verdieping",premium:"Premium"}[effectiveLevel()]||"") : "";
+    const niveau = localCodeTier() ? " · " + ({deep:"Verdieping",premium:"Plus"}[effectiveLevel()]||"") : "";
     sinceEl.textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}${niveau}`;
     if (editBtn) editBtn.style.display = "none";   // gast gebruikt de aanmoedig-knop
     if (logoutBtn) logoutBtn.style.display = "none";
@@ -5634,7 +5756,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.b
 
 document.getElementById("profileLogoutBtn")?.addEventListener("click", async () => {
   if (appSb) { try { await appSb.auth.signOut(); } catch {} }
-  appAuth.user = null; appAuth.accessLevel = "free";
+  appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = [];
   afterAccessChange();
 });
 

@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.2.2</span>
+    <span class="env-badge" id="backendVersion">backend v1.2.3</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -104,7 +104,7 @@
 // =====================================================================
 // Data-service: werkt in local_mock (localStorage) of via Supabase.
 // =====================================================================
-const TABLES = ["categories","protocols","protocol_phases","audio_tracks","protocol_audio","media_files","license_records","app_settings","profiles","user_access","access_codes","usage_sessions"];
+const TABLES = ["categories","protocols","protocol_phases","audio_tracks","protocol_audio","media_files","license_records","app_settings","profiles","user_access","access_codes","usage_sessions","user_entitlements","payment_records"];
 let sb = null;                  // supabase client (of null in mock)
 let session = null;             // { email, role, access_level }
 const cfg = getActiveConfig();
@@ -1039,20 +1039,54 @@ async function editMedia(id) {
 // ---------- Gebruikers ----------
 async function renderUsers() {
   const users = await dbList("profiles");
+  // Actieve toegang (entitlements) en betalingen — tabellen bestaan na supabase/plus.sql
+  let ents = [], pays = [], plusErr = null;
+  try {
+    ents = await dbList("user_entitlements");
+    pays = await dbList("payment_records");
+  } catch (e) { plusErr = e.message || String(e); }
+  const nuIso = new Date().toISOString();
+  const fmtD = (d) => d ? new Date(d).toLocaleDateString("nl-NL") : "—";
+  const bronLabel = { trial: "proefperiode", rustcode: "rustcode", mollie_payment: "Plus (betaald)", admin: "Plus (toegekend)" };
+  const activeEnt = (uid) => ents
+    .filter(e => e.user_id === uid && e.status === "active" && (e.starts_at || "") <= nuIso && (!e.ends_at || e.ends_at > nuIso))
+    .sort((a, b) => (b.ends_at || "9999").localeCompare(a.ends_at || "9999"))[0];
+  const entCell = (uid) => { const e = activeEnt(uid); return e ? `${bronLabel[e.source] || e.source} t/m ${fmtD(e.ends_at)}` : "—"; };
+  const emailById = Object.fromEntries(users.map(u => [u.id, u.email]));
+  const payRows = pays
+    .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")).slice(0, 20)
+    .map(p => `<tr><td>${fmtD(p.created_at)}</td><td>${esc(emailById[p.user_id] || p.user_id.slice(0, 8))}</td><td>€ ${esc(p.amount || "—")}</td><td><span class="pill ${p.status === "paid" ? "published" : "draft"}">${esc(p.status)}</span></td><td class="muted">${esc(p.provider_payment_id)}</td></tr>`)
+    .join("");
   const sel=(v,opts)=>opts.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("");
   tabBody.innerHTML = `<div class="card"><h2>Gebruikers</h2>
-    <p class="muted">${cfg.useBackend?"Wijzigingen worden via Supabase opgeslagen (alleen admin via RLS).":"Mock-modus: alleen lokaal."}</p>
-    <table><thead><tr><th>E-mail</th><th>Naam</th><th>Geb.datum</th><th>Rol</th><th>Toegang</th><th class="actions"></th></tr></thead>
+    <p class="muted">${cfg.useBackend?"Wijzigingen worden via Supabase opgeslagen (alleen admin via RLS).":"Mock-modus: alleen lokaal."}${plusErr ? ' <span class="pill archived">Plus-tabellen ontbreken — draai supabase/plus.sql</span>' : ''}</p>
+    <table><thead><tr><th>E-mail</th><th>Naam</th><th>Geb.datum</th><th>Rol</th><th>Toegang</th><th>Actieve toegang</th><th class="actions"></th></tr></thead>
     <tbody>${users.map(u=>`<tr data-u="${u.id}">
       <td>${esc(u.email)}</td>
       <td>${esc([u.first_name,u.last_name].filter(Boolean).join(" "))}</td>
       <td>${esc(u.birthdate)}</td>
       <td><select class="u_role">${sel(u.role,["user","tester","admin"])}</select></td>
       <td><select class="u_access">${sel(u.access_level,["free","deep","premium","admin"])}</select></td>
-      <td class="actions"><div class="row-actions"><button class="btn small secondary u_edit">Bewerken</button><button class="btn small u_save">Opslaan</button>${(session && u.id===session.id) ? "" : `<button class="btn small danger u_del">Verwijderen</button>`}</div></td></tr>`).join("")||'<tr><td colspan="6" class="muted">Geen gebruikers.</td></tr>'}</tbody></table>
-    <p class="msg hidden" id="u_msg"></p></div>`;
+      <td>${entCell(u.id)}</td>
+      <td class="actions"><div class="row-actions"><button class="btn small secondary u_edit">Bewerken</button><button class="btn small secondary u_plus">Plus geven</button><button class="btn small u_save">Opslaan</button>${(session && u.id===session.id) ? "" : `<button class="btn small danger u_del">Verwijderen</button>`}</div></td></tr>`).join("")||'<tr><td colspan="7" class="muted">Geen gebruikers.</td></tr>'}</tbody></table>
+    <p class="msg hidden" id="u_msg"></p>
+    <p class="section-title" style="font-weight:800;margin:18px 0 6px">Betalingen (Mollie)</p>
+    <table><thead><tr><th>Datum</th><th>Gebruiker</th><th>Bedrag</th><th>Status</th><th>Betaling</th></tr></thead>
+    <tbody>${payRows || '<tr><td colspan="5" class="muted">Nog geen betalingen.</td></tr>'}</tbody></table></div>`;
   tabBody.querySelectorAll("tr[data-u]").forEach(row=>{
     row.querySelector(".u_edit")?.addEventListener("click", ()=> editUser(row.dataset.u));
+    row.querySelector(".u_plus")?.addEventListener("click", async ()=>{
+      const msg=document.getElementById("u_msg");
+      if (!(cfg.useBackend && sb)) { msg.className="msg err"; msg.textContent="Plus geven vereist Supabase."; msg.classList.remove("hidden"); return; }
+      const dagen = Number(prompt("Hoeveel dagen Plus geven?", "365"));
+      if (!dagen || dagen < 1) return;
+      try {
+        const { data, error } = await sb.rpc("admin_grant_plus", { p_user: row.dataset.u, p_days: dagen });
+        if (error || !(data && data.ok)) throw new Error(error?.message || "functie ontbreekt — draai supabase/plus.sql");
+        msg.className="msg ok"; msg.textContent=`Plus toegekend tot ${new Date(data.ends_at).toLocaleDateString("nl-NL")}.`; msg.classList.remove("hidden");
+        renderUsers();
+      } catch(e){ msg.className="msg err"; msg.textContent="Plus geven mislukt: "+(e.message||e); msg.classList.remove("hidden"); }
+    });
     row.querySelector(".u_save")?.addEventListener("click", async ()=>{
       const id=row.dataset.u;
       const u=(await dbList("profiles")).find(x=>x.id===id);
@@ -1134,7 +1168,7 @@ async function renderCodes() {
   const fmtDate = (d) => d ? new Date(d).toLocaleDateString("nl-NL") : "—";
   const rows = codes.sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||"")).map(c => `<tr>
       <td><b>${esc(c.code)}</b></td>
-      <td><span class="pill ${c.tier==='premium'?'published':'draft'}">${esc(c.tier)}</span></td>
+      <td>${c.days || 30}</td>
       <td>${esc(c.label)}</td>
       <td>${c.active ? "ja" : "nee"}</td>
       <td>${c.uses||0}${c.max_uses ? " / "+c.max_uses : ""}</td>
@@ -1145,18 +1179,23 @@ async function renderCodes() {
       </div></td>
     </tr>`).join("");
   tabBody.innerHTML = `<div class="card">
-    <div class="toolbar"><h2 class="grow">Toegangscodes</h2></div>
-    <p class="muted">Een code ontgrendelt 'deep' (of 'premium') op het apparaat van de gebruiker, los van een account.${err?` <span class="pill archived">tabel ontbreekt — draai supabase/access-codes.sql</span>`:""}</p>
+    <div class="toolbar"><h2 class="grow">Rustcodes</h2></div>
+    <p class="muted">Een rustcode geeft tijdelijk extra toegang, bijvoorbeeld bij een productactie. Ingelogde gebruikers krijgen het ingestelde aantal dagen aan hun account gekoppeld; gasten ontgrendelen ermee de Verdieping op hun apparaat.${err?` <span class="pill archived">tabel ontbreekt — draai supabase/access-codes.sql en supabase/plus.sql</span>`:""}</p>
     <div class="row4" style="align-items:end">
-      <div><label>Code</label><input id="c_code" placeholder="bv. PHYTO-DEEP-2026"></div>
-      <div><label>Niveau</label><select id="c_tier"><option value="deep">deep</option><option value="premium">premium</option></select></div>
+      <div><label>Code</label><input id="c_code" placeholder="bv. RUST-2026"></div>
+      <div><label>Dagen toegang</label><input id="c_days" type="number" min="1" value="30"></div>
       <div><label>Label (optioneel)</label><input id="c_label"></div>
       <div><label>Max. gebruik (leeg = ∞)</label><input id="c_max" type="number" min="1"></div>
     </div>
-    <div class="row" style="margin-top:8px"><div><label>Vervaldatum (optioneel)</label><input id="c_exp" type="date"></div><div style="display:flex;align-items:end"><button class="btn" id="c_add">+ Code toevoegen</button></div></div>
+    <div class="row4" style="margin-top:8px;align-items:end">
+      <div><label>Vervaldatum code (optioneel)</label><input id="c_exp" type="date"></div>
+      <div><label>Gastniveau (apparaat)</label><select id="c_tier"><option value="deep">deep</option><option value="premium">premium</option></select></div>
+      <div></div>
+      <div><button class="btn" id="c_add">+ Rustcode toevoegen</button></div>
+    </div>
     <p class="msg hidden" id="c_msg"></p>
-    <table style="margin-top:12px"><thead><tr><th>Code</th><th>Niveau</th><th>Label</th><th>Actief</th><th>Gebruik</th><th>Vervalt</th><th class="actions"></th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="7" class="muted">Nog geen codes.</td></tr>'}</tbody></table>
+    <table style="margin-top:12px"><thead><tr><th>Code</th><th>Dagen</th><th>Label</th><th>Actief</th><th>Gebruik</th><th>Vervalt</th><th class="actions"></th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="7" class="muted">Nog geen rustcodes.</td></tr>'}</tbody></table>
   </div>`;
   document.getElementById("c_add").addEventListener("click", async () => {
     const msg = document.getElementById("c_msg");
@@ -1164,6 +1203,7 @@ async function renderCodes() {
     if (!code) { msg.className="msg err"; msg.textContent="Vul een code in."; msg.classList.remove("hidden"); return; }
     const rec = {
       code, tier: document.getElementById("c_tier").value,
+      days: Number(document.getElementById("c_days").value) || 30,
       label: document.getElementById("c_label").value.trim() || null,
       max_uses: Number(document.getElementById("c_max").value) || null,
       expires_at: document.getElementById("c_exp").value || null,
