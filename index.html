@@ -1648,7 +1648,7 @@ canvas {
       <div class="profile-list">
         <details class="profile-item profile-item-details">
           <summary><span class="profile-item-icon">&#128274;</span><span>Privacy</span><span class="profile-item-arrow">&#8250;</span></summary>
-          <p class="profile-item-body" id="privacyBody">Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen trackers gebruikt.</p>
+          <p class="profile-item-body" id="privacyBody">Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat en worden er geen persoonsgegevens opgeslagen. Om de app te kunnen verbeteren registreert de app wel anoniem welke sessies worden gedaan (protocol, duur en tijdstip), gekoppeld aan een willekeurig apparaatnummer dat niets over jou zegt en niet tot jou te herleiden is. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen advertentie-trackers gebruikt.</p>
         </details>
         <div class="profile-item profile-item-static">
           <span class="profile-item-icon">&#127760;</span><span>Taal</span><span class="profile-item-value">Nederlands</span>
@@ -1721,7 +1721,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.8</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.9</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2966,6 +2966,37 @@ function logSession(seconds, completed) {
   while (log.length > 1000) log.shift();
   localStorage.setItem(SESSION_LOG_KEY, JSON.stringify(log));
   if (typeof userStatePush === "function") userStatePush();   // voortgang naar account
+  pushUsageSession(seconds, completed);                        // anonieme gaststatistiek
+}
+
+// ── Anonieme gaststatistiek ──
+// Gasten (zonder account) krijgen een willekeurig apparaatnummer dat niets
+// over de persoon zegt. Per sessie gaat één rij naar usage_sessions:
+// apparaatnummer, protocol, duur, afgerond. Alleen-toevoegen (RLS); lezen
+// kan uitsluitend de admin via het backend. Zie supabase/usage-sessions.sql.
+function usageDeviceId() {
+  let id = localStorage.getItem("phyto_device_id");
+  if (!id) {
+    id = (crypto.randomUUID ? crypto.randomUUID() : "dev-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+    localStorage.setItem("phyto_device_id", id);
+  }
+  return id;
+}
+let _usageClient = null;
+function pushUsageSession(seconds, completed) {
+  try {
+    // Accountsessies lopen al via de voortgangssync; hier alleen gasten tellen.
+    if (typeof appAuth !== "undefined" && appAuth.user) return;
+    if (!_usageClient) _usageClient = (typeof createSupabaseClient === "function") ? createSupabaseClient() : null;
+    if (!_usageClient) return;
+    _usageClient.from("usage_sessions").insert({
+      device_id: usageDeviceId(),
+      protocol_slug: activePreset,
+      seconds: Math.round(seconds),
+      completed: !!completed,
+      is_guest: true
+    }).then(() => {}, () => {});   // stil falen: statistiek mag de app nooit storen
+  } catch {}
 }
 let running = false;
 let sessionState = "idle"; // idle | running | paused | completed

@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.2.1</span>
+    <span class="env-badge" id="backendVersion">backend v1.2.2</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -104,7 +104,7 @@
 // =====================================================================
 // Data-service: werkt in local_mock (localStorage) of via Supabase.
 // =====================================================================
-const TABLES = ["categories","protocols","protocol_phases","audio_tracks","protocol_audio","media_files","license_records","app_settings","profiles","user_access","access_codes"];
+const TABLES = ["categories","protocols","protocol_phases","audio_tracks","protocol_audio","media_files","license_records","app_settings","profiles","user_access","access_codes","usage_sessions"];
 let sb = null;                  // supabase client (of null in mock)
 let session = null;             // { email, role, access_level }
 const cfg = getActiveConfig();
@@ -320,6 +320,29 @@ async function renderDashboard() {
   const card = (val,label) => `<div class="card"><b style="font-size:1.4rem">${val}</b><div class="muted">${label}</div></div>`;
   const levelTxt = ["free","deep","premium","admin"].filter(l=>byLevel[l]).map(l=>`${byLevel[l]}× ${l}`).join(" · ") || "—";
 
+  // Gastgebruik (usage_sessions): anonieme sessies per apparaat, zonder account.
+  // Bestaat de tabel nog niet, dan tonen we een hint naar het SQL-script.
+  let usage = [], usageError = null;
+  try { usage = await dbList("usage_sessions"); } catch (e) { usageError = e.message || String(e); }
+  const guests = usage.filter(u => u.is_guest !== false);
+  const perDevice = {};
+  for (const u of guests) {
+    const d = (perDevice[u.device_id] = perDevice[u.device_id] || { count:0, seconds:0, last:"", prot:{} });
+    d.count++; d.seconds += Number(u.seconds || 0);
+    const dag = (u.created_at || "").slice(0, 10);
+    if (dag > d.last) d.last = dag;
+    if (u.protocol_slug) d.prot[u.protocol_slug] = (d.prot[u.protocol_slug] || 0) + 1;
+  }
+  const weekGrens = new Date(Date.now() - 7 * 86400000).toISOString();
+  const guestWeek = guests.filter(u => (u.created_at || "") >= weekGrens).length;
+  const guestDevices = Object.keys(perDevice).length;
+  const guestMin = Math.round(guests.reduce((s, u) => s + Number(u.seconds || 0), 0) / 60);
+  const recentDevices = Object.entries(perDevice).map(([id, v]) => ({
+    kort: id.slice(0, 8),
+    ...v,
+    top: (() => { const t = Object.entries(v.prot).sort((a,b)=>b[1]-a[1])[0]; return t ? (titleBySlug[t[0]] || t[0]) : "—"; })()
+  })).sort((a,b)=>(b.last||"").localeCompare(a.last||"")).slice(0, 12);
+
   tabBody.innerHTML = `<div class="card"><h2>Dashboard</h2>
     <p class="muted">Omgeving: <b>${APP_ENV}</b> · backend: <b>${cfg.useBackend ? "Supabase" : "lokaal (mock)"}</b></p>
     <p class="section-title" style="font-weight:800;margin:10px 0 6px">Gebruikers &amp; gebruik</p>
@@ -331,6 +354,17 @@ async function renderDashboard() {
     </div>
     <p class="muted" style="margin-top:8px">Toegangsniveaus: ${levelTxt}</p>
     ${(cfg.useBackend && sb) ? "" : '<p class="msg err" style="margin-top:8px">Statistieken vereisen Supabase (en de user_state-tabel). In testmodus zijn ze leeg.</p>'}
+
+    <p class="section-title" style="font-weight:800;margin:16px 0 6px">Gastgebruik (zonder account)</p>
+    <div class="row4">
+      ${card(guestDevices, "apparaten")}
+      ${card(guests.length, "gastsessies")}
+      ${card(guestWeek, "afgelopen 7 dagen")}
+      ${card(guestMin, "minuten")}
+    </div>
+    ${usageError ? '<p class="msg err" style="margin-top:8px">Gastregistratie nog niet actief: voer <b>supabase/usage-sessions.sql</b> uit in de Supabase SQL Editor.</p>' : `
+    <table style="margin-top:8px"><thead><tr><th>Apparaat</th><th>Sessies</th><th>Min</th><th>Meest gedaan</th><th>Laatst</th></tr></thead>
+    <tbody>${recentDevices.map(d=>`<tr><td class="muted">${esc(d.kort)}…</td><td>${d.count}</td><td>${Math.round(d.seconds/60)}</td><td>${esc(d.top)}</td><td>${esc(d.last||"—")}</td></tr>`).join("") || '<tr><td colspan="5" class="muted">Nog geen gastsessies geregistreerd.</td></tr>'}</tbody></table>`}
 
     <p class="section-title" style="font-weight:800;margin:16px 0 6px">Protocollen</p>
     <div class="row4">
@@ -1213,7 +1247,7 @@ Deze app is ontstaan vanuit de wens om rust, adem en klank op een eenvoudige man
 PhytoForsan Relax App
 Een initiatief van Rens Stam voor PhytoForsan.nl.`,
     privacy_text:
-"Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen trackers gebruikt.",
+"Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat en worden er geen persoonsgegevens opgeslagen. Om de app te kunnen verbeteren registreert de app wel anoniem welke sessies worden gedaan (protocol, duur en tijdstip), gekoppeld aan een willekeurig apparaatnummer dat niets over jou zegt en niet tot jou te herleiden is. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen advertentie-trackers gebruikt.",
     contact_text:
 `Contact- en bedrijfsgegevens
 
