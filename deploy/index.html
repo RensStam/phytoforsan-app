@@ -1598,6 +1598,7 @@ canvas {
         <div class="profile-info">
           <strong id="profileName">Welkom</strong>
           <span id="profileSince"></span>
+          <span id="profileAccess" style="display:none;font-size:.78rem;font-weight:800;color:#4d7c43;margin-top:2px"></span>
         </div>
       </div>
       <button class="profile-edit-btn" id="profileEditBtn">Profiel bewerken</button>
@@ -1721,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2178,17 +2179,20 @@ function effectiveLevel() {
   let lvl = (appAuth.access && appAuth.access.level) || appAuth.accessLevel || "free";
   const code = localCodeTier();
   if (code && (TIER_ORDER[code] || 0) > (TIER_ORDER[lvl] || 0)) lvl = code;
-  return lvl;
+  // Eenduidig: de oude tussenlaag 'deep' telt overal als Plus (premium)
+  return lvl === "deep" ? "premium" : lvl;
 }
 function canAccessTier(tier) {
   if (SHOW_DEV_UNLOCK) return true;
   return (TIER_ORDER[effectiveLevel()] || 0) >= (TIER_ORDER[tier || "free"] || 0);
 }
-// Het vereiste niveau van een protocol.
+// Het vereiste niveau van een protocol. Eenduidig model: 'free' of 'premium'
+// (Plus). "Verdieping" is een inhoudelijke markering met veiligheidsinformatie,
+// geen apart toegangsniveau — de oude waarde 'deep' telt daarom als premium.
 function protocolTier(preset) {
   if (!preset) return "free";
   if (preset.requiresPremium || preset.accessTier === "premium") return "premium";
-  if (preset.accessTier === "deep" || preset.requiresDeepAccess || preset.category === "verdieping" || preset.sessionType === "test") return "deep";
+  if (preset.accessTier === "deep" || preset.requiresDeepAccess || preset.category === "verdieping" || preset.sessionType === "test") return "premium";
   return preset.accessTier || "free";
 }
 function hasDeepAccess() {
@@ -4937,7 +4941,6 @@ function accessStatusText() {
     if (acc.source === "mollie_payment") return `PhytoForsan Relax Plus is actief tot ${fmtDatum(acc.ends_at)}.`;
     return acc.ends_at ? `Plus is actief tot ${fmtDatum(acc.ends_at)}.` : "Plus is actief.";
   }
-  if (acc && acc.level === "deep") return `Ingelogd als ${appAuth.user.email} — toegang tot de Verdieping.`;
   const trialGehad = (appAuth.entitlements || []).some(e => e.source === "trial");
   if (trialGehad) return "Je proefperiode is verlopen. Activeer Plus of verzilver een rustcode om extra protocollen te blijven gebruiken.";
   return "Je gebruikt de basisversie. Activeer Plus of verzilver een rustcode voor extra protocollen.";
@@ -5009,7 +5012,8 @@ async function refreshUserAccess() {
   if (!appSb || !appAuth.user) return;
   try {
     const { data } = await appSb.rpc("get_user_access");
-    if (data && data.level) appAuth.access = data;
+    // 'deep' (oud handmatig niveau) telt als Plus
+    if (data && data.level) appAuth.access = data.level === "deep" ? { ...data, level: "premium" } : data;
   } catch {}
   try {
     const { data } = await appSb.from("user_entitlements")
@@ -5531,8 +5535,11 @@ function renderProfile() {
     let since = "";
     const created = appAuth.profile && appAuth.profile.created_at;
     if (created) { const d = new Date(created); since = ` · lid sinds ${months[d.getMonth()]} ${d.getFullYear()}`; }
-    const niveau = { free:"Gratis", deep:"Verdieping", premium:"Plus", admin:"Admin" }[effectiveLevel()] || effectiveLevel();
+    const niveau = { free:"Gratis", premium:"Plus", admin:"Admin" }[effectiveLevel()] || effectiveLevel();
     sinceEl.textContent = `${appAuth.user.email} · ${niveau}${since}`;
+    // Toegangsstatus als eigen regel: "Plus is actief tot …" / proefperiode / basis
+    const accessEl = document.getElementById("profileAccess");
+    if (accessEl) { accessEl.textContent = accessStatusText(); accessEl.style.display = "block"; }
     if (editBtn) { editBtn.textContent = "Account & toegangscode"; editBtn.style.display = ""; }
     if (logoutBtn) logoutBtn.style.display = "";
     if (block) { block.style.display = ""; fillProfileForm(appAuth.profile); }
@@ -5540,8 +5547,10 @@ function renderProfile() {
   } else {
     const prof = getProfile();
     const [y, m] = (prof.since || dateKey(new Date())).split("-");
-    const niveau = localCodeTier() ? " · " + ({deep:"Verdieping",premium:"Plus"}[effectiveLevel()]||"") : "";
+    const niveau = localCodeTier() ? " · Plus (code)" : "";
     sinceEl.textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}${niveau}`;
+    const accessEl = document.getElementById("profileAccess");
+    if (accessEl) accessEl.style.display = "none";
     if (editBtn) editBtn.style.display = "none";   // gast gebruikt de aanmoedig-knop
     if (logoutBtn) logoutBtn.style.display = "none";
     if (block) block.style.display = "none";
