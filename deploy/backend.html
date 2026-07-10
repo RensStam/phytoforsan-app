@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.2.0</span>
+    <span class="env-badge" id="backendVersion">backend v1.2.1</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1168,9 +1168,7 @@ async function renderSettings() {
     rest_sub_pause: "Ondertekst rust na uitademing",
     meditation_cue_word: "Cue-woord meditatietimer",
     meditation_cue_sub: "Ondertekst meditatietimer",
-    opening_enabled: "Openingsscherm tonen (true/false)",
-    opening_line_1: "Openingsregel 1",
-    opening_line_2: "Openingsregel 2"
+    opening_enabled: "Openingsscherm tonen (true/false)"
   };
   // Huidige standaardteksten — worden voorgevuld zodat de velden niet leeg zijn.
   const DEFAULTS = {
@@ -1186,8 +1184,6 @@ async function renderSettings() {
     meditation_cue_word: "MEDITATIE",
     meditation_cue_sub: "vrije aandacht",
     opening_enabled: "true",
-    opening_line_1: "Nog voordat er woorden waren, was er adem.",
-    opening_line_2: "Nog voordat er gedachten waren, was er trilling.",
     about_text:
 `De weg naar binnen begint met een klank
 
@@ -1260,8 +1256,8 @@ Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
     <p class="muted">Het rustwoord geldt voor alle protocollen tegelijk. Alle andere cirkelwoorden stel je bij het protocol zelf in: de IN/UIT-woorden en subteksten bij de fases, de woorden van de meditatietimer en de klankwoorden van MAEN, AMEN en OM in het protocolformulier.</p>
     ${cueKeys.map(fieldHtml).join("")}
     <h3 style="margin-top:18px">Openingsscherm</h3>
-    <p class="muted">Twee regels die de app rustig openen. Zet "tonen" op false om het openingsscherm uit te schakelen. Wijzigingen zijn zichtbaar vanaf de eerstvolgende keer dat de app opnieuw wordt geopend.</p>
-    ${["opening_enabled","opening_line_1","opening_line_2"].map(fieldHtml).join("")}
+    <p class="muted">Een ademende cirkel met het PhytoForsan-blaadje opent de app. Zet "tonen" op false om het openingsscherm uit te schakelen. Wijzigingen zijn zichtbaar vanaf de eerstvolgende keer dat de app opnieuw wordt geopend.</p>
+    ${["opening_enabled"].map(fieldHtml).join("")}
     <h3 style="margin-top:18px">Teksten op het profiel-/instellingenscherm</h3>
     <p class="muted">Laat een veld leeg om de standaardtekst van de app te gebruiken. Een lege regel begint een nieuwe alinea.<br>Opmaak: <b>**vet**</b>, <i>*schuin*</i>, en <code>[kleur=#e08c2a]gekleurde tekst[/kleur]</code>. E-mail en links worden automatisch klikbaar.</p>
     ${textKeys.map(textareaHtml).join("")}

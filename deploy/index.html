@@ -792,24 +792,35 @@ select:focus, input[type="number"]:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
   opacity: 0;
   transition: opacity .9s ease;
 }
 .opening-inner.visible { opacity: 1; }
-.opening-logo {
-  height: 34px;
-  width: auto;
-  margin-bottom: 8px;
-  opacity: .85;
+.opening-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, rgba(105,182,38,.14), rgba(18,55,52,.06));
+  border: 2px solid rgba(18,55,52,.14);
+  animation: openingBreath 4.5s ease-in-out infinite;
 }
-.opening-line {
-  margin: 0;
-  max-width: 460px;
-  font-size: 1.02rem;
-  font-weight: 700;
-  line-height: 1.5;
-  color: var(--deep);
+@keyframes openingBreath {
+  0%, 100% { transform: scale(.9); }
+  50% { transform: scale(1.08); }
+}
+/* Alleen het blaadje/schildje: het linkerdeel van het logo uitsnijden */
+.opening-leaf {
+  width: 56px;
+  height: 60px;
+  object-fit: cover;
+  object-position: left center;
+  opacity: .95;
+}
+@media (prefers-reduced-motion: reduce) {
+  .opening-circle { animation: none; }
 }
 
 /* Draai-hint: standaard verborgen; alleen op telefoons (aanraakscherm,
@@ -1710,7 +1721,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.7</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.6.8</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2009,12 +2020,10 @@ canvas {
 
 </main>
 
-<!-- Openingsmoment: pure splash — logo + twee regels in één zachte fade (tik = overslaan) -->
+<!-- Openingsmoment: ademende cirkel met het PhytoForsan-blaadje (tik = overslaan) -->
 <div id="openingOverlay" aria-hidden="true">
   <div class="opening-inner" id="openingInner">
-    <img class="opening-logo" src="logo.svg" alt="PhytoForsan">
-    <p class="opening-line" id="openingLine1">Nog voordat er woorden waren, was er adem.</p>
-    <p class="opening-line" id="openingLine2">Nog voordat er gedachten waren, was er trilling.</p>
+    <div class="opening-circle"><img class="opening-leaf" src="logo.svg" alt="PhytoForsan"></div>
   </div>
 </div>
 
@@ -5807,13 +5816,11 @@ function applyContentSettings(settings) {
   set("privacyBody", "privacy_text");
   set("contactBody", "contact_text");
   set("faqBody", "faq_text");
-  // Openingsmoment: backend-instellingen cachen voor de volgende start
+  // Openingsmoment: aan/uit-stand cachen voor de volgende start
   // (het openingsscherm toont vóór deze fetch klaar is).
   try {
     localStorage.setItem("phyto_opening", JSON.stringify({
-      off: /^(0|false|uit|nee|off)$/i.test(String(map.opening_enabled ?? "").trim()),
-      l1: (map.opening_line_1 || "").trim(),
-      l2: (map.opening_line_2 || "").trim()
+      off: /^(0|false|uit|nee|off)$/i.test(String(map.opening_enabled ?? "").trim())
     }));
   } catch {}
 }
@@ -6029,19 +6036,17 @@ const manifestUrl = URL.createObjectURL(blob);
 document.getElementById("pwa-manifest").setAttribute("href", manifestUrl);
 
 // ── Openingsmoment ──
-// Pure splash: logo + twee regels (uit "Over de app") in één zachte fade.
+// Ademende cirkel met het PhytoForsan-blaadje — zonder tekst.
 // Tik = overslaan. Beheer via het backend (app_settings):
-//   opening_enabled ("0" = uit), opening_line_1, opening_line_2
-// Backend-waarden worden lokaal gecachet zodat ze bij de VOLGENDE start direct
-// beschikbaar zijn (de opening toont al vóór de backend-fetch klaar is).
+//   opening_enabled ("0" = uit)
+// De aan/uit-stand wordt lokaal gecachet zodat hij bij de VOLGENDE start direct
+// beschikbaar is (de opening toont al vóór de backend-fetch klaar is).
 (function initOpeningMoment() {
   const overlay = document.getElementById("openingOverlay");
   if (!overlay) return;
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem("phyto_opening") || "null"); } catch {}
   if (cached && cached.off) { overlay.remove(); return; }
-  if (cached && cached.l1) document.getElementById("openingLine1").textContent = cached.l1;
-  if (cached && cached.l2) document.getElementById("openingLine2").textContent = cached.l2;
   const close = () => {
     if (overlay.classList.contains("fade-out")) return;
     overlay.classList.add("fade-out");
@@ -6049,7 +6054,7 @@ document.getElementById("pwa-manifest").setAttribute("href", manifestUrl);
   };
   overlay.addEventListener("click", close);
   window.setTimeout(() => document.getElementById("openingInner")?.classList.add("visible"), 150);
-  window.setTimeout(close, 2600);
+  window.setTimeout(close, 3200);
 })();
 
 // ── Service Worker + update-melding ──
