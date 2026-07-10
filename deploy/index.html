@@ -1721,7 +1721,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.1</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2079,7 +2079,7 @@ canvas {
     <!-- Blok 3: Rustcode verzilveren -->
     <div class="deep-gate-block" id="deepInviteBlock">
       <h3 class="deep-gate-h">Rustcode verzilveren</h3>
-      <p class="deep-gate-note">Heb je een rustcode, bijvoorbeeld bij een product of actie? Ingelogd wordt de extra toegang aan je account gekoppeld; zonder account ontgrendelt de code de Verdieping op dit apparaat.</p>
+      <p class="deep-gate-note">Heb je een rustcode, bijvoorbeeld bij een product of actie? Log in (gratis) en verzilver de code — de extra toegang wordt dan aan je account gekoppeld.</p>
       <details class="deep-gate-safety">
         <summary>Veiligheidsinformatie</summary>
         <p>Gebruik deze sessies niet tijdens autorijden, fietsen, zwemmen, baden of het bedienen van machines.</p>
@@ -2676,221 +2676,10 @@ const presets = {
     breathingOnly: false,
     meditationMode: true
   },
-  vanEmotiesNaarOntspanning: {
-    id: "vanEmotiesNaarOntspanning",
-    sessionType: "phasedBreath",
-    label: "Van emoties naar ontspanning",
-    category: "verdieping",
-    group: "Emotionele regulatie",
-    accessTier: "deep", requiresDeepAccess: true, requiresPremium: false,
-    audio: { enabled: false, optional: true, type: null, src: null, premium: false },
-    text: "Een rustige sessie om bij sterke gevoelens te vertragen, te oriënteren en het lichaam richting ontspanning te begeleiden.",
-    product: "Van emoties naar ontspanning",
-    productText: "Een rustige sessie gericht op zelfregulatie bij emotionele onrust. Kan ondersteunen bij ontspanning en biedt ruimte om na te voelen.",
-    minutes: 9,
-    tone: 0, type: "none", breathingOnly: true, freeExhale: true,
-    inhale: 0, hold: 0, exhale: 0, pause: 0,
-    phases: [
-      { id: "orientatie", label: "Oriëntatie", duration: 60, mode: "free", visualMode: "slowBreath",
-        cue: "ORIËNTATIE", sub: "Kijk rustig om je heen. Voel de ondergrond onder je lichaam. Je hoeft niets weg te duwen." },
-      { id: "langeUit", label: "Lange uitademing", duration: 180, mode: "breath",
-        inhale: 4, hold: 0, exhale: 6, pause: 0, cueIn: "IN", cueOut: "UIT",
-        subIn: "Adem rustig in.", subOut: "Laat de uitademing langer worden. Niet forceren." },
-      { id: "ritme", label: "Rustig ritme", duration: 180, mode: "breath",
-        inhale: 5, hold: 0, exhale: 5, pause: 0, cueIn: "IN", cueOut: "UIT",
-        subIn: "Volg het gelijkmatige ritme.", subOut: "Je hoeft niets op te lossen." },
-      { id: "verzachten", label: "Verzachten", duration: 60, mode: "breath",
-        inhale: 4, hold: 0, exhale: 8, pause: 0, cueIn: "IN", cueOut: "UIT",
-        subIn: "Adem rustig in.", subOut: "Laat buik, borst of schouders iets zachter worden." },
-      { id: "integratie", label: "Integratie", duration: 60, mode: "free", visualMode: "slowBreath",
-        cue: "INTEGRATIE", sub: "Laat de adem vrij. Neem waar wat er nu aanwezig is." }
-    ]
-  },
-  bijOverprikkeling: {
-    id: "bijOverprikkeling",
-    sessionType: "phasedBreath",
-    label: "Bij overprikkeling",
-    category: "verdieping",
-    group: "Prikkelarme rust",
-    accessTier: "deep", requiresDeepAccess: true, requiresPremium: false,
-    audio: { enabled: false, optional: true, type: null, src: null, premium: false },
-    text: "Een stille sessie om prikkels te verminderen en het systeem rustig te laten zakken.",
-    product: "Bij overprikkeling",
-    productText: "Een zo prikkelarm mogelijke sessie zonder humming of klank. Kan ondersteunen bij ontspanning en helpt vertragen. Gericht op zelfregulatie.",
-    minutes: 8,
-    tone: 0, type: "none", breathingOnly: true, freeExhale: true,
-    inhale: 0, hold: 0, exhale: 0, pause: 0,
-    phases: [
-      { id: "zakken", label: "Prikkels laten zakken", duration: 120, mode: "free", visualMode: "slowBreath",
-        cue: "RUST", sub: "Sluit je ogen of gebruik een zachte blik. Volg alleen je eigen adem." },
-      { id: "zachteUit", label: "Zachte uitademing", duration: 180, mode: "breath",
-        inhale: 4, hold: 0, exhale: 6, pause: 0, cueIn: "IN", cueOut: "UIT",
-        subIn: "Adem rustig in.", subOut: "Laat de uitademing iets langer worden." },
-      { id: "stilte", label: "Stilte", duration: 120, mode: "free", visualMode: "slowBreath",
-        cue: "STILTE", sub: "Geen sturing. Alleen ruimte." },
-      { id: "integratie", label: "Integratie", duration: 60, mode: "free", visualMode: "slowBreath",
-        cue: "INTEGRATIE", sub: "Blijf nog even stil. Keer rustig terug." }
-    ]
-  },
-  voorHetSlapen: {
-    id: "voorHetSlapen",
-    sessionType: "phasedBreath",
-    label: "Voor het slapen",
-    category: "verdieping",
-    group: "Slaap & herstel",
-    night: true,
-    accessTier: "deep", requiresDeepAccess: true, requiresPremium: false,
-    audio: { enabled: false, optional: true, type: null, src: null, premium: false },
-    text: "Een rustige, verdiepende sessie om de dag af te bouwen en het lichaam richting rust te begeleiden.",
-    product: "Voor het slapen",
-    productText: "Een verdiepende afbouwsessie die het lichaam richting rust begeleidt en ruimte biedt om na te voelen. Gericht op zelfregulatie.",
-    minutes: 10,
-    tone: 0, type: "none", breathingOnly: true, freeExhale: true,
-    inhale: 0, hold: 0, exhale: 0, pause: 0,
-    phases: [
-      { id: "ontspannen", label: "Ontspannen", duration: 90, mode: "free", visualMode: "slowBreath",
-        cue: "ONTSPANNEN", sub: "Laat je lichaam gedragen worden. Je hoeft niets meer te bereiken." },
-      { id: "langeUit", label: "Lange uitademing", duration: 240, mode: "breath",
-        inhale: 4, hold: 0, exhale: 8, pause: 2, cueIn: "IN", cueOut: "UIT",
-        subIn: "Adem rustig in.", subOut: "Laat de uitademing langzaam uitstromen." },
-      { id: "buikadem", label: "Zachte buikadem", duration: 180, mode: "breath",
-        inhale: 4, hold: 0, exhale: 6, pause: 0, cueIn: "IN", cueOut: "UIT",
-        subIn: "Laat de adem zacht naar buik en middenrif bewegen.", subOut: "Houd het licht en moeiteloos." },
-      { id: "vrijeAdem", label: "Vrije adem", duration: 90, mode: "free", visualMode: "slowBreath",
-        cue: "VRIJE ADEM", sub: "Laat alle sturing los. Adem vrij. De sessie mag overgaan in rust." }
-    ]
-  },
-  nachtelijkWakkerWorden: {
-    id: "nachtelijkWakkerWorden",
-    sessionType: "phasedBreath",
-    label: "Nachtelijk wakker worden",
-    category: "verdieping",
-    group: "Slaap & herstel",
-    night: true,
-    accessTier: "deep", requiresDeepAccess: true, requiresPremium: false,
-    audio: { enabled: false, optional: true, type: null, src: null, premium: false },
-    text: "Een zachte sessie voor wanneer je 's nachts wakker ligt en niet actief wilt oefenen.",
-    product: "Nachtelijk wakker worden",
-    productText: "Een zachte sessie voor wanneer je 's nachts wakker ligt. Kan ondersteunen bij ontspanning en helpt vertragen. Gericht op zelfregulatie.",
-    minutes: 6,
-    tone: 0, type: "none", breathingOnly: true, freeExhale: true,
-    inhale: 0, hold: 0, exhale: 0, pause: 0,
-    phases: [
-      { id: "nietVechten", label: "Niet vechten", duration: 60, mode: "free", visualMode: "slowBreath",
-        cue: "NIET VECHTEN", sub: "Je hoeft niet tegen wakker zijn te vechten. Laat je lichaam liggen. Adem gewoon." },
-      { id: "zachteUit", label: "Zachte uitademing", duration: 180, mode: "breath",
-        inhale: 4, hold: 0, exhale: 6, pause: 0, cueIn: "IN", cueOut: "UIT",
-        subIn: "Adem rustig in.", subOut: "Laat de uitademing zacht langer worden." },
-      { id: "langeUit", label: "Lange uitademing", duration: 90, mode: "breath",
-        inhale: 4, hold: 0, exhale: 8, pause: 0, cueIn: "IN", cueOut: "UIT",
-        subIn: "Adem rustig in.", subOut: "Maak de uitademing nog iets langer, zonder druk." },
-      { id: "loslaten", label: "Loslaten", duration: 30, mode: "free", visualMode: "slowBreath",
-        cue: "LOSLATEN", sub: "Laat de oefening los. Leg het scherm weg en blijf liggen." }
-    ]
-  },
-  herstelmoment: {
-    id: "herstelmoment",
-    sessionType: "phasedBreath",
-    label: "Herstelmoment",
-    category: "verdieping",
-    group: "Slaap & herstel",
-    night: true,
-    accessTier: "deep", requiresDeepAccess: true, requiresPremium: false,
-    audio: { enabled: false, optional: true, type: null, src: null, premium: false },
-    text: "Een langere sessie om ruimte te maken voor herstel, rust en navoelen.",
-    product: "Herstelmoment",
-    productText: "Een langere sessie die ruimte maakt voor herstel en navoelen. Kan ondersteunen bij ontspanning en helpt vertragen. Gericht op zelfregulatie.",
-    minutes: 12,
-    tone: 0, type: "none", breathingOnly: true, freeExhale: true,
-    inhale: 0, hold: 0, exhale: 0, pause: 0,
-    phases: [
-      { id: "aankomen", label: "Aankomen", duration: 120, mode: "free", visualMode: "slowBreath",
-        cue: "AANKOMEN", sub: "Je hoeft nu even niets. Laat je lichaam landen." },
-      { id: "rustigeAdem", label: "Rustige adem", duration: 240, mode: "breath",
-        inhale: 5, hold: 0, exhale: 5, pause: 0, cueIn: "IN", cueOut: "UIT",
-        subIn: "Volg het rustige ritme.", subOut: "In en uit, zonder haast." },
-      { id: "langeUit", label: "Lange uitademing", duration: 180, mode: "breath",
-        inhale: 4, hold: 0, exhale: 8, pause: 0, cueIn: "IN", cueOut: "UIT",
-        subIn: "Adem rustig in.", subOut: "Geef het lichaam tijd om te zakken." },
-      { id: "vrijeAdem", label: "Vrije adem", duration: 120, mode: "free", visualMode: "slowBreath",
-        cue: "VRIJE ADEM", sub: "Laat de sturing los. Vertrouw op je eigen adem." },
-      { id: "integratie", label: "Integratie", duration: 60, mode: "free", visualMode: "slowBreath",
-        cue: "INTEGRATIE", sub: "Neem de tijd om de ervaring een plek te geven." }
-    ]
-  },
-  holotropicBreathTest: {
-    id: "holotropicBreathTest",
-    sessionType: "test",
-    requiresDeepAccess: true,
-    accessTier: "deep", requiresPremium: false,
-    group: "Intensieve testprotocollen",
-    label: "Holotropische Ademtest",
-    category: "verdieping",
-    text: "Een verborgen testprotocol met actieve verbonden ademhaling, geïnspireerd op holotropische ademhaling. Alleen gebruiken als je je goed voelt en voldoende ervaring hebt met ademwerk.",
-    product: "Holotropische Ademtest",
-    productText: "Deze sessie is geïnspireerd op holotropische ademhaling. Het protocol is bedoeld als intern testprotocol voor actieve verbonden ademhaling.",
-    minutes: 25,
-    totalSeconds: 1500,
-    inhale: 0, hold: 0, exhale: 0, pause: 0,
-    tone: 0, type: "none",
-    breathingOnly: true, freeExhale: true,
-    hidden: true, experimental: true, requiresWarning: true,
-    phases: [
-      { id: "preparation",    label: "Voorbereiding",    duration: 180, mode: "free", visualMode: "slowBreath",
-        cue: "VOORBEREIDING", sub: "Adem vrij en laat je lichaam ontspannen." },
-      { id: "buildUp",        label: "Opbouwfase",       duration: 300, mode: "breath",
-        inhale: 3, hold: 0, exhale: 3, pause: 0,
-        cueIn: "IN", cueOut: "UIT", subIn: "Adem rustig en ruim in.", subOut: "Laat de adem direct weer uitstromen." },
-      { id: "activeBreathing",label: "Actieve ademfase", duration: 600, mode: "breath",
-        inhale: 2, hold: 0, exhale: 2, pause: 0,
-        cueIn: "IN", cueOut: "UIT", subIn: "Adem actief en ruim in, zonder te forceren.", subOut: "Laat los. Geen pauze." },
-      { id: "downshift",      label: "Vertraging",       duration: 120, mode: "breath",
-        inhale: 4, hold: 0, exhale: 6, pause: 0,
-        cueIn: "IN", cueOut: "UIT", subIn: "Adem rustig in.", subOut: "Adem langzaam uit." },
-      { id: "integration",    label: "Integratie",       duration: 300, mode: "free", visualMode: "slowBreath",
-        cue: "INTEGRATIE", sub: "Adem vrij. Voel na." }
-    ]
-  },
-  activeBreathTest: {
-    id: "activeBreathTest",
-    sessionType: "test",
-    requiresDeepAccess: true,
-    accessTier: "deep", requiresPremium: false,
-    group: "Intensieve testprotocollen",
-    label: "Actieve Ademtest",
-    category: "verdieping",
-    text: "Een korte, actieve ademtest met een vloeiend ademritme zonder pauzes. Alleen gebruiken als je je goed voelt en direct stoppen bij ongemak.",
-    product: "Actieve Ademtest",
-    productText: "Deze sessie is een milde testvariant van actieve verbonden ademhaling. De oefening is kort gehouden en bedoeld voor ervaren gebruikers die willen onderzoeken hoe een actiever ademritme voelt.",
-    minutes: 5.5,
-    totalSeconds: 330,
-    inhale: 2,
-    hold: 0,
-    exhale: 2,
-    pause: 0,
-    tone: 0,
-    type: "none",
-    freeExhale: true,
-    breathingOnly: true,
-    experimental: true,
-    hidden: true,
-    requiresWarning: true,
-    exhaleCue: "UIT",
-    exhaleLabel: "Uitademen",
-    exhaleName: "actief uit",
-    exhaleSub: "laat de adem vloeiend uitstromen zonder pauze",
-    phases: [
-      { id: "preparation", label: "Voorbereiding", duration: 30,  mode: "free", visualMode: "slowBreath",
-        cue: "VOORBEREIDING", sub: "Ga zitten of liggen. Adem rustig. Stop direct bij duizeligheid, paniek, druk op de borst of sterk ongemak." },
-      { id: "activeBreathing", label: "Actieve ademhaling", duration: 180, mode: "breath",
-        inhale: 2, hold: 0, exhale: 2, pause: 0,
-        cueIn: "IN", cueOut: "UIT",
-        subIn: "Adem vloeiend en iets dieper in, zonder te forceren.",
-        subOut: "Laat de adem direct weer uitstromen, zonder pauze." },
-      { id: "integration", label: "Integratie", duration: 120, mode: "free", visualMode: "slowBreath",
-        cue: "INTEGRATIE", sub: "Laat de adem vanzelf terugkeren. Voel na en blijf rustig zitten of liggen." }
-    ]
-  }
+  // Verdiepings- en testprotocollen staan bewust niet meer in de app-code:
+  // het backend (Supabase) levert ze uitsluitend aan gebruikers met toegang
+  // (RLS per toegangsniveau, zie supabase/content-tiers.sql). De app voegt ze
+  // na het laden toe via normalizeProtocol().
 };
 
 const els = {
@@ -5168,10 +4957,22 @@ function updateAccessUI() {
   if (plusBtn) plusBtn.textContent = (appAuth.access && appAuth.access.source === "mollie_payment")
     ? "Plus verlengen (+1 jaar)" : "Plus activeren";
 }
+let _accessRefetchTimer = null;
+let _accessRefetchKey = "init";   // voorkomt herladen als de toegang niet echt wijzigde
 function afterAccessChange() {
   renderProtocols(); updateAccessUI();
   try { if (typeof renderProfile === "function") renderProfile(); } catch {}
   try { if (typeof updateGreeting === "function") updateGreeting(); } catch {}
+  // Het toegangsniveau bepaalt welke protocollen het backend meegeeft (RLS):
+  // bibliotheek opnieuw ophalen na in-/uitloggen of nieuwe toegang.
+  // Niet tijdens een lopende sessie (bootstrapBackend reset de sessieweergave).
+  clearTimeout(_accessRefetchTimer);
+  _accessRefetchTimer = setTimeout(() => {
+    const key = (appAuth.user ? appAuth.user.id : "gast") + ":" + effectiveLevel();
+    if (key === _accessRefetchKey || running) return;
+    _accessRefetchKey = key;
+    try { if (typeof bootstrapBackend === "function") bootstrapBackend(); } catch {}
+  }, 200);
 }
 
 // Auth-initialisatie: bestaande sessie ophalen en op wijzigingen reageren.
@@ -5383,7 +5184,13 @@ document.getElementById("accessCodeSubmit")?.addEventListener("click", async () 
       // Bij een fout (bv. functie nog niet aangemaakt) door naar de apparaat-flow.
     } catch { /* val terug op de apparaat-flow */ }
   }
-  // Gast (of terugval): code ontgrendelt dit apparaat, zoals voorheen.
+  // Gast: de verdiepingsprotocollen worden alleen aan accounts geleverd,
+  // dus vraag eerst om (gratis) in te loggen — de code wordt niet verbruikt.
+  if (!appAuth.user) {
+    setGateMsg("accessCodeMsg", "Maak eerst een gratis account aan (of log in) en verzilver de code daarna — de extra toegang wordt dan aan je account gekoppeld.", "err");
+    return;
+  }
+  // Terugval (bv. rustcode-functie nog niet aangemaakt): apparaat-flow.
   if (appSb) {
     setGateMsg("accessCodeMsg", "Code controleren…", "");
     try {
@@ -5895,13 +5702,19 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
     text: row.short_description || "", product: row.title, productText: row.long_description || "",
     accessTier: row.access_tier, requiresDeepAccess: !!row.requires_deep_access, requiresPremium: !!row.requires_premium,
     group: row.group_name || null, night: !!row.night,
+    // Veiligheidswaarschuwing vooraf voor de intensieve testprotocollen
+    requiresWarning: (typeof warningContent === "object") && !!warningContent[row.slug],
     minutes: Math.max(1, Math.round((phs.reduce((s,p)=>s+p.duration,0))/60)),
     inhale:0, hold:0, exhale:0, pause:0, tone:0, type:"none", breathingOnly:true, freeExhale:true,
     phases: phs.length ? phs : undefined
   };
 }
 async function fetchBackendData() {
-  const client = (typeof createSupabaseClient === "function") ? createSupabaseClient() : null;
+  // Voorkeur: de client met de inlogsessie (appSb), zodat RLS per
+  // toegangsniveau ook de verdiepings-/premiumprotocollen meegeeft.
+  const client = (typeof appSb !== "undefined" && appSb)
+    ? appSb
+    : ((typeof createSupabaseClient === "function") ? createSupabaseClient() : null);
   if (!client) return null;
   const [{ data: cats }, { data: prot }, { data: phases }, { data: media }, { data: pAudio }, { data: tracks }, { data: settings }] = await Promise.all([
     client.from("categories").select("*"),
