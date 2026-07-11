@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.2.4</span>
+    <span class="env-badge" id="backendVersion">backend v1.2.5</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1055,7 +1055,7 @@ async function renderUsers() {
   const emailById = Object.fromEntries(users.map(u => [u.id, u.email]));
   const payRows = pays
     .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")).slice(0, 20)
-    .map(p => `<tr><td>${fmtD(p.created_at)}</td><td>${esc(emailById[p.user_id] || p.user_id.slice(0, 8))}</td><td>€ ${esc(p.amount || "—")}</td><td><span class="pill ${p.status === "paid" ? "published" : "draft"}">${esc(p.status)}</span></td><td class="muted">${esc(p.provider_payment_id)}</td></tr>`)
+    .map(p => `<tr><td>${fmtD(p.created_at)}</td><td>${esc(emailById[p.user_id] || p.user_id.slice(0, 8))}</td><td>€ ${esc(p.amount || "—")}</td><td><span class="pill ${p.status === "paid" ? "published" : "draft"}">${esc(p.status)}</span></td><td class="muted">${esc(p.provider_payment_id)}</td><td class="actions"><div class="row-actions"><button class="btn small secondary" data-receipt="${p.id}">Bewijs</button><button class="btn small danger" data-paydel="${p.id}">Verwijderen</button></div></td></tr>`)
     .join("");
   const sel=(v,opts)=>opts.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("");
   tabBody.innerHTML = `<div class="card"><h2>Gebruikers</h2>
@@ -1071,8 +1071,21 @@ async function renderUsers() {
       <td class="actions"><div class="row-actions"><button class="btn small secondary u_edit">Bewerken</button><button class="btn small secondary u_plus">Plus geven</button><button class="btn small u_save">Opslaan</button>${(session && u.id===session.id) ? "" : `<button class="btn small danger u_del">Verwijderen</button>`}</div></td></tr>`).join("")||'<tr><td colspan="7" class="muted">Geen gebruikers.</td></tr>'}</tbody></table>
     <p class="msg hidden" id="u_msg"></p>
     <p class="section-title" style="font-weight:800;margin:18px 0 6px">Betalingen (Mollie)</p>
-    <table><thead><tr><th>Datum</th><th>Gebruiker</th><th>Bedrag</th><th>Status</th><th>Betaling</th></tr></thead>
-    <tbody>${payRows || '<tr><td colspan="5" class="muted">Nog geen betalingen.</td></tr>'}</tbody></table></div>`;
+    <table><thead><tr><th>Datum</th><th>Gebruiker</th><th>Bedrag</th><th>Status</th><th>Betaling</th><th class="actions"></th></tr></thead>
+    <tbody>${payRows || '<tr><td colspan="6" class="muted">Nog geen betalingen.</td></tr>'}</tbody></table></div>`;
+  // Betaalbewijs openen + betaling verwijderen (vereist supabase/plus-admin.sql)
+  tabBody.querySelectorAll("[data-receipt]").forEach(b => b.addEventListener("click", () => {
+    const p = pays.find(x => x.id === b.dataset.receipt);
+    if (p) openPaymentReceipt(p, users.find(u => u.id === p.user_id));
+  }));
+  tabBody.querySelectorAll("[data-paydel]").forEach(b => b.addEventListener("click", async () => {
+    const p = pays.find(x => x.id === b.dataset.paydel);
+    if (!p) return;
+    if (!confirm(`Betaling ${p.provider_payment_id} (€ ${p.amount || "?"}) uit de administratie verwijderen?\nDe toegang van de gebruiker blijft gewoon bestaan.`)) return;
+    const msg = document.getElementById("u_msg");
+    try { await dbDelete("payment_records", p.id); renderUsers(); }
+    catch (e) { msg.className = "msg err"; msg.textContent = "Verwijderen mislukt: " + (e.message || e) + " — draai eventueel supabase/plus-admin.sql"; msg.classList.remove("hidden"); }
+  }));
   tabBody.querySelectorAll("tr[data-u]").forEach(row=>{
     row.querySelector(".u_edit")?.addEventListener("click", ()=> editUser(row.dataset.u));
     row.querySelector(".u_plus")?.addEventListener("click", async ()=>{
@@ -1110,6 +1123,55 @@ async function renderUsers() {
       } catch(e){ msg.className="msg err"; msg.textContent="Verwijderen mislukt: "+(e.message||e); msg.classList.remove("hidden"); }
     });
   });
+}
+
+// Betaalbewijs als afdrukbare pagina (opslaan als PDF via de printdialoog).
+// Bedragen zijn inclusief 21% BTW; het bewijs splitst dit uit voor de administratie.
+function openPaymentReceipt(p, prof) {
+  const bedrag = Number(p.amount || 0);
+  const excl = bedrag / 1.21;
+  const btw = bedrag - excl;
+  const fmtE = (n) => "€ " + n.toFixed(2).replace(".", ",");
+  const datum = p.created_at ? new Date(p.created_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }) : "—";
+  const nr = "PF-" + String(p.created_at || "").slice(0, 10).replace(/-/g, "") + "-" + String(p.provider_payment_id || p.id).replace(/^tr_/, "").slice(0, 6).toUpperCase();
+  const product = p.product_type === "relax_plus_year" ? "PhytoForsan Relax Plus — 1 jaar toegang" : (p.product_type || "—");
+  const klantHtml = prof ? [
+    [prof.first_name, prof.last_name].filter(Boolean).join(" ") || null,
+    [prof.street, prof.house_number].filter(Boolean).join(" ") || null,
+    [prof.postal_code, prof.city].filter(Boolean).join(" ") || null,
+    prof.email || null
+  ].filter(Boolean).map(esc).join("<br>") : "—";
+  const w = window.open("", "_blank");
+  if (!w) { alert("Sta pop-ups toe om het betaalbewijs te openen."); return; }
+  w.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Betaalbewijs ${nr}</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;color:#123734;max-width:640px;margin:40px auto;padding:0 20px}
+  h1{font-size:1.3rem;margin-bottom:4px}
+  table{width:100%;border-collapse:collapse;margin-top:16px}
+  td,th{padding:8px 10px;border-bottom:1px solid #dde8e4;text-align:left}
+  th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:#5a6f6b}
+  .tot td{font-weight:800;border-top:2px solid #123734}
+  .kop{display:flex;justify-content:space-between;gap:24px;margin-top:18px}
+  .kop div{font-size:.9rem;line-height:1.6}
+  .muted{color:#5a6f6b;font-size:.82rem}
+  @media print{button{display:none}}
+</style></head><body>
+<h1>Betaalbewijs</h1>
+<p class="muted">Nummer <b>${nr}</b> · ${datum} · Mollie-referentie ${esc(p.provider_payment_id || "—")} · status ${esc(p.status)}</p>
+<div class="kop">
+  <div><b>PhytoForsan.nl</b><br>Staverdenseweg 94<br>8075 AS Elspeet<br>KVK 92370802 · BTW NL004949180B47</div>
+  <div><b>Klant</b><br>${klantHtml}</div>
+</div>
+<table><thead><tr><th>Omschrijving</th><th style="text-align:right">Bedrag</th></tr></thead>
+<tbody>
+  <tr><td>${esc(product)}</td><td style="text-align:right">${fmtE(excl)}</td></tr>
+  <tr><td>BTW 21%</td><td style="text-align:right">${fmtE(btw)}</td></tr>
+  <tr class="tot"><td>Totaal (betaald via Mollie)</td><td style="text-align:right">${fmtE(bedrag)}</td></tr>
+</tbody></table>
+<p class="muted" style="margin-top:20px">Automatisch aangemaakt vanuit de PhytoForsan Relax App-administratie.</p>
+<button onclick="print()" style="margin-top:14px;padding:10px 18px;border-radius:999px;border:1px solid #123734;background:#123734;color:#fff;font-weight:700;cursor:pointer">Afdrukken / opslaan als PDF</button>
+</body></html>`);
+  w.document.close();
 }
 
 // Volledig bewerkscherm + voortgang per gebruiker

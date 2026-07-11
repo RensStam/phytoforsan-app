@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.4</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5052,6 +5052,7 @@ async function saveProfileForm() {
   setGateMsg("pfMsg", "Opslaan…", "");
   const { error } = await appSb.from("profiles").update(rec).eq("id", appAuth.user.id);
   if (error) { setGateMsg("pfMsg", error.message, "err"); return; }
+  appAuth.profile = { ...appAuth.profile, ...rec };   // direct bruikbaar voor de NAW-check
   setGateMsg("pfMsg", "Gegevens opgeslagen.", "ok");
 }
 
@@ -5228,8 +5229,24 @@ document.getElementById("newPassBtn")?.addEventListener("click", async () => {
 // ── PhytoForsan Relax Plus: betaling via Mollie ──
 // De app kent geen betaalgegevens of API-keys; de Edge Function
 // mollie-create-payment maakt de betaling aan en geeft de checkout-URL terug.
+// NAW-gegevens compleet? Verplicht vóór een aankoop (betaalbewijs/administratie).
+function profileNawComplete() {
+  const p = appAuth.profile || {};
+  return ["first_name", "last_name", "street", "house_number", "postal_code", "city"]
+    .every(k => p[k] && String(p[k]).trim() !== "");
+}
 document.getElementById("plusActivateBtn")?.addEventListener("click", async () => {
   if (!appSb || !appAuth.user) { setGateMsg("plusMsg", "Log eerst in om Plus te activeren.", "err"); return; }
+  if (!profileNawComplete()) {
+    setGateMsg("plusMsg", "Vul eerst je naam en adres in — die hebben we nodig voor het betaalbewijs. Je gegevens openen zo…", "err");
+    setTimeout(() => {
+      closeDeepAccessGate();
+      openProfile();
+      const details = document.getElementById("profileBlock")?.querySelector("details");
+      if (details) { details.open = true; details.scrollIntoView({ block: "center", behavior: "smooth" }); }
+    }, 1800);
+    return;
+  }
   setGateMsg("plusMsg", "Betaling voorbereiden…", "");
   try {
     const { data, error } = await appSb.functions.invoke("mollie-create-payment", { body: {} });

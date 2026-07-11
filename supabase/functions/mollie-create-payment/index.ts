@@ -41,6 +41,15 @@ Deno.serve(async (req) => {
   const user = userData?.user;
   if (userErr || !user) return json({ error: "login_vereist" }, 401);
 
+  // NAW-gegevens zijn verplicht vóór een aankoop (betaalbewijs/administratie)
+  const { data: prof } = await supabase.from("profiles")
+    .select("first_name,last_name,street,house_number,postal_code,city")
+    .eq("id", user.id).maybeSingle();
+  const naw = [prof?.first_name, prof?.last_name, prof?.street, prof?.house_number, prof?.postal_code, prof?.city];
+  if (!naw.every((v) => v && String(v).trim() !== "")) {
+    return json({ error: "profiel_onvolledig" }, 400);
+  }
+
   const price = (Deno.env.get("PLUS_PRICE_EUR") || "29.95").replace(",", ".");
   const amountValue = Number(price).toFixed(2);
 
