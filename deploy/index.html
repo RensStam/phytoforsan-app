@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2066,6 +2066,11 @@ canvas {
         <button class="deep-gate-secondary" id="authRegisterBtn" type="button" style="flex:1;margin:0">Registreren</button>
       </div>
       <button type="button" id="authForgotBtn" style="background:none;border:none;color:rgba(18,55,52,.65);font-size:.78rem;font-weight:700;text-decoration:underline;cursor:pointer;margin-top:10px;padding:0">Wachtwoord vergeten?</button>
+      <div id="pwForgotRow" style="display:none;margin-top:10px">
+        <p class="deep-gate-note">Vul het e-mailadres van je account in; we sturen je een link om een nieuw wachtwoord in te stellen.</p>
+        <input class="deep-gate-input" id="forgotEmailInput" type="email" placeholder="E-mailadres" autocomplete="off">
+        <button class="primary-session-button" id="forgotSendBtn" type="button" style="margin-top:6px">Stuur herstel-link</button>
+      </div>
       <button class="deep-gate-secondary" id="authLogoutBtn" type="button" style="margin-top:8px;display:none">Uitloggen</button>
       <p class="deep-gate-msg" id="authMsg" style="display:none"></p>
     </div>
@@ -4918,6 +4923,11 @@ function setGateMsg(id, text, kind) {
   el.style.display = text ? "" : "none";
 }
 
+// Kwam de gebruiker binnen via de wachtwoord-herstel-link uit de e-mail?
+// Vastleggen vóórdat de Supabase-client de URL verwerkt en leegmaakt — het
+// PASSWORD_RECOVERY-event kan namelijk al vuren voordat wij luisteren.
+const authRecoveryFlow = /type=recovery/.test(window.location.hash) || /type=recovery/.test(window.location.search);
+
 // Gedeelde Supabase-client voor de app (auth + code inwisselen). null als niet geconfigureerd.
 const appSb = (typeof createSupabaseClient === "function") ? createSupabaseClient() : null;
 
@@ -4990,16 +5000,27 @@ async function initAppAuth() {
     if (data?.session?.user) await loadAppProfile(data.session.user);
     appSb.auth.onAuthStateChange((_e, sess) => {
       // Herstel-link uit de wachtwoord-vergeten-mail: nieuw wachtwoord vragen
-      if (_e === "PASSWORD_RECOVERY") {
-        openDeepAccessGate();
-        const blok = document.getElementById("pwResetBlock");
-        if (blok) blok.style.display = "";
-      }
+      if (_e === "PASSWORD_RECOVERY") showPasswordResetBlock();
       if (sess?.user) loadAppProfile(sess.user);
       else { appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = []; afterAccessChange(); }
     });
   } catch (e) { console.info("PhytoForsan: auth-init", e); }
+  // Het PASSWORD_RECOVERY-event kan al gevuurd zijn vóórdat we hierboven
+  // luisterden; daarom is de herstel-link ook los uit de URL gedetecteerd.
+  if (authRecoveryFlow) showPasswordResetBlock();
   updateAccessUI();
+}
+
+// Toon het blok "Nieuw wachtwoord instellen" (na de herstel-link uit de e-mail).
+function showPasswordResetBlock() {
+  openDeepAccessGate();
+  const blok = document.getElementById("pwResetBlock");
+  if (!blok) return;
+  blok.style.display = "";
+  setTimeout(() => {
+    blok.scrollIntoView({ block: "center", behavior: "smooth" });
+    document.getElementById("newPassInput")?.focus();
+  }, 250);
 }
 async function loadAppProfile(user) {
   appAuth.user = { id: user.id, email: user.email };
@@ -5205,14 +5226,31 @@ document.getElementById("accessCodeSubmit")?.addEventListener("click", async () 
 });
 
 // ── Wachtwoord vergeten / herstellen ──
-document.getElementById("authForgotBtn")?.addEventListener("click", async () => {
+// De link toont een eigen (leeg) e-mailveld: bewust los van het inlogveld,
+// zodat automatisch ingevulde adressen niet ongevraagd worden gebruikt.
+document.getElementById("authForgotBtn")?.addEventListener("click", () => {
+  const row = document.getElementById("pwForgotRow");
+  if (!row) return;
+  const open = row.style.display !== "none";
+  row.style.display = open ? "none" : "";
+  if (!open) {
+    const veld = document.getElementById("forgotEmailInput");
+    if (veld) { veld.value = ""; veld.focus(); }
+    setGateMsg("authMsg", "", "");
+  }
+});
+document.getElementById("forgotSendBtn")?.addEventListener("click", async () => {
   if (!appSb) { setGateMsg("authMsg", "Wachtwoordherstel is nu niet beschikbaar.", "err"); return; }
-  const email = (document.getElementById("authEmail").value || "").trim();
-  if (!email) { setGateMsg("authMsg", "Vul hierboven je e-mailadres in; daarna sturen we je een herstel-link.", "err"); return; }
+  const email = (document.getElementById("forgotEmailInput").value || "").trim();
+  if (!email || !email.includes("@")) { setGateMsg("authMsg", "Vul een geldig e-mailadres in.", "err"); return; }
   setGateMsg("authMsg", "Herstel-link versturen…", "");
   const { error } = await appSb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
   if (error) setGateMsg("authMsg", friendlyAuthError(error.message, "reset"), "err");
-  else setGateMsg("authMsg", `We hebben een e-mail gestuurd naar ${email} met een link om een nieuw wachtwoord in te stellen. (Geen mail? Kijk in spam.)`, "ok");
+  else {
+    setGateMsg("authMsg", `Als er een account bestaat voor ${email}, ontvang je zo een e-mail met een link om een nieuw wachtwoord in te stellen. (Geen mail? Kijk in spam.)`, "ok");
+    const row = document.getElementById("pwForgotRow");
+    if (row) row.style.display = "none";
+  }
 });
 document.getElementById("newPassBtn")?.addEventListener("click", async () => {
   if (!appSb) return;
