@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3352,7 +3352,8 @@ function renderLibraryCard(id, item, experimental = false, locked = false) {
     : (cardIllustrations[id] || defaultCardIllustration);
   // Duur afleiden uit de centrale functie; meditatie houdt vrije duur
   const totalSec = getSessionTotalSeconds(item);
-  const durationText = item.meditationMode ? "vrij" : (totalSec > 0 ? formatDuration(totalSec) : meta.duration);
+  // Vergrendelde cataloguskaart zonder bekende duur: toon "Plus" als label
+  const durationText = item.meditationMode ? "vrij" : (totalSec > 0 ? formatDuration(totalSec) : (meta.duration || (locked ? "Plus" : "")));
   const isActive = id === activePreset;
   const badge = "";
   // Verdieping zonder toegang: zichtbaar maar vergrendeld (slotje i.p.v. play)
@@ -5773,7 +5774,8 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
     group: row.group_name || null, night: !!row.night,
     // Veiligheidswaarschuwing vooraf voor de intensieve testprotocollen
     requiresWarning: (typeof warningContent === "object") && !!warningContent[row.slug],
-    minutes: Math.max(1, Math.round((phs.reduce((s,p)=>s+p.duration,0))/60)),
+    // Zonder fases (cataloguskaart voor gasten) geen neptijd tonen
+    minutes: phs.length ? Math.max(1, Math.round((phs.reduce((s,p)=>s+p.duration,0))/60)) : 0,
     inhale:0, hold:0, exhale:0, pause:0, tone:0, type:"none", breathingOnly:true, freeExhale:true,
     phases: phs.length ? phs : undefined
   };
@@ -5965,18 +5967,24 @@ function applyAdminData(data) {
     const img = resolveMediaUrl(mediaById[row.image_id]);
     const matchKey = presets[row.slug] ? row.slug : keyByLower[(row.slug || "").toLowerCase()];
     let target;
-    if (matchKey && presets[matchKey]) {
+    if (matchKey && presets[matchKey] && !presets[matchKey]._fromBackend) {
+      // Lokale preset (klank-/humming-logica): alleen teksten en timing overlayen
       overlayProtocol(presets[matchKey], row, phs);
       if (img) presets[matchKey].image = img;
       target = presets[matchKey];
       overlaid++;
     } else {
+      // Backend-preset: altijd volledig herbouwen. Belangrijk: zonder toegang
+      // komt een protocol als kale cataloguskaart binnen (geen fases, RLS);
+      // na inloggen mét toegang moet dezelfde preset opnieuw worden opgebouwd.
       const np = normalizeProtocol(row, phs, catSlug[row.category_id]);
+      np._fromBackend = true;
       if (img) np.image = img;
-      presets[row.slug] = np;
-      keyByLower[(row.slug || "").toLowerCase()] = row.slug;
+      const key = matchKey || row.slug;
+      presets[key] = np;
+      keyByLower[(row.slug || "").toLowerCase()] = key;
       target = np;
-      added++;
+      if (matchKey) overlaid++; else added++;
     }
     target.bgMusic = bgByProtocol[row.id] || null;   // achtergrondmuziek koppelen (of wissen)
   }

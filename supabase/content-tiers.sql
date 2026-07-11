@@ -1,11 +1,15 @@
 -- =====================================================================
 -- PhytoForsan — protocolinhoud per toegangsniveau (RLS)
 -- Voer dit uit in de Supabase SQL Editor (ná plus.sql).
+-- Opnieuw uitvoeren is veilig (idempotent).
 --
--- Vanaf nu levert het backend de verdiepings-/premiumprotocollen (en hun
--- fases) uitsluitend aan ingelogde gebruikers met een actieve entitlement
--- (proefperiode, rustcode of Plus), een handmatig niveau of adminrol.
--- Vrije protocollen blijven voor iedereen leesbaar, ook voor gasten.
+-- Model:
+--  • De CATALOGUS (protocolrijen: titel, omschrijving, categorie, afbeelding)
+--    is voor iedereen leesbaar — zo zien gasten de vergrendelde protocollen
+--    mét slotje in de bibliotheek staan.
+--  • De INHOUD (protocol_phases: de fases, tijden en instructies) gaat
+--    uitsluitend naar ingelogde gebruikers met een actieve entitlement
+--    (proefperiode, rustcode of Plus), een handmatig niveau of adminrol.
 -- =====================================================================
 
 -- Heeft de huidige gebruiker extra toegang (trial/rustcode/Plus/handmatig/admin)?
@@ -30,23 +34,13 @@ language sql stable security definer set search_path = public as $$
 $$;
 grant execute on function public.user_has_extra_access() to anon, authenticated;
 
--- Protocollen: vrij niveau voor iedereen; extra niveaus alleen met toegang.
+-- Catalogus: gepubliceerde protocolrijen zijn voor iedereen leesbaar.
 drop policy if exists protocols_public_read on public.protocols;
 drop policy if exists protocols_tier_read on public.protocols;
 create policy protocols_tier_read on public.protocols
-  for select using (
-    public.is_admin()
-    or (
-      status = 'published' and (
-        (coalesce(access_tier, 'free') = 'free'
-          and not coalesce(requires_deep_access, false)
-          and not coalesce(requires_premium, false))
-        or public.user_has_extra_access()
-      )
-    )
-  );
+  for select using (public.is_admin() or status = 'published');
 
--- Fases: leesbaar wanneer het bijbehorende protocol leesbaar is.
+-- Inhoud: fases van extra protocollen alleen met toegang.
 drop policy if exists phases_public_read on public.protocol_phases;
 drop policy if exists phases_tier_read on public.protocol_phases;
 create policy phases_tier_read on public.protocol_phases
@@ -65,4 +59,4 @@ create policy phases_tier_read on public.protocol_phases
     )
   );
 
-select 'Protocolinhoud per toegangsniveau actief' as status;
+select 'Catalogus publiek, inhoud per toegangsniveau' as status;
