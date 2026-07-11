@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2065,8 +2065,18 @@ canvas {
         <button class="primary-session-button" id="authLoginBtn" type="button" style="flex:1">Inloggen</button>
         <button class="deep-gate-secondary" id="authRegisterBtn" type="button" style="flex:1;margin:0">Registreren</button>
       </div>
+      <button type="button" id="authForgotBtn" style="background:none;border:none;color:rgba(18,55,52,.65);font-size:.78rem;font-weight:700;text-decoration:underline;cursor:pointer;margin-top:10px;padding:0">Wachtwoord vergeten?</button>
       <button class="deep-gate-secondary" id="authLogoutBtn" type="button" style="margin-top:8px;display:none">Uitloggen</button>
       <p class="deep-gate-msg" id="authMsg" style="display:none"></p>
+    </div>
+
+    <!-- Blok: nieuw wachtwoord instellen (verschijnt na de herstel-link uit de e-mail) -->
+    <div class="deep-gate-block" id="pwResetBlock" style="display:none">
+      <h3 class="deep-gate-h">Nieuw wachtwoord instellen</h3>
+      <p class="deep-gate-note">Kies een nieuw wachtwoord voor je account (minimaal 6 tekens).</p>
+      <input class="deep-gate-input" id="newPassInput" type="password" placeholder="Nieuw wachtwoord" autocomplete="new-password">
+      <button class="primary-session-button" id="newPassBtn" type="button" style="margin-top:6px">Wachtwoord opslaan</button>
+      <p class="deep-gate-msg" id="pwResetMsg" style="display:none"></p>
     </div>
 
     <!-- Blok 2: PhytoForsan Relax Plus (alleen ingelogd) -->
@@ -2170,15 +2180,13 @@ function updateUserProfile(partial) {
 // Bron 2: lokale code-ontgrendeling (los van account, alleen 'deep'/'premium')
 const TIER_ORDER = { free: 0, deep: 1, premium: 2, admin: 3 };
 let appAuth = { user: null, accessLevel: "free", access: null, entitlements: [] };
-function localCodeTier() { return localStorage.getItem("phyto_code_tier") || null; }
-function setLocalCodeTier(t) { if (t) localStorage.setItem("phyto_code_tier", t); }
+// (De oude apparaat-ontgrendeling via phyto_code_tier is vervallen: toegang
+// loopt volledig via accounts en entitlements in Supabase.)
 function effectiveLevel() {
   // Centrale toegang: user_entitlements via get_user_access() is leidend
   // (proefperiode, rustcode, Plus). Valt terug op het profielveld
   // (handmatig/admin) en de lokale apparaatcode voor gasten.
-  let lvl = (appAuth.access && appAuth.access.level) || appAuth.accessLevel || "free";
-  const code = localCodeTier();
-  if (code && (TIER_ORDER[code] || 0) > (TIER_ORDER[lvl] || 0)) lvl = code;
+  const lvl = (appAuth.access && appAuth.access.level) || appAuth.accessLevel || "free";
   // Eenduidig: de oude tussenlaag 'deep' telt overal als Plus (premium)
   return lvl === "deep" ? "premium" : lvl;
 }
@@ -4927,11 +4935,7 @@ function closeDeepAccessGate() {
 // Statustekst voor de accountomgeving, op basis van de centrale toegang.
 function accessStatusText() {
   const fmtDatum = (iso) => iso ? new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }) : "";
-  if (!appAuth.user) {
-    return localCodeTier()
-      ? "Je gebruikt de app als gast met een rustcode op dit apparaat."
-      : "Je gebruikt de app als gast (gratis sessies).";
-  }
+  if (!appAuth.user) return "Je gebruikt de app als gast (gratis sessies).";
   if (effectiveLevel() === "admin") return `Ingelogd als ${appAuth.user.email} — beheerder (volledige toegang).`;
   const acc = appAuth.access;
   if (acc && acc.level === "premium") {
@@ -4985,6 +4989,12 @@ async function initAppAuth() {
     const { data } = await appSb.auth.getSession();
     if (data?.session?.user) await loadAppProfile(data.session.user);
     appSb.auth.onAuthStateChange((_e, sess) => {
+      // Herstel-link uit de wachtwoord-vergeten-mail: nieuw wachtwoord vragen
+      if (_e === "PASSWORD_RECOVERY") {
+        openDeepAccessGate();
+        const blok = document.getElementById("pwResetBlock");
+        if (blok) blok.style.display = "";
+      }
       if (sess?.user) loadAppProfile(sess.user);
       else { appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = []; afterAccessChange(); }
     });
@@ -5185,38 +5195,34 @@ document.getElementById("accessCodeSubmit")?.addEventListener("click", async () 
         setGateMsg("accessCodeMsg", uitleg[data.reason] || "Deze rustcode is niet geldig.", "err");
         return;
       }
-      // Bij een fout (bv. functie nog niet aangemaakt) door naar de apparaat-flow.
-    } catch { /* val terug op de apparaat-flow */ }
-  }
-  // Gast: de verdiepingsprotocollen worden alleen aan accounts geleverd,
-  // dus vraag eerst om (gratis) in te loggen — de code wordt niet verbruikt.
-  if (!appAuth.user) {
-    setGateMsg("accessCodeMsg", "Maak eerst een gratis account aan (of log in) en verzilver de code daarna — de extra toegang wordt dan aan je account gekoppeld.", "err");
+    } catch { /* netwerkfout of functie ontbreekt: nette melding hieronder */ }
+    setGateMsg("accessCodeMsg", "Verzilveren is op dit moment niet beschikbaar. Probeer het later opnieuw.", "err");
     return;
   }
-  // Terugval (bv. rustcode-functie nog niet aangemaakt): apparaat-flow.
-  if (appSb) {
-    setGateMsg("accessCodeMsg", "Code controleren…", "");
-    try {
-      const { data, error } = await appSb.rpc("redeem_access_code", { p_code: code });
-      if (!error && data) {
-        setLocalCodeTier(data);
-        setGateMsg("accessCodeMsg", `Toegang ontgrendeld (${data}).`, "ok");
-        afterAccessChange();
-        setTimeout(closeDeepAccessGate, 1400);
-        return;
-      }
-      if (!error && !data) { setGateMsg("accessCodeMsg", "Deze code is niet geldig of verlopen.", "err"); return; }
-    } catch (e) { /* val terug op lokaal */ }
-  }
-  if (validateLocalTestInvite(code)) {
-    setLocalCodeTier("deep");
-    setGateMsg("accessCodeMsg", "Verdieping ontgrendeld op dit apparaat.", "ok");
-    afterAccessChange();
-    setTimeout(closeDeepAccessGate, 1400);
-  } else {
-    setGateMsg("accessCodeMsg", "Deze rustcode is niet geldig.", "err");
-  }
+  // Gast: rustcodes worden aan een account gekoppeld — de code wordt niet verbruikt.
+  setGateMsg("accessCodeMsg", "Maak eerst een gratis account aan (of log in) en verzilver de code daarna — de extra toegang wordt dan aan je account gekoppeld.", "err");
+});
+
+// ── Wachtwoord vergeten / herstellen ──
+document.getElementById("authForgotBtn")?.addEventListener("click", async () => {
+  if (!appSb) { setGateMsg("authMsg", "Wachtwoordherstel is nu niet beschikbaar.", "err"); return; }
+  const email = (document.getElementById("authEmail").value || "").trim();
+  if (!email) { setGateMsg("authMsg", "Vul hierboven je e-mailadres in; daarna sturen we je een herstel-link.", "err"); return; }
+  setGateMsg("authMsg", "Herstel-link versturen…", "");
+  const { error } = await appSb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  if (error) setGateMsg("authMsg", friendlyAuthError(error.message, "reset"), "err");
+  else setGateMsg("authMsg", `We hebben een e-mail gestuurd naar ${email} met een link om een nieuw wachtwoord in te stellen. (Geen mail? Kijk in spam.)`, "ok");
+});
+document.getElementById("newPassBtn")?.addEventListener("click", async () => {
+  if (!appSb) return;
+  const pass = document.getElementById("newPassInput").value || "";
+  if (pass.length < 6) { setGateMsg("pwResetMsg", "Gebruik minstens 6 tekens.", "err"); return; }
+  setGateMsg("pwResetMsg", "Opslaan…", "");
+  const { error } = await appSb.auth.updateUser({ password: pass });
+  if (error) { setGateMsg("pwResetMsg", friendlyAuthError(error.message, "reset"), "err"); return; }
+  setGateMsg("pwResetMsg", "Wachtwoord aangepast — je bent ingelogd.", "ok");
+  document.getElementById("newPassInput").value = "";
+  setTimeout(() => { const blok = document.getElementById("pwResetBlock"); if (blok) blok.style.display = "none"; }, 2200);
 });
 
 // ── PhytoForsan Relax Plus: betaling via Mollie ──
@@ -5547,8 +5553,7 @@ function renderProfile() {
   } else {
     const prof = getProfile();
     const [y, m] = (prof.since || dateKey(new Date())).split("-");
-    const niveau = localCodeTier() ? " · Plus (code)" : "";
-    sinceEl.textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}${niveau}`;
+    sinceEl.textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}`;
     const accessEl = document.getElementById("profileAccess");
     if (accessEl) accessEl.style.display = "none";
     if (editBtn) editBtn.style.display = "none";   // gast gebruikt de aanmoedig-knop
