@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.8</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.9</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2866,10 +2866,31 @@ function startSessionMusic() {
   if (!toggle?.checked) return;
   // Een lopende fade-out annuleren: we starten (opnieuw) op vol volume
   if (sessionMusicFadeTimer) { clearInterval(sessionMusicFadeTimer); sessionMusicFadeTimer = null; }
-  sessionMusic.loop = cfg.loop !== false;
+  // Meditatietimer: de muziek moet de héle gekozen duur vullen, dus altijd
+  // herhalen (een kort fragment loopt anders halverwege leeg). De envelope
+  // hieronder laat het geheel zacht in- en uitvloeien op de gekozen tijd.
+  sessionMusic.loop = presets[activePreset]?.meditationMode ? true : (cfg.loop !== false);
   if (!sessionMusic.src.endsWith(cfg.url) && sessionMusic.src !== cfg.url) { sessionMusic.src = cfg.url; }
   sessionMusic.volume = sessionMusicVolume();
   sessionMusic.play().catch(() => {});
+}
+
+// Meditatietimer: koppel het volume van de achtergrondmuziek aan de gekozen
+// sessieduur. Een zachte fade-in bij de start en een fade-out die precies op
+// het einde uitkomt, zodat het één samenhangend geheel wordt in plaats van
+// "muziek klaar → stilte". Wordt elke frame aangeroepen tijdens de sessie, dus
+// pauzeren, hervatten en verspringen lopen vanzelf mee.
+function applyMeditationMusicEnvelope(elapsed) {
+  if (!sessionMusic.src || sessionMusic.paused) return;
+  const total = sessionDuration();
+  if (total <= 0) return;
+  const remaining = Math.max(0, total - elapsed);
+  const fadeIn  = Math.min(4, total * 0.08);   // rustige intro
+  const fadeOut = Math.min(10, total * 0.2);   // zacht afsluiten op de eindtijd
+  let env = 1;
+  if (elapsed < fadeIn) env = elapsed / fadeIn;
+  else if (remaining < fadeOut) env = remaining / fadeOut;
+  sessionMusic.volume = Math.max(0, Math.min(1, sessionMusicVolume() * env));
 }
 // Muziek stopt nooit abrupt: standaard een rustige fade-out (fadeSeconds=0 → direct,
 // bv. bij een herstart waar de muziek meteen opnieuw begint).
@@ -4179,7 +4200,7 @@ function updatePhase(time) {
     setCueWord(inSession ? fmtClock(remaining) : appSetting("meditation_cue_word", "MEDITATIE"));
     els.cueSub.textContent = appSetting("meditation_cue_sub", "vrije aandacht");
     els.phaseStat.textContent = "Meditatie";
-    if (running) maybePlayMeditationIntervalTone(time);
+    if (running) { maybePlayMeditationIntervalTone(time); applyMeditationMusicEnvelope(time); }
     els.toneStat.textContent  = "—";
     els.droneStat.textContent = "UIT";
     els.dotIn.classList.remove("active");
