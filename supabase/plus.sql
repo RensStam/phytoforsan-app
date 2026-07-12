@@ -121,7 +121,9 @@ begin
   if auth.uid() is null then
     return jsonb_build_object('ok', false, 'reason', 'login');
   end if;
-  select * into r from public.access_codes where lower(code) = lower(trim(p_code));
+  select * into r from public.access_codes
+    where lower(code) = lower(trim(p_code))
+    for update;   -- lock: geen gelijktijdige dubbele verzilvering
   if not found or not r.active then return jsonb_build_object('ok', false, 'reason', 'ongeldig'); end if;
   if r.expires_at is not null and r.expires_at < now() then return jsonb_build_object('ok', false, 'reason', 'verlopen'); end if;
   if r.max_uses is not null and r.uses >= r.max_uses then return jsonb_build_object('ok', false, 'reason', 'op'); end if;
