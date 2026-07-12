@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.2.5</span>
+    <span class="env-badge" id="backendVersion">backend v1.2.6</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -90,10 +90,10 @@
     <nav class="tabs">
       <button data-tab="dashboard" class="active">Dashboard</button>
       <button data-tab="protocols">Protocollen</button>
-      <button data-tab="audio">Audio</button>
-      <button data-tab="media">Media</button>
+      <button data-tab="audio">Muziek &amp; geluid</button>
+      <button data-tab="media">Afbeeldingen &amp; documenten</button>
       <button data-tab="users">Gebruikers</button>
-      <button data-tab="codes">Codes</button>
+      <button data-tab="codes">Rustcodes</button>
       <button data-tab="settings">Instellingen</button>
     </nav>
     <div id="tabBody"></div>
@@ -937,7 +937,8 @@ async function savePhasesFromDom() {
 // ---------- Audio ----------
 async function renderAudio() {
   const tracks = await dbList("audio_tracks");
-  tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Audio-tracks</h2><button class="btn" id="newAudio">+ Nieuwe track</button></div>
+  tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Muziek &amp; geluid</h2><button class="btn" id="newAudio">+ Nieuwe track</button></div>
+    <p class="muted">Geluid dat de app afspeelt: muziektracks en klanken, inclusief de licentie-administratie (maker, bron, bewijs). Koppelen aan een protocol doe je in het protocolformulier onder "Achtergrondmuziek".</p>
     <table><thead><tr><th>Titel</th><th>Maker</th><th>Licentie</th><th>storage_path</th><th class="actions"></th></tr></thead>
     <tbody>${tracks.map(t=>`<tr><td>${esc(t.title)||'<span class="muted">(naamloos)</span>'}</td><td>${esc(t.artist)}</td><td>${esc(t.license)}</td><td class="muted">${t.storage_path?"✓ bestand":"—"}</td><td class="actions"><div class="row-actions"><button class="btn small secondary" data-edit="${t.id}">Bewerken</button><button class="btn small danger" data-del="${t.id}">Verwijderen</button></div></td></tr>`).join("")||'<tr><td colspan="5" class="muted">Nog geen audio.</td></tr>'}</tbody></table></div>
     <div id="audioForm"></div>`;
@@ -987,7 +988,8 @@ const mediaThumb = (m, size=40) => {
 };
 async function renderMedia() {
   const media = await dbList("media_files");
-  tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Media</h2><button class="btn" id="newMedia">+ Nieuw bestand</button></div>
+  tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Afbeeldingen &amp; documenten</h2><button class="btn" id="newMedia">+ Nieuw bestand</button></div>
+    <p class="muted">Bestanden die je toont of bewaart: vooral de tegel-afbeeldingen van protocollen (kies je in het protocolformulier bij "Afbeelding"), plus documenten zoals licentiebewijzen.</p>
     <table><thead><tr><th></th><th>Bestand</th><th>Type</th><th>Bron/pad</th><th>Licentie</th><th class="actions"></th></tr></thead>
     <tbody>${media.map(m=>`<tr><td>${mediaThumb(m)}</td><td>${esc(m.filename)}</td><td>${esc(m.type)}</td><td class="muted">${esc(m.data_url ? "(geüpload)" : m.storage_path)}</td><td>${esc(m.license)}</td><td class="actions"><div class="row-actions"><button class="btn small secondary" data-edit="${m.id}">Bewerken</button><button class="btn small danger" data-del="${m.id}">Verwijderen</button></div></td></tr>`).join("")||'<tr><td colspan="6" class="muted">Nog geen media.</td></tr>'}</tbody></table></div>
     <div id="mediaForm"></div>`;
