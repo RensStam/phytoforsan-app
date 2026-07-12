@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.7</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.8</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5584,7 +5584,12 @@ function getProfile() {
 function renderProfile() {
   updateAdminScrub();   // admin-scrubber op de voortgangsbalk aan/uit
   const months = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
-  document.getElementById("profileName").textContent = accountDisplayName() || "Welkom";
+  // Kop: echte naam als die is ingevuld; anders "Mijn account" (niet het
+  // e-mailadres, dat staat al in de regel eronder — voorkomt dubbeling).
+  const _p = appAuth.profile || {};
+  const _naam = [_p.first_name, _p.last_name].filter(Boolean).join(" ").trim();
+  document.getElementById("profileName").textContent =
+    _naam || (appAuth.user ? "Mijn account" : (accountDisplayName() || "Welkom"));
   const sinceEl = document.getElementById("profileSince");
   const editBtn = document.getElementById("profileEditBtn");
   const logoutBtn = document.getElementById("profileLogoutBtn");
