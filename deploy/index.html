@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.1</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1896,25 +1896,13 @@ canvas {
               <div class="value-line"><input id="volumeInput" type="range" min="0" max="100" value="50"><output id="volumeOut">50%</output></div>
             </label>
           </div>
-          <div id="grondtoonPanel">
-          <p class="section-title" style="margin-top:14px">Grondtoon</p>
-          <div class="editor">
-            <label>
-              Kies grondtoon
-              <select id="toneSelect">
-                <option value="98">G2 - 98 Hz</option>
-                <option value="110">A2 - 110 Hz</option>
-                <option value="123">B2 - 123 Hz</option>
-                <option value="131" selected="">C3 - 131 Hz</option>
-                <option value="147">D3 - 147 Hz</option>
-                <option value="165">E3 - 165 Hz</option>
-                <option value="174">F3 - 174 Hz</option>
-                <option value="196">G3 - 196 Hz</option>
-                <option value="220">A3 - 220 Hz</option>
-              </select>
-            </label>
+          <!-- Grondtoon/Hz-keuze verwijderd uit de UI; verborgen select blijft
+               bestaan zodat currentTone() en bestaande logica blijven werken. -->
+          <div id="grondtoonPanel" style="display:none" aria-hidden="true">
+            <select id="toneSelect">
+              <option value="131" selected="">C3</option>
+            </select>
           </div>
-          </div><!-- /grondtoonPanel -->
         </section>
 
         <section class="control-group" id="breathingControls" style="display:none">
@@ -1947,30 +1935,16 @@ canvas {
           </div>
         </section>
 
-        <section class="control-group">
-          <p class="section-title">Klankbegeleiding</p>
-          <div class="engine-panel">
-            <input id="toneType" type="hidden" value="human">
-            <div class="engine-readout"><span>Gekoppeld aan grondtoon</span><b id="droneHz">174 Hz</b></div>
-          </div>
-          <div id="omVersionRow" class="switch-row" style="display:none;align-items:center;justify-content:space-between">
-            <span style="font-size:0.85em;opacity:0.7">OM versie</span>
-            <div style="display:flex;background:var(--surface,#eee);border-radius:24px;padding:3px;gap:2px">
-              <button id="omV1Btn" onclick="setOmVersion('v1')" style="padding:5px 18px;border-radius:20px;border:none;cursor:pointer;font-weight:700;font-size:0.85em;transition:all 0.18s;background:var(--accent);color:var(--bg)">v1</button>
-              <button id="omV2Btn" onclick="setOmVersion('v2')" style="padding:5px 18px;border-radius:20px;border:none;cursor:pointer;font-weight:700;font-size:0.85em;transition:all 0.18s;background:transparent;color:inherit;opacity:0.5">v2</button>
-            </div>
-          </div>
-          <div class="switch-row">
-            <label class="switch-label">
-              <span>Drone tijdens hum</span>
-              <span class="switch"><input id="guideToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
-            </label>
-            <label class="switch-label">
-              <span>Levende toon</span>
-              <span class="switch"><input id="droneToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
-            </label>
-          </div>
-        </section>
+        <!-- Klankbegeleiding (synth-drone/grondtoon/levende toon) is verwijderd:
+             sessies gebruiken echte muziek en gesproken begeleiding. De velden
+             blijven verborgen bestaan zodat de bestaande logica niet breekt. -->
+        <div style="display:none" aria-hidden="true">
+          <input id="toneType" type="hidden" value="human">
+          <b id="droneHz"></b>
+          <span id="omVersionRow"><button id="omV1Btn" type="button"></button><button id="omV2Btn" type="button"></button></span>
+          <input id="guideToggle" type="checkbox">
+          <input id="droneToggle" type="checkbox">
+        </div>
       </div>
       <div class="protocol-start-actions" id="protocolStartActions" style="display:none">
         <button class="primary-session-button" id="startSessionBtn" type="button">Start sessie</button>
@@ -2859,6 +2833,43 @@ function sessionMusicVolume() {
   const base = Math.max(0, Number(els.volumeInput.value) / 100);
   return Math.min(1, base * (cfg.volume == null ? 0.35 : cfg.volume));
 }
+// ── Gapless muziek-loop voor de meditatietimer (Web Audio) ──
+// Een HTML-audio element laat bij loop (zeker mp3) een hoorbaar gaatje vallen.
+// Een gedecodeerde AudioBuffer loopt sample-nauwkeurig en dus naadloos door.
+let medMusic = { source: null, gain: null, buffer: null, url: null, playing: false };
+async function startMeditationMusicGapless(url) {
+  await ensureAudio();
+  if (!audioCtx) return;
+  if (medMusic.url !== url || !medMusic.buffer) {
+    try {
+      const resp = await fetch(url);
+      const arr = await resp.arrayBuffer();
+      medMusic.buffer = await audioCtx.decodeAudioData(arr);
+      medMusic.url = url;
+    } catch { return; }
+  }
+  stopMeditationMusicGapless();
+  const gain = audioCtx.createGain();
+  gain.gain.value = sessionMusicVolume();
+  const src = audioCtx.createBufferSource();
+  src.buffer = medMusic.buffer;
+  src.loop = true;                 // naadloze herhaling over de hele duur
+  src.connect(gain);
+  gain.connect(audioCtx.destination);
+  try { src.start(); } catch {}
+  medMusic.source = src; medMusic.gain = gain; medMusic.playing = true;
+}
+function stopMeditationMusicGapless() {
+  if (medMusic.source) { try { medMusic.source.stop(); } catch {} try { medMusic.source.disconnect(); } catch {} medMusic.source = null; }
+  if (medMusic.gain) { try { medMusic.gain.disconnect(); } catch {} medMusic.gain = null; }
+  medMusic.playing = false;
+}
+function setMeditationMusicGain(v) {
+  if (medMusic.gain && audioCtx) {
+    medMusic.gain.gain.setTargetAtTime(Math.max(0, Math.min(1, v)), audioCtx.currentTime, 0.06);
+  }
+}
+
 function startSessionMusic() {
   const cfg = presets[activePreset]?.bgMusic;
   if (!cfg || !cfg.url) return;
@@ -2868,12 +2879,11 @@ function startSessionMusic() {
     ? document.getElementById("medBgSoundToggle")
     : els.breathSoundToggle;
   if (!toggle?.checked) return;
-  // Een lopende fade-out annuleren: we starten (opnieuw) op vol volume
+  // Meditatietimer → gapless Web Audio-loop (vult de hele duur zonder gaatje).
+  if (presets[activePreset]?.meditationMode) { startMeditationMusicGapless(cfg.url); return; }
+  // Overige protocollen → gewoon HTML-audio.
   if (sessionMusicFadeTimer) { clearInterval(sessionMusicFadeTimer); sessionMusicFadeTimer = null; }
-  // Meditatietimer: de muziek moet de héle gekozen duur vullen, dus altijd
-  // herhalen (een kort fragment loopt anders halverwege leeg). De envelope
-  // hieronder laat het geheel zacht in- en uitvloeien op de gekozen tijd.
-  sessionMusic.loop = presets[activePreset]?.meditationMode ? true : (cfg.loop !== false);
+  sessionMusic.loop = cfg.loop !== false;
   if (!sessionMusic.src.endsWith(cfg.url) && sessionMusic.src !== cfg.url) { sessionMusic.src = cfg.url; }
   sessionMusic.volume = sessionMusicVolume();
   sessionMusic.play().catch(() => {});
@@ -2885,7 +2895,7 @@ function startSessionMusic() {
 // "muziek klaar → stilte". Wordt elke frame aangeroepen tijdens de sessie, dus
 // pauzeren, hervatten en verspringen lopen vanzelf mee.
 function applyMeditationMusicEnvelope(elapsed) {
-  if (!sessionMusic.src || sessionMusic.paused) return;
+  if (!medMusic.playing) return;
   const total = sessionDuration();
   if (total <= 0) return;
   const remaining = Math.max(0, total - elapsed);
@@ -2894,7 +2904,7 @@ function applyMeditationMusicEnvelope(elapsed) {
   let env = 1;
   if (elapsed < fadeIn) env = elapsed / fadeIn;
   else if (remaining < fadeOut) env = remaining / fadeOut;
-  sessionMusic.volume = Math.max(0, Math.min(1, sessionMusicVolume() * env));
+  setMeditationMusicGain(sessionMusicVolume() * env);
 }
 
 // ── Gesproken begeleiding (per protocol ingesproken stem) ──
@@ -2946,6 +2956,17 @@ function playVoiceCue(phase) {
 // bv. bij een herstart waar de muziek meteen opnieuw begint).
 let sessionMusicFadeTimer = null;
 function stopSessionMusic(reset = true, fadeSeconds = 2.5) {
+  // Gapless meditatiemuziek (Web Audio) mee afronden.
+  if (medMusic.playing || medMusic.source) {
+    if (!fadeSeconds || !medMusic.gain || !audioCtx) {
+      stopMeditationMusicGapless();
+    } else {
+      medMusic.gain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, Math.max(0.05, fadeSeconds / 4));
+      const src = medMusic.source, g = medMusic.gain;
+      medMusic.source = null; medMusic.gain = null; medMusic.playing = false;
+      window.setTimeout(() => { try { src.stop(); src.disconnect(); g.disconnect(); } catch {} }, fadeSeconds * 1000 + 150);
+    }
+  }
   if (!sessionMusic.src) return;
   if (sessionMusicFadeTimer) { clearInterval(sessionMusicFadeTimer); sessionMusicFadeTimer = null; }
   const finish = () => {
@@ -3544,18 +3565,11 @@ function lockRhythm(locked) {
 function applyPreset(id, userSelected = false) {
   stopBgAudio();
   activePreset = id;
-  document.getElementById("omVersionRow").style.display = id === "om" ? "flex" : "none";
   const locked = Boolean(presets[id]?.exhaleFlow) && !Boolean(presets[id]?.breathingOnly);
   lockRhythm(locked);
   const isBreathing = Boolean(presets[id]?.breathingOnly);
   const isMeditationPreset = Boolean(presets[id]?.meditationMode);
-  // Klankbegeleiding: alleen voor humming/klank — nooit bij ademhaling of meditatie
-  const klankSection = document.querySelector("section.control-group:has(#guideToggle)") ||
-    (() => { const el = document.getElementById("guideToggle"); return el ? el.closest("section.control-group") : null; })();
-  if (klankSection) klankSection.style.display = (isBreathing || isMeditationPreset) ? "none" : "";
-  // Grondtoon: verberg bij ademhaling en meditatie
-  const grondtoonPanel = document.getElementById("grondtoonPanel");
-  if (grondtoonPanel) grondtoonPanel.style.display = (isBreathing || isMeditationPreset) ? "none" : "";
+  // (Grondtoon/Klankbegeleiding-UI is verwijderd — geen synth-drone meer.)
   // Geluid-sectie (geluid/tril-cues): voor alle geluidsprotocollen, niet bij meditatie
   const breathingControls = document.getElementById("breathingControls");
   if (breathingControls) breathingControls.style.display = presets[id]?.meditationMode ? "none" : "";
@@ -3617,7 +3631,10 @@ function applyPreset(id, userSelected = false) {
   const rhythmSectionEl = document.getElementById("rhythmSection");
   if (meditationDurationSection) meditationDurationSection.style.display = isMeditation ? "" : "none";
   if (meditationSignalsSection) meditationSignalsSection.style.display = isMeditation ? "" : "none";
-  if (rhythmSectionEl) rhythmSectionEl.style.display = isPhasedOrMeditation ? "none" : "";
+  // Opbouwschema vergrendeld (per protocol): gebruiker kan het ademritme niet
+  // aanpassen — de ritme-sliders worden dan verborgen.
+  const schemaLocked = Boolean(preset.lockSchema);
+  if (rhythmSectionEl) rhythmSectionEl.style.display = (isPhasedOrMeditation || schemaLocked) ? "none" : "";
   updateMeditationSoundUI();
   // Fase-overzicht bij de uitleg (desktop: onder de productomschrijving)
   const practiceOverview = document.getElementById("practicePhaseOverview");
@@ -3937,6 +3954,10 @@ function droneLayers(type) {
 }
 
 function startDroneEngine(freq, exhaleDuration = 8) {
+  // Synth-drone verwijderd: de app gebruikt echte muziek/gesproken begeleiding.
+  // Deze functie is bewust een no-op zodat er nooit een drone klinkt.
+  return;
+  // eslint-disable-next-line no-unreachable
   const type = els.toneType.value;
   if (!audioCtx || !els.guideToggle.checked || toneOn || type === "none") return;
   const now = audioCtx.currentTime;
@@ -5854,7 +5875,7 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
     sessionType: phs.length ? "phasedBreath" : "simpleBreath",
     text: row.short_description || "", product: row.title, productText: row.long_description || "",
     accessTier: row.access_tier, requiresDeepAccess: !!row.requires_deep_access, requiresPremium: !!row.requires_premium,
-    group: row.group_name || null, night: !!row.night,
+    group: row.group_name || null, night: !!row.night, lockSchema: !!row.lock_schema,
     // Veiligheidswaarschuwing vooraf voor de intensieve testprotocollen
     requiresWarning: (typeof warningContent === "object") && !!warningContent[row.slug],
     // Zonder fases (cataloguskaart voor gasten) geen neptijd tonen
@@ -5986,6 +6007,7 @@ function overlayProtocol(preset, row, phaseRows) {
   setStr(preset, "productText", row.long_description);
   setStr(preset, "label", row.title);
   preset.night = !!row.night;
+  if (row.lock_schema !== undefined) preset.lockSchema = !!row.lock_schema;
   if (row.access_tier) preset.accessTier = row.access_tier;
   preset.requiresDeepAccess = !!row.requires_deep_access;
   preset.requiresPremium = !!row.requires_premium;

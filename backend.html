@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.2.7</span>
+    <span class="env-badge" id="backendVersion">backend v1.2.8</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -590,6 +590,7 @@ async function editProtocol(id) {
       <div><label>requires_deep_access</label><select id="f_deep"><option value="false" ${!p.requires_deep_access?"selected":""}>nee</option><option value="true" ${p.requires_deep_access?"selected":""}>ja</option></select></div>
       <div><label>requires_premium</label><select id="f_prem"><option value="false" ${!p.requires_premium?"selected":""}>nee</option><option value="true" ${p.requires_premium?"selected":""}>ja</option></select></div>
       <div><label>Nacht-tint</label><select id="f_night"><option value="false" ${!p.night?"selected":""}>nee</option><option value="true" ${p.night?"selected":""}>ja</option></select></div>
+      <div><label title="Gebruiker kan het ademritme/opbouwschema niet aanpassen">Opbouwschema vergrendelen</label><select id="f_lock"><option value="false" ${!p.lock_schema?"selected":""}>nee</option><option value="true" ${p.lock_schema?"selected":""}>ja</option></select></div>
     </div>
     <div id="f_img_preview" style="margin-top:8px"></div>
     <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
@@ -836,7 +837,8 @@ function readProtocolForm() {
     image_id: document.getElementById("f_img").value || null,
     requires_deep_access: document.getElementById("f_deep").value === "true",
     requires_premium: document.getElementById("f_prem").value === "true",
-    night: document.getElementById("f_night").value === "true"
+    night: document.getElementById("f_night").value === "true",
+    lock_schema: document.getElementById("f_lock").value === "true"
   };
 }
 
