@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.2</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -4985,7 +4985,9 @@ document.getElementById("settingsBack")?.addEventListener("click", () => switchM
 // ── Deel-knop in het sessiescherm ──
 document.getElementById("shareBtn")?.addEventListener("click", async () => {
   const preset = presets[activePreset];
-  const url = "https://rensstam.github.io/phytoforsan-app/deploy/";
+  // Deel de app mét het gekozen protocol: de link opent dit protocol direct.
+  const base = "https://rensstam.github.io/phytoforsan-app/deploy/";
+  const url = activePreset ? `${base}?p=${encodeURIComponent(activePreset)}` : base;
   const shareData = {
     title: "PhytoForsan Relax",
     text: `Ik gebruik de sessie "${preset?.label || ""}" in de PhytoForsan Relax App.`,
@@ -6160,7 +6162,22 @@ function exportLocalProtocolsAsJson() {
 }
 window.exportLocalProtocolsAsJson = exportLocalProtocolsAsJson;
 
-bootstrapBackend();
+// Gedeelde link met een protocol (?p=slug): open dat protocol na het laden.
+function openSharedProtocol() {
+  let slug;
+  try { slug = new URLSearchParams(location.search).get("p"); } catch { slug = null; }
+  if (!slug) return;
+  history.replaceState({}, "", location.pathname);
+  const key = presets[slug] ? slug : Object.keys(presets).find(k => k.toLowerCase() === slug.toLowerCase());
+  if (!key) return;
+  try {
+    applyPreset(key, true);   // selecteert het protocol (mobiel → naar instellingen)
+    if (typeof isMobile === "function" && !isMobile()) {
+      document.getElementById("breathStage")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  } catch {}
+}
+bootstrapBackend().then(openSharedProtocol);
 initAppAuth();
 </script>
 
