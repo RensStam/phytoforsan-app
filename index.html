@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.7.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1920,6 +1920,10 @@ canvas {
         <section class="control-group" id="breathingControls" style="display:none">
           <p class="section-title">Geluid</p>
           <div class="switch-row">
+            <label class="switch-label" id="voiceGuidanceRow" style="display:none">
+              <span>Gesproken begeleiding</span>
+              <span class="switch"><input id="voiceToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
+            </label>
             <label class="switch-label" id="breathSoundRow">
               <span>Achtergrondgeluid</span>
               <span class="switch"><input id="breathSoundToggle" type="checkbox"><span class="switch-track"></span></span>
@@ -2892,6 +2896,52 @@ function applyMeditationMusicEnvelope(elapsed) {
   else if (remaining < fadeOut) env = remaining / fadeOut;
   sessionMusic.volume = Math.max(0, Math.min(1, sessionMusicVolume() * env));
 }
+
+// ── Gesproken begeleiding (per protocol ingesproken stem) ──
+// Losse, schoon afgespeelde fragmenten op elke ademfasewisseling — bewust
+// ZONDER fade. Elk moment (inademen/uitademen/rust) een eigen audio-element,
+// vooraf geladen zodat de stem direct klinkt.
+const voiceAudio = { inhale: new Audio(), exhale: new Audio(), rest: new Audio() };
+for (const a of Object.values(voiceAudio)) { a.preload = "auto"; }
+function loadVoiceForPreset(preset) {
+  const v = (preset && preset.voice) || {};
+  for (const key of ["inhale", "exhale", "rest"]) {
+    const url = v[key];
+    if (url) {
+      if (!voiceAudio[key].src.endsWith(url) && voiceAudio[key].src !== url) { voiceAudio[key].src = url; voiceAudio[key].load(); }
+    } else {
+      try { voiceAudio[key].pause(); } catch {}
+      voiceAudio[key].removeAttribute("src");
+    }
+  }
+}
+function protocolHasVoice(preset) {
+  const v = (preset && preset.voice) || {};
+  return !!(v.inhale || v.exhale || v.rest);
+}
+function voiceEnabled() {
+  const t = document.getElementById("voiceToggle");
+  return !!(t && t.checked);
+}
+// Speelt de stem voor deze fase; geeft true als er een fragment was.
+function playVoiceCue(phase) {
+  if (!phase || !voiceEnabled()) return false;
+  const v = presets[activePreset]?.voice;
+  if (!v) return false;
+  let key = null;
+  if (phase.key === "inhale") key = "inhale";
+  else if (phase.key === "exhale") key = "exhale";
+  else if (phase.key === "hold" || phase.key === "pause") key = "rest";
+  if (!key || !v[key]) return false;
+  const a = voiceAudio[key];
+  if (!a || !a.src) return false;
+  try {
+    a.currentTime = 0;
+    a.volume = Math.max(0, Math.min(1, Number(els.volumeInput.value) / 100));
+    a.play().catch(() => {});
+    return true;
+  } catch { return false; }
+}
 // Muziek stopt nooit abrupt: standaard een rustige fade-out (fadeSeconds=0 → direct,
 // bv. bij een herstart waar de muziek meteen opnieuw begint).
 let sessionMusicFadeTimer = null;
@@ -3512,6 +3562,11 @@ function applyPreset(id, userSelected = false) {
   // Achtergrondgeluid: bij ademhaling (ambient pad) of als er een track gekoppeld is.
   const breathSoundRow = document.getElementById("breathSoundRow");
   if (breathSoundRow) breathSoundRow.style.display = (isBreathing || presets[id]?.bgMusic) ? "" : "none";
+  // Gesproken begeleiding: alleen tonen als dit protocol stemfragmenten heeft.
+  const heeftStem = protocolHasVoice(presets[id]);
+  const voiceRow = document.getElementById("voiceGuidanceRow");
+  if (voiceRow) voiceRow.style.display = heeftStem ? "" : "none";
+  loadVoiceForPreset(presets[id]);
   const preset = presets[id];
   els.inhaleInput.value = preset.inhale;
   els.holdInput.value = preset.hold;
@@ -4160,6 +4215,8 @@ function phaseOverviewHTML(preset) {
 // playRestCue()   = rustcue, alleen bij een echte rustfase (>0s).
 function triggerPhaseCues(phase) {
   if (!phase || Number(phase.dur || 0) <= 0) return;
+  // Ingesproken stem heeft voorrang op de synthetische cue-toon (en klinkt schoon).
+  if (playVoiceCue(phase)) return;
   if (isBreathPhase(phase)) playInhaleCue();
   else if (isRealRestPhase(phase)) playRestCue();
 }
@@ -4273,10 +4330,11 @@ function completeSession() {
   elapsedBefore = sessionDuration();
   releaseWakeLock();
   cancelAnimationFrame(raf);
-  // Stop alle sessie-audio; muziek en klanktracks faden rustig uit zodat het
-  // einde van de sessie niet abrupt klinkt.
+  // Stop alle sessie-audio. Alleen echte achtergrond-MUZIEK vloeit zacht uit;
+  // klankprotocollen (MAEN/AMEN/OM) sluiten crisp af — hun eigen klank heeft al
+  // een natuurlijke uitklank, een extra fade zou daar niet bij passen.
   stopDroneEngine();
-  stopBgAudio(false, 2.2);
+  stopBgAudio(true);
   stopBreathAmbient();
   stopSessionMusic(true, 2.5);
   // Meditatietimer: optionele zachte eindtoon markeert de afronding
@@ -5971,13 +6029,19 @@ function applyAdminData(data) {
   const catSlug = Object.fromEntries(data.cats.map(c => [c.id, c.slug]));
   const mediaById = Object.fromEntries((data.media || []).map(m => [m.id, m]));
   const trackById = Object.fromEntries((data.audio_tracks || []).map(t => [t.id, t]));
-  // Achtergrondmuziek per protocol-id (rol = background, ingeschakeld, geldige URL).
+  // Achtergrondmuziek + gesproken begeleiding per protocol-id.
   const bgByProtocol = {};
+  const voiceByProtocol = {};   // { protocol_id: { inhale, exhale, rest } } met URLs
+  const voiceRoleKey = { voice_inhale: "inhale", voice_exhale: "exhale", voice_rest: "rest" };
   for (const l of (data.protocol_audio || [])) {
-    if (l.audio_role !== "background" || l.enabled === false) continue;
+    if (l.enabled === false) continue;
     const tr = trackById[l.audio_track_id];
-    if (tr && tr.storage_path && /^https?:/.test(tr.storage_path)) {
-      bgByProtocol[l.protocol_id] = { url: tr.storage_path, volume: (l.volume == null ? 0.35 : Number(l.volume)), loop: l.loop !== false };
+    const url = tr && tr.storage_path && /^https?:/.test(tr.storage_path) ? tr.storage_path : null;
+    if (!url) continue;
+    if (l.audio_role === "background") {
+      bgByProtocol[l.protocol_id] = { url, volume: (l.volume == null ? 0.35 : Number(l.volume)), loop: l.loop !== false };
+    } else if (voiceRoleKey[l.audio_role]) {
+      (voiceByProtocol[l.protocol_id] = voiceByProtocol[l.protocol_id] || {})[voiceRoleKey[l.audio_role]] = url;
     }
   }
   // Bestaande preset-sleutel ongeacht hoofd-/kleine letters vinden (voorkomt kopieën
@@ -6012,6 +6076,7 @@ function applyAdminData(data) {
       if (matchKey) overlaid++; else added++;
     }
     target.bgMusic = bgByProtocol[row.id] || null;   // achtergrondmuziek koppelen (of wissen)
+    target.voice = voiceByProtocol[row.id] || null;  // gesproken begeleiding koppelen (of wissen)
   }
   // Autoritatief: presets die niet (meer) gepubliceerd zijn in het backend verwijderen.
   let removed = 0;

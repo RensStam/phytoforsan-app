@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.2.6</span>
+    <span class="env-badge" id="backendVersion">backend v1.2.7</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -599,6 +599,7 @@ async function editProtocol(id) {
     </div>
     <p class="msg hidden" id="protMsg"></p>
     <div id="audioWrap"></div>
+    <div id="voiceWrap"></div>
     <div id="cueWordsWrap"></div>
     <div id="soundWordsWrap"></div>
     <div id="phasesWrap"></div>
@@ -619,8 +620,59 @@ async function editProtocol(id) {
   });
   renderPhases();
   renderProtocolAudio();
+  renderProtocolVoice();
   renderCueWords();
   renderSoundWords();
+}
+
+// Gesproken begeleiding: per protocol een ingesproken stem koppelen aan de
+// ademfases (inademen / uitademen / rust). Opslag als protocol_audio-rijen met
+// rol voice_inhale / voice_exhale / voice_rest. De stem klinkt schoon (geen
+// fade) op elke fasewisseling en vervangt dan de synthetische cue-toon.
+const VOICE_ROLES = [
+  { role: "voice_inhale", label: "Bij inademen", hint: 'bijv. "adem in"' },
+  { role: "voice_exhale", label: "Bij uitademen", hint: 'bijv. "adem uit"' },
+  { role: "voice_rest",   label: "Bij rust",      hint: 'bijv. "rust"' }
+];
+async function renderProtocolVoice() {
+  const wrap = document.getElementById("voiceWrap");
+  if (!wrap) return;
+  if (!editingProtocolId) { wrap.innerHTML = ""; return; }
+  const prot = (await dbList("protocols")).find(x => x.id === editingProtocolId);
+  // Klankprotocollen (MAEN/AMEN/OM) en de meditatietimer krijgen geen ademstem.
+  const slug = (prot?.slug || "").toLowerCase();
+  if (SOUND_WORD_DEFAULTS[slug] || slug === "meditationtimer") {
+    wrap.innerHTML = `<h3>Gesproken begeleiding</h3><p class="muted">Niet van toepassing op dit protocoltype.</p>`;
+    return;
+  }
+  const allTracks = (await dbList("audio_tracks")).filter(t => t.storage_path);
+  const trackLabel = (t) => t.title || t.original_filename || "(naamloze track)";
+  const links = await dbList("protocol_audio", { protocol_id: editingProtocolId });
+  const opt = (sel) => `<option value="">— geen —</option>` + allTracks.map(t => `<option value="${t.id}" ${t.id===sel?"selected":""}>${esc(trackLabel(t))}</option>`).join("");
+  wrap.innerHTML = `<h3>Gesproken begeleiding</h3>
+    <p class="muted">Koppel per ademmoment een ingesproken stem (bijv. "adem in", "adem uit", "rust"). De stem speelt schoon af op de fasewisseling en vervangt dan de standaard cue-toon. Upload de opnames eerst bij "Muziek &amp; geluid".</p>
+    ${VOICE_ROLES.map(v => {
+      const link = links.find(l => l.audio_role === v.role);
+      return `<div class="row" data-voice="${v.role}">
+        <div><label>${v.label} <span class="muted">${v.hint}</span></label><select class="voice_track">${opt(link && link.audio_track_id)}</select></div>
+      </div>`;
+    }).join("")}
+    <div style="margin-top:8px"><button class="btn small" id="voice_save">Gesproken begeleiding opslaan</button></div>
+    <p class="msg hidden" id="voice_msg"></p>`;
+  document.getElementById("voice_save").addEventListener("click", async () => {
+    const msg = document.getElementById("voice_msg");
+    try {
+      for (const row of wrap.querySelectorAll("[data-voice]")) {
+        const role = row.dataset.voice;
+        const trackId = row.querySelector(".voice_track").value;
+        const bestaand = links.filter(l => l.audio_role === role);
+        for (const l of bestaand) await dbDelete("protocol_audio", l.id);
+        if (trackId) await dbUpsert("protocol_audio", { protocol_id: editingProtocolId, audio_track_id: trackId, audio_role: role, enabled: true });
+      }
+      msg.className = "msg ok"; msg.textContent = "Gesproken begeleiding opgeslagen."; msg.classList.remove("hidden");
+      renderProtocolVoice();
+    } catch (e) { msg.className = "msg err"; msg.textContent = "Fout: " + (e.message || e); msg.classList.remove("hidden"); }
+  });
 }
 
 // ---------- Woorden in de sessiecirkel (bij het protocol) ----------
