@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.4</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3066,6 +3066,10 @@ function breathAmbientVolume() {
 }
 
 function startBreathAmbient() {
+  // Synth-achtergrondpad verwijderd: achtergrondgeluid komt alleen nog uit een
+  // per protocol gekoppelde track. Bewust een no-op.
+  return;
+  // eslint-disable-next-line no-unreachable
   if (!els.breathSoundToggle?.checked) return;
   if (breathAmbientOscs) return;
   ensureAudio().then(() => {
@@ -3574,9 +3578,12 @@ function applyPreset(id, userSelected = false) {
   // Geluid-sectie (geluid/tril-cues): voor alle geluidsprotocollen, niet bij meditatie
   const breathingControls = document.getElementById("breathingControls");
   if (breathingControls) breathingControls.style.display = presets[id]?.meditationMode ? "none" : "";
-  // Achtergrondgeluid: bij ademhaling (ambient pad) of als er een track gekoppeld is.
+  // Achtergrondgeluid: alléén als er per protocol een track is gekoppeld.
+  const heeftBgTrack = !!presets[id]?.bgMusic;
   const breathSoundRow = document.getElementById("breathSoundRow");
-  if (breathSoundRow) breathSoundRow.style.display = (isBreathing || presets[id]?.bgMusic) ? "" : "none";
+  if (breathSoundRow) breathSoundRow.style.display = heeftBgTrack ? "" : "none";
+  // Bij een gekoppelde track staat het achtergrondgeluid standaard aan.
+  if (els.breathSoundToggle) els.breathSoundToggle.checked = heeftBgTrack;
   // Gesproken begeleiding: alleen tonen als dit protocol stemfragmenten heeft.
   const heeftStem = protocolHasVoice(presets[id]);
   const voiceRow = document.getElementById("voiceGuidanceRow");
@@ -4459,8 +4466,7 @@ async function start() {
   els.breathVisual.classList.add("running");
   // Als we hervatten tijdens de hum-fase, direct audio starten
   if (lastPhaseKey === "exhale" && activePreset in bgAudioFiles) startBgAudio(false);
-  // Gekoppelde muziek vervangt de synth-achtergrondpad (niet allebei tegelijk).
-  if (presets[activePreset]?.breathingOnly && !presets[activePreset]?.bgMusic) startBreathAmbient();
+  // Achtergrondgeluid komt uitsluitend uit een per protocol gekoppelde track.
   startSessionMusic();
   tick();
 }
@@ -4895,20 +4901,8 @@ function restartSessionFromStart() {
   start();   // begint alles (protocol + geluid) gelijk op
 }
 
-// Achtergrondgeluid toggle
+// Achtergrondgeluid toggle — stuurt uitsluitend de gekoppelde track aan.
 els.breathSoundToggle.addEventListener("change", () => {
-  // Aanzetten tijdens een (lopende of gepauzeerde) sessie → protocol opnieuw starten
-  // zodat het geluid altijd synchroon met het protocol meeloopt.
-  if (els.breathSoundToggle.checked && (running || sessionState === "paused")) {
-    restartSessionFromStart();
-    return;
-  }
-  if (els.breathSoundToggle.checked && running && presets[activePreset]?.breathingOnly && !presets[activePreset]?.bgMusic) {
-    startBreathAmbient();
-  } else {
-    stopBreathAmbient();
-  }
-  // Gekoppelde achtergrondmuziek volgt dezelfde toggle
   if (els.breathSoundToggle.checked && running) {
     startSessionMusic();
   } else {
