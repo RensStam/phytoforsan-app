@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.2.8</span>
+    <span class="env-badge" id="backendVersion">backend v1.2.9</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -786,8 +786,10 @@ async function renderProtocolAudio() {
   const link = links[0] || null;
   const opt = (sel) => `<option value="">— geen —</option>` + tracks.map(t => `<option value="${t.id}" ${t.id===sel?"selected":""}>${esc(trackLabel(t))}</option>`).join("");
   const track = link && tracks.find(t => t.id === link.audio_track_id);
+  const sessieSec = totalSeconds(await dbList("protocol_phases", { protocol_id: editingProtocolId }));
   wrap.innerHTML = `<h3>Achtergrondmuziek</h3>
     <p class="muted">Speelt zacht mee tijdens de hele sessie. Upload eerst een track in het tabblad Audio.</p>
+    <p class="muted">Sessieduur van dit protocol: <b id="audioSessionDur">${fmtDur(sessieSec)} (${sessieSec} s)</b> — stem je geluidsfragment hierop af. Loopt de track (herhalen aan), dan hoeft dat niet exact.</p>
     <div class="row">
       <div><label>Track</label><select id="pa_track">${opt(link && link.audio_track_id)}</select></div>
       <div><label>Volume (0–100%)</label><input id="pa_vol" type="number" min="0" max="100" value="${link ? Math.round((link.volume??0.35)*100) : 35}"></div>
@@ -931,7 +933,8 @@ async function renderPhases() {
   }
   const typeOpt = (v)=>["breath","free","humming","sound","silence","integration","warning"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
   const invalid = phases.some(f=>Number(f.duration_seconds)<=0);
-  wrap.innerHTML = `<h3>Fases — totale duur ${fmtDur(totalSeconds(phases))} · ${phases.length} fases ${invalid?'<span class="pill archived">ongeldige fase</span>':''}</h3>
+  wrap.innerHTML = `<h3>Fases — <span id="phasesTotalDur">totale duur ${fmtDur(totalSeconds(phases))} (${totalSeconds(phases)} s)</span> · ${phases.length} fases ${invalid?'<span class="pill archived">ongeldige fase</span>':''}</h3>
+    <p class="muted" style="margin:0 0 8px">De totale duur is de vaste, absolute lengte van de sessie. Pas de "Duur (s)" hieronder aan; de teller loopt live mee zodat je je geluidsfragment op deze lengte kunt afstemmen.</p>
     ${phases.map(f=>`<div class="phase-row" data-ph="${f.id}">
       <div class="row"><div><label>Titel</label><input class="ph_title" value="${esc(f.title)}"></div>
       <div><label>Type</label><select class="ph_type">${typeOpt(f.type)}</select></div></div>
@@ -969,6 +972,20 @@ async function renderPhases() {
     const pid = rowEl.dataset.ph;
     rowEl.querySelector(".ph_del").addEventListener("click", async () => { if(confirm("Deze fase verwijderen?")){ await dbDelete("protocol_phases", pid); renderPhases(); } });
   });
+  // Live meelopende totale duur bij het typen in de "Duur (s)"-velden.
+  wrap.querySelectorAll(".ph_dur").forEach(inp => inp.addEventListener("input", updatePhasesTotal));
+  updatePhasesTotal();
+}
+
+// Herberekent de totale (absolute) sessieduur uit de fase-duurvelden en werkt
+// de teller bij het fasebeheer én de duurweergave bij de audio-sectie live bij.
+function updatePhasesTotal() {
+  let sum = 0;
+  document.querySelectorAll("#phasesWrap .ph_dur").forEach(i => { sum += Number(i.value) || 0; });
+  const el = document.getElementById("phasesTotalDur");
+  if (el) el.textContent = `totale duur ${fmtDur(sum)} (${sum} s)`;
+  const audioEl = document.getElementById("audioSessionDur");
+  if (audioEl) audioEl.textContent = `${fmtDur(sum)} (${sum} s)`;
 }
 
 // Leest alle fase-rijen uit het formulier en slaat ze op (gebruikt door Opslaan + Fase toevoegen).
