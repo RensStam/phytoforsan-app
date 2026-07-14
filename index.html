@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.7</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.8</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1864,6 +1864,12 @@ canvas {
               <div class="value-line value-line--wide"><input id="medIntervalInput" type="range" min="1" max="15" step="1" value="5"><output id="medIntervalOut">elke 5 minuten</output></div>
             </label>
           </div>
+          <div class="editor" style="margin-top:6px">
+            <label>
+              Volume signalen (tonen)
+              <div class="value-line"><input id="medSignalVolInput" type="range" min="0" max="100" value="70"><output id="medSignalVolOut">70%</output></div>
+            </label>
+          </div>
         </section>
         <section class="control-group" id="rhythmSection">
           <div class="section-title-row">
@@ -1931,6 +1937,12 @@ canvas {
             <label class="switch-label">
               <span>Trillen bij rust</span>
               <span class="switch"><input id="vibrateToggleBreath" type="checkbox"><span class="switch-track"></span></span>
+            </label>
+          </div>
+          <div class="editor" style="margin-top:10px">
+            <label>
+              Volume signalen (piepjes)
+              <div class="value-line"><input id="signalVolInput" type="range" min="0" max="100" value="70"><output id="signalVolOut">70%</output></div>
             </label>
           </div>
         </section>
@@ -3803,6 +3815,32 @@ function targetGain() {
   return Math.max(0.003, Number(els.volumeInput.value) / 100 * 0.064);
 }
 
+// ── Signaalvolume (piepjes/tonen) ── los van het muziek-/hoofdvolume, zodat de
+// cue-tonen boven de achtergrondmuziek uit kunnen komen. 0–100, standaard 70.
+let signalVolume = (() => {
+  const raw = localStorage.getItem("phyto_signal_volume");
+  if (raw == null || raw === "") return 70;   // geen opgeslagen waarde → standaard 70
+  const v = Number(raw);
+  return Number.isFinite(v) && v >= 0 && v <= 100 ? v : 70;
+})();
+// Afspeelniveau van een signaal (ruimer bereik dan vroeger, tot goed hoorbaar).
+function signalLevel(scale = 1) {
+  return Math.max(0.004, (signalVolume / 100) * 0.11) * scale;
+}
+function setSignalVolume(v) {
+  signalVolume = Math.max(0, Math.min(100, Math.round(Number(v) || 0)));
+  localStorage.setItem("phyto_signal_volume", String(signalVolume));
+  for (const id of ["signalVolInput", "medSignalVolInput"]) {
+    const el = document.getElementById(id);
+    if (el && Number(el.value) !== signalVolume) el.value = signalVolume;
+    if (el && typeof updateSliderFill === "function") updateSliderFill(el);
+  }
+  for (const id of ["signalVolOut", "medSignalVolOut"]) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = signalVolume + "%";
+  }
+}
+
 function droneLayers(type) {
   if (type === "pure") {
     return {
@@ -4113,7 +4151,7 @@ function stopDroneEngine() {
 function playRestCue() {
   if (audioCtx && els.restCueToggleBreath.checked) {
     const now = audioCtx.currentTime;
-    const level = Math.max(0.008, Math.min(0.026, targetGain() * 0.55));
+    const level = signalLevel(0.8);   // rustcue iets zachter dan de ademcue
 
     [0, 0.18].forEach(offset => {
       const start = now + offset;
@@ -4154,7 +4192,7 @@ function playRestCue() {
 function playInhaleCue() {
   if (audioCtx && els.inhaleCueToggle?.checked) {
     const now = audioCtx.currentTime;
-    const level = Math.max(0.008, Math.min(0.026, targetGain() * 0.55));
+    const level = signalLevel();
 
     [[0, 520], [0.16, 700]].forEach(([offset, freq]) => {
       const start = now + offset;
@@ -4722,7 +4760,7 @@ function playMeditationBell(kind = "interval") {
   if (!audioCtx) return;
   const base = 240;                     // rustige, lage belklank
   const soft = kind === "interval";     // intervaltoon nóg iets zachter
-  const level = Math.max(0.012, Math.min(0.09, Number(els.volumeInput.value) / 100 * 0.09)) * (soft ? 0.65 : 1);
+  const level = signalLevel(soft ? 0.75 : 1.1);
   const decay = soft ? 2.6 : 3.4;
   const strikes = kind === "end" ? [0, 1.9] : [0];   // eindtoon: twee zachte aanslagen
   for (const offset of strikes) {
@@ -4867,6 +4905,17 @@ els.volumeInput.addEventListener("input", () => {
   _userChangedVolume = true;   // gebruiker heeft zelf gekozen → backend-standaard niet meer toepassen
   if (bgAudio && !bgAudio.paused) bgAudio.volume = bgAudioVolume();
 });
+
+// Signaalvolume-sliders (Geluid-sectie én meditatie-Signalen): allebei sturen
+// dezelfde waarde en blijven synchroon. Een korte proef-piep bij het loslaten.
+for (const id of ["signalVolInput", "medSignalVolInput"]) {
+  const el = document.getElementById(id);
+  if (!el) continue;
+  el.addEventListener("input", () => setSignalVolume(el.value));
+  el.addEventListener("change", () => { _userChangedSignalVol = true; if (audioCtx) playInhaleCue(); });
+}
+let _userChangedSignalVol = false;
+setSignalVolume(signalVolume);   // sliders/labels initialiseren op de opgeslagen waarde
 
 els.toneSelect.addEventListener("change", syncUI);
 els.toneType.addEventListener("change", () => {
@@ -6019,6 +6068,17 @@ function applyDefaultVolume(settings) {
   pct = Math.max(0, Math.min(100, Math.round(pct)));
   if (els.volumeInput) { els.volumeInput.value = pct; if (els.volumeOut) els.volumeOut.textContent = pct + "%"; updateLiveVolume(); }
 }
+// Standaard signaalvolume uit het backend (alleen als de gebruiker het zelf
+// nog niet heeft aangepast op dit apparaat).
+function applyDefaultSignalVolume(settings) {
+  if (_userChangedSignalVol || localStorage.getItem("phyto_signal_volume") != null) return;
+  const row = (settings || []).find(s => s.key === "default_signal_volume");
+  if (!row || row.value == null || row.value === "") return;
+  let pct = Number(row.value);
+  if (!Number.isFinite(pct)) return;
+  if (pct <= 1) pct = pct * 100;
+  setSignalVolume(Math.max(0, Math.min(100, Math.round(pct))));
+}
 // Maakt van tekst veilige HTML met lichte opmaak:
 //   lege regel = nieuwe alinea, enkele regel = <br>
 //   **vet**  *schuin*  [kleur=#e08c2a]gekleurd[/kleur]
@@ -6211,6 +6271,7 @@ async function bootstrapBackend() {
     if (!data || !data.prot.length) return; // geen backoffice-data → lokale protocollen blijven actief
     const res = applyAdminData(data);
     applyDefaultVolume(data.app_settings);
+    applyDefaultSignalVolume(data.app_settings);
     applyContentSettings(data.app_settings);
     applyMeditationToneSettings(data.app_settings);
     applySoundWords();

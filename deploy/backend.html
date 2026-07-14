@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.2.9</span>
+    <span class="env-badge" id="backendVersion">backend v1.3.0</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1365,6 +1365,7 @@ async function renderSettings() {
     default_closing_title: "Standaard afsluittitel",
     default_closing_text: "Standaard afsluittekst",
     default_audio_volume: "Standaard geluidsvolume (%)",
+    default_signal_volume: "Standaard signaalvolume — piepjes/tonen (%)",
     maintenance_mode: "Onderhoudsmodus (true/false)",
     deep_access_enabled: "Verdieping ingeschakeld (true/false)",
     default_audio_enabled: "Achtergrondgeluid standaard aan (true/false)",
@@ -1447,11 +1448,12 @@ Hoe vaak kan ik oefenen?
 Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
   };
   const val = (k) => (map[k] != null && map[k] !== "") ? map[k] : (DEFAULTS[k] ?? "");
-  const keys = ["app_name","default_closing_title","default_closing_text","default_audio_volume","maintenance_mode","deep_access_enabled","default_audio_enabled"];
+  const keys = ["app_name","default_closing_title","default_closing_text","default_audio_volume","default_signal_volume","maintenance_mode","deep_access_enabled","default_audio_enabled"];
   const textKeys = ["about_text","privacy_text","contact_text","faq_text"];
   const fieldHtml = (k) => {
-    if (k === "default_audio_volume") {
-      const v = map[k] != null && map[k] !== "" ? Math.round(Number(map[k]) <= 1 ? Number(map[k])*100 : Number(map[k])) : 50;
+    if (k === "default_audio_volume" || k === "default_signal_volume") {
+      const def = k === "default_signal_volume" ? 70 : 50;
+      const v = map[k] != null && map[k] !== "" ? Math.round(Number(map[k]) <= 1 ? Number(map[k])*100 : Number(map[k])) : def;
       return `<label>${labels[k]}</label><input data-key="${k}" type="number" min="0" max="100" value="${v}">`;
     }
     return `<label>${labels[k]||k}</label><input data-key="${k}" value="${esc(val(k))}">`;
