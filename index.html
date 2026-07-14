@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5541,6 +5541,26 @@ function updateAdminScrub() {
   bar.classList.toggle("admin-scrub", on);
   bar.title = on ? "Spring naar een punt in de sessie (admin)" : "";
 }
+// Laat de muziek meespringen naar de sessiepositie (voor de admin-scrubber),
+// zodat muziek en protocol synchroon blijven lopen.
+function syncMusicToElapsed(target) {
+  // Gekoppelde achtergrondtrack (HTML-audio, niet-meditatie)
+  if (sessionMusic.src && !sessionMusic.paused && isFinite(sessionMusic.duration) && sessionMusic.duration > 0) {
+    try { sessionMusic.currentTime = sessionMusic.loop ? (target % sessionMusic.duration) : Math.min(target, sessionMusic.duration); } catch {}
+  }
+  // Gapless meditatie-loop (Web Audio): herstart op de bijbehorende positie
+  if (medMusic.playing && medMusic.buffer && medMusic.gain && audioCtx) {
+    const dur = medMusic.buffer.duration;
+    const offset = dur > 0 ? (target % dur) : 0;
+    try { medMusic.source.stop(); medMusic.source.disconnect(); } catch {}
+    const src = audioCtx.createBufferSource();
+    src.buffer = medMusic.buffer; src.loop = true;
+    src.connect(medMusic.gain);
+    try { src.start(0, offset); } catch { try { src.start(); } catch {} }
+    medMusic.source = src;
+    applyMeditationMusicEnvelope(target);   // volume direct op de nieuwe positie
+  }
+}
 function seekSessionTo(remainingFraction) {
   const total = sessionDuration();
   if (!total) return;
@@ -5551,6 +5571,7 @@ function seekSessionTo(remainingFraction) {
   stopBgAudio();
   lastPhaseKey = "seek";
   elapsedBefore = target;
+  syncMusicToElapsed(target);   // muziek meespringen met de tijd
   // Intervalteller meditatie bijzetten zodat er geen inhaaltonen klinken
   if (presets[activePreset]?.meditationMode) {
     const step = (parseInt(document.getElementById("medIntervalInput")?.value, 10) || 5) * 60;
