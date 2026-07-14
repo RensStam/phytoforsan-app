@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.6</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.7</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2837,8 +2837,8 @@ function sessionMusicVolume() {
 // ── Gapless muziek-loop voor de meditatietimer (Web Audio) ──
 // Een HTML-audio element laat bij loop (zeker mp3) een hoorbaar gaatje vallen.
 // Een gedecodeerde AudioBuffer loopt sample-nauwkeurig en dus naadloos door.
-let medMusic = { source: null, gain: null, buffer: null, url: null, playing: false };
-async function startMeditationMusicGapless(url) {
+let medMusic = { source: null, gain: null, buffer: null, url: null, playing: false, loop: true };
+async function startMeditationMusicGapless(url, loop = true) {
   await ensureAudio();
   if (!audioCtx) return;
   if (medMusic.url !== url || !medMusic.buffer) {
@@ -2850,11 +2850,12 @@ async function startMeditationMusicGapless(url) {
     } catch { return; }
   }
   stopMeditationMusicGapless();
+  medMusic.loop = loop;
   const gain = audioCtx.createGain();
   gain.gain.value = sessionMusicVolume();
   const src = audioCtx.createBufferSource();
   src.buffer = medMusic.buffer;
-  src.loop = true;                 // naadloze herhaling over de hele duur
+  src.loop = loop;                 // aan = naadloos herhalen; uit = één keer
   src.connect(gain);
   gain.connect(audioCtx.destination);
   try { src.start(); } catch {}
@@ -2880,8 +2881,8 @@ function startSessionMusic() {
     ? document.getElementById("medBgSoundToggle")
     : els.breathSoundToggle;
   if (!toggle?.checked) return;
-  // Meditatietimer → gapless Web Audio-loop (vult de hele duur zonder gaatje).
-  if (presets[activePreset]?.meditationMode) { startMeditationMusicGapless(cfg.url); return; }
+  // Meditatietimer → gapless Web Audio-loop; respecteert het herhaal-vinkje.
+  if (presets[activePreset]?.meditationMode) { startMeditationMusicGapless(cfg.url, cfg.loop !== false); return; }
   // Overige protocollen → gewoon HTML-audio.
   if (sessionMusicFadeTimer) { clearInterval(sessionMusicFadeTimer); sessionMusicFadeTimer = null; }
   sessionMusic.loop = cfg.loop !== false;
@@ -5551,13 +5552,18 @@ function syncMusicToElapsed(target) {
   // Gapless meditatie-loop (Web Audio): herstart op de bijbehorende positie
   if (medMusic.playing && medMusic.buffer && medMusic.gain && audioCtx) {
     const dur = medMusic.buffer.duration;
-    const offset = dur > 0 ? (target % dur) : 0;
     try { medMusic.source.stop(); medMusic.source.disconnect(); } catch {}
-    const src = audioCtx.createBufferSource();
-    src.buffer = medMusic.buffer; src.loop = true;
-    src.connect(medMusic.gain);
-    try { src.start(0, offset); } catch { try { src.start(); } catch {} }
-    medMusic.source = src;
+    // Herhaal aan → positie binnen de loop; uit → absolute positie in de track.
+    if (!medMusic.loop && target >= dur) {
+      medMusic.source = null;   // track al voorbij (één keer afspelen) → stil
+    } else {
+      const offset = medMusic.loop ? (dur > 0 ? (target % dur) : 0) : Math.min(target, Math.max(0, dur - 0.05));
+      const src = audioCtx.createBufferSource();
+      src.buffer = medMusic.buffer; src.loop = medMusic.loop;
+      src.connect(medMusic.gain);
+      try { src.start(0, offset); } catch { try { src.start(); } catch {} }
+      medMusic.source = src;
+    }
     applyMeditationMusicEnvelope(target);   // volume direct op de nieuwe positie
   }
 }
