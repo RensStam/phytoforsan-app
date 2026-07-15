@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1921,20 +1921,12 @@ canvas {
               <span class="switch"><input id="breathSoundToggle" type="checkbox"><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
-              <span>Geluid bij ademfase</span>
+              <span>Geluid bij fasewisseling</span>
               <span class="switch"><input id="inhaleCueToggle" type="checkbox" checked=""><span class="switch-track"></span></span>
             </label>
             <label class="switch-label">
-              <span>Geluid bij rust</span>
-              <span class="switch"><input id="restCueToggleBreath" type="checkbox" checked=""><span class="switch-track"></span></span>
-            </label>
-            <label class="switch-label">
-              <span>Trillen bij ademfase</span>
+              <span>Trillen bij fasewisseling</span>
               <span class="switch"><input id="inhaleVibrateToggle" type="checkbox"><span class="switch-track"></span></span>
-            </label>
-            <label class="switch-label">
-              <span>Trillen bij rust</span>
-              <span class="switch"><input id="vibrateToggleBreath" type="checkbox"><span class="switch-track"></span></span>
             </label>
           </div>
         </section>
@@ -2708,11 +2700,9 @@ const els = {
   dotPause: document.getElementById("dotPause"),
   guideToggle: document.getElementById("guideToggle"),
   droneToggle: document.getElementById("droneToggle"),
-  restCueToggleBreath: document.getElementById("restCueToggleBreath"),
   inhaleCueToggle: document.getElementById("inhaleCueToggle"),
   inhaleVibrateToggle: document.getElementById("inhaleVibrateToggle"),
   breathSoundToggle: document.getElementById("breathSoundToggle"),
-  vibrateToggleBreath: document.getElementById("vibrateToggleBreath"),
   productTitle: document.getElementById("productTitle"),
   productText: document.getElementById("productText"),
   inhaleInput: document.getElementById("inhaleInput"),
@@ -4141,7 +4131,7 @@ function stopDroneEngine() {
 }
 
 function playRestCue() {
-  if (audioCtx && els.restCueToggleBreath.checked) {
+  if (audioCtx && els.inhaleCueToggle?.checked) {   // één schakelaar: geluid bij fasewisseling
     const now = audioCtx.currentTime;
     const level = signalLevel(0.8);   // rustcue iets zachter dan de ademcue
 
@@ -4177,7 +4167,7 @@ function playRestCue() {
   }
 
   // Trillen ná audio schedulen zodat vibrate() de AudioContext niet suspendeert
-  if (els.vibrateToggleBreath?.checked && navigator.vibrate) navigator.vibrate([80, 120, 80]);
+  if (els.inhaleVibrateToggle?.checked && navigator.vibrate) navigator.vibrate([80, 120, 80]);
 }
 
 // Positieve, stijgende cue voor de inademing (laag → hoog)
