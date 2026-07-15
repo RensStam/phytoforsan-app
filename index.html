@@ -1722,7 +1722,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.8</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.8.9</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1864,12 +1864,6 @@ canvas {
               <div class="value-line value-line--wide"><input id="medIntervalInput" type="range" min="1" max="15" step="1" value="5"><output id="medIntervalOut">elke 5 minuten</output></div>
             </label>
           </div>
-          <div class="editor" style="margin-top:6px">
-            <label>
-              Volume signalen (tonen)
-              <div class="value-line"><input id="medSignalVolInput" type="range" min="0" max="100" value="70"><output id="medSignalVolOut">70%</output></div>
-            </label>
-          </div>
         </section>
         <section class="control-group" id="rhythmSection">
           <div class="section-title-row">
@@ -1900,6 +1894,10 @@ canvas {
             <label>
               Volume
               <div class="value-line"><input id="volumeInput" type="range" min="0" max="100" value="50"><output id="volumeOut">50%</output></div>
+            </label>
+            <label>
+              Volume signalen
+              <div class="value-line"><input id="signalVolInput" type="range" min="0" max="100" value="70"><output id="signalVolOut">70%</output></div>
             </label>
           </div>
           <!-- Grondtoon/Hz-keuze verwijderd uit de UI; verborgen select blijft
@@ -1937,12 +1935,6 @@ canvas {
             <label class="switch-label">
               <span>Trillen bij rust</span>
               <span class="switch"><input id="vibrateToggleBreath" type="checkbox"><span class="switch-track"></span></span>
-            </label>
-          </div>
-          <div class="editor" style="margin-top:10px">
-            <label>
-              Volume signalen (piepjes)
-              <div class="value-line"><input id="signalVolInput" type="range" min="0" max="100" value="70"><output id="signalVolOut">70%</output></div>
             </label>
           </div>
         </section>
