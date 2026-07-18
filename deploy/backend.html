@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.3.0</span>
+    <span class="env-badge" id="backendVersion">backend v1.3.1</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -840,7 +840,9 @@ function readProtocolForm() {
     requires_deep_access: document.getElementById("f_deep").value === "true",
     requires_premium: document.getElementById("f_prem").value === "true",
     night: document.getElementById("f_night").value === "true",
-    lock_schema: document.getElementById("f_lock").value === "true"
+    lock_schema: document.getElementById("f_lock").value === "true",
+    // Afsluitende rust (uit het fasebeheer, per protocol). Leeg → null (globale standaard).
+    closing_rest_seconds: (() => { const el = document.getElementById("f_closing_rest"); if (!el || el.value === "") return null; const n = Number(el.value); return Number.isFinite(n) ? n : null; })()
   };
 }
 
@@ -933,23 +935,29 @@ async function renderPhases() {
   }
   const typeOpt = (v)=>["breath","free","humming","sound","silence","integration","warning"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
   const invalid = phases.some(f=>Number(f.duration_seconds)<=0);
+  // Standaard afsluitrust uit app_settings; per protocol te overschrijven.
+  const defRestRow = (await dbList("app_settings")).find(s => s.key === "default_closing_rest_seconds");
+  const defRest = defRestRow && defRestRow.value ? Number(defRestRow.value) : 15;
+  const closingRest = (curProt && curProt.closing_rest_seconds != null) ? Number(curProt.closing_rest_seconds) : defRest;
   wrap.innerHTML = `<h3>Fases — <span id="phasesTotalDur">totale duur ${fmtDur(totalSeconds(phases))} (${totalSeconds(phases)} s)</span> · ${phases.length} fases ${invalid?'<span class="pill archived">ongeldige fase</span>':''}</h3>
-    <p class="muted" style="margin:0 0 8px">De totale duur is de vaste, absolute lengte van de sessie. Pas de "Duur (s)" hieronder aan; de teller loopt live mee zodat je je geluidsfragment op deze lengte kunt afstemmen.</p>
+    <p class="muted" style="margin:0 0 8px">Bij een <b>ademfase</b> vul je het <b>aantal ademcycli</b> in — de duur wordt dan exact cycli × cyclusduur (in+hold+uit+pauze). Bij een vrije/rustfase gebruik je "Duur (s)". De totale sessieduur is absoluut en loopt live mee, zodat je de muziek er exact op kunt afstemmen.</p>
     ${phases.map(f=>`<div class="phase-row" data-ph="${f.id}">
       <div class="row"><div><label>Titel</label><input class="ph_title" value="${esc(f.title)}"></div>
       <div><label>Type</label><select class="ph_type">${typeOpt(f.type)}</select></div></div>
       <div class="row4">
-        <div><label>Duur (s)</label><input class="ph_dur" type="number" value="${f.duration_seconds||0}"></div>
+        <div><label>Aantal ademcycli <span class="muted">(ademfase)</span></label><input class="ph_cycles" type="number" min="0" value="${f.breath_cycles ?? ''}"></div>
         <div><label>In (s)</label><input class="ph_in" type="number" step="0.5" value="${f.inhale_seconds||0}"></div>
         <div><label>Hold (s)</label><input class="ph_hold" type="number" step="0.5" value="${f.hold_seconds||0}"></div>
         <div><label>Uit (s)</label><input class="ph_ex" type="number" step="0.5" value="${f.exhale_seconds||0}"></div>
       </div>
       <div class="row4">
         <div><label>Pauze (s)</label><input class="ph_pause" type="number" step="0.5" value="${f.pause_seconds||0}"></div>
+        <div><label>Duur (s) <span class="muted">(vrije/rustfase)</span></label><input class="ph_dur" type="number" value="${f.duration_seconds||0}"></div>
         <div><label>visual_mode</label><input class="ph_vis" value="${esc(f.visual_mode)}"></div>
-        <div><label>cue (rustfase)</label><input class="ph_cue" value="${esc(f.cue)}"></div>
         <div><label>volgorde</label><input class="ph_sort" type="number" value="${f.sort_order||0}"></div>
       </div>
+      <p class="muted ph_calc" style="margin:2px 0 6px"></p>
+      <div class="row"><div><label>cue (rustfase)</label><input class="ph_cue" value="${esc(f.cue)}"></div><div></div></div>
       <p class="muted" style="margin:6px 0 2px">Teksten in de sessie-cirkel</p>
       <div class="row">
         <div><label>Cue-woord inademen</label><input class="ph_cuein" value="${esc(f.cue_in)}" placeholder="IN"></div>
@@ -961,7 +969,8 @@ async function renderPhases() {
       <div style="margin-top:8px;display:flex;gap:8px"><button class="btn small danger ph_del">Fase verwijderen</button></div>
     </div>`).join("")}
     <button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>
-    <p class="muted" style="margin-top:6px">Wijzigingen in de fases worden mee opgeslagen met de knop <b>Opslaan</b> bovenaan.</p>`;
+    <div class="row" style="margin-top:12px"><div><label>Afsluitende rust (s) <span class="muted">— sessie eindigt hierop, daarna het eindbericht</span></label><input id="f_closing_rest" type="number" min="0" value="${closingRest}"></div><div></div></div>
+    <p class="muted" style="margin-top:6px">Wijzigingen in de fases (en de afsluitrust) worden mee opgeslagen met de knop <b>Opslaan</b> bovenaan.</p>`;
   const addPhaseBtn = document.getElementById("addPhase");
   if (addPhaseBtn) addPhaseBtn.addEventListener("click", async () => {
     await savePhasesFromDom(); // bestaande wijzigingen niet verliezen
@@ -972,20 +981,47 @@ async function renderPhases() {
     const pid = rowEl.dataset.ph;
     rowEl.querySelector(".ph_del").addEventListener("click", async () => { if(confirm("Deze fase verwijderen?")){ await dbDelete("protocol_phases", pid); renderPhases(); } });
   });
-  // Live meelopende totale duur bij het typen in de "Duur (s)"-velden.
-  wrap.querySelectorAll(".ph_dur").forEach(inp => inp.addEventListener("input", updatePhasesTotal));
+  // Live meelopende totale duur: reageert op cycli, ritme, losse duur én de afsluitrust.
+  wrap.querySelectorAll(".ph_cycles, .ph_in, .ph_hold, .ph_ex, .ph_pause, .ph_dur, .ph_type").forEach(inp => inp.addEventListener("input", updatePhasesTotal));
+  document.getElementById("f_closing_rest")?.addEventListener("input", updatePhasesTotal);
   updatePhasesTotal();
 }
 
-// Herberekent de totale (absolute) sessieduur uit de fase-duurvelden en werkt
-// de teller bij het fasebeheer én de duurweergave bij de audio-sectie live bij.
+// Effectieve duur van één fase-rij: ademfase (cycli) → cycli × cyclusduur;
+// anders de losse "Duur (s)".
+function phaseRowSeconds(rowEl) {
+  const g = (c) => rowEl.querySelector(c);
+  const type = g(".ph_type")?.value;
+  const cycles = Number(g(".ph_cycles")?.value) || 0;
+  const cycle = (Number(g(".ph_in")?.value)||0) + (Number(g(".ph_hold")?.value)||0) + (Number(g(".ph_ex")?.value)||0) + (Number(g(".ph_pause")?.value)||0);
+  if (type === "breath" && cycles > 0) return Math.round(cycles * cycle);
+  return Number(g(".ph_dur")?.value) || 0;
+}
+
+// Herberekent de totale (absolute) sessieduur (fases + afsluitrust) en werkt de
+// teller bij het fasebeheer, de per-fase-berekening én de audio-sectie live bij.
 function updatePhasesTotal() {
   let sum = 0;
-  document.querySelectorAll("#phasesWrap .ph_dur").forEach(i => { sum += Number(i.value) || 0; });
+  document.querySelectorAll("#phasesWrap .phase-row").forEach(rowEl => {
+    const sec = phaseRowSeconds(rowEl);
+    sum += sec;
+    const g = (c) => rowEl.querySelector(c);
+    const calc = g(".ph_calc");
+    if (calc) {
+      const type = g(".ph_type")?.value;
+      const cycles = Number(g(".ph_cycles")?.value) || 0;
+      const cycle = (Number(g(".ph_in")?.value)||0)+(Number(g(".ph_hold")?.value)||0)+(Number(g(".ph_ex")?.value)||0)+(Number(g(".ph_pause")?.value)||0);
+      calc.textContent = (type === "breath" && cycles > 0)
+        ? `Ademfase: cyclus ${cycle}s × ${cycles} cycli = ${fmtDur(sec)} (${sec} s)`
+        : `Duur: ${fmtDur(sec)} (${sec} s)`;
+    }
+  });
+  const rest = Number(document.getElementById("f_closing_rest")?.value) || 0;
+  const totaal = sum + rest;
   const el = document.getElementById("phasesTotalDur");
-  if (el) el.textContent = `totale duur ${fmtDur(sum)} (${sum} s)`;
+  if (el) el.textContent = `totale duur ${fmtDur(totaal)} (${totaal} s) — fases ${fmtDur(sum)} + rust ${rest}s`;
   const audioEl = document.getElementById("audioSessionDur");
-  if (audioEl) audioEl.textContent = `${fmtDur(sum)} (${sum} s)`;
+  if (audioEl) audioEl.textContent = `${fmtDur(totaal)} (${totaal} s)`;
 }
 
 // Leest alle fase-rijen uit het formulier en slaat ze op (gebruikt door Opslaan + Fase toevoegen).
@@ -994,8 +1030,13 @@ async function savePhasesFromDom() {
   const rows = document.querySelectorAll("#phasesWrap .phase-row");
   for (const rowEl of rows) {
     const g = (c) => rowEl.querySelector(c);
+    const cycles = Number(g(".ph_cycles")?.value) || 0;
+    const isBreathCycles = g(".ph_type").value === "breath" && cycles > 0;
     await dbUpsert("protocol_phases", { id: rowEl.dataset.ph, protocol_id: editingProtocolId,
-      title:g(".ph_title").value, type:g(".ph_type").value, duration_seconds:Number(g(".ph_dur").value)||0,
+      title:g(".ph_title").value, type:g(".ph_type").value,
+      // Ademfase met cycli → exacte duur = cycli × cyclusduur; anders de losse duur.
+      duration_seconds: phaseRowSeconds(rowEl),
+      breath_cycles: isBreathCycles ? cycles : null,
       inhale_seconds:Number(g(".ph_in").value)||0, hold_seconds:Number(g(".ph_hold").value)||0,
       exhale_seconds:Number(g(".ph_ex").value)||0, pause_seconds:Number(g(".ph_pause").value)||0,
       visual_mode:g(".ph_vis").value||null, cue:g(".ph_cue").value||null, sort_order:Number(g(".ph_sort").value)||0,

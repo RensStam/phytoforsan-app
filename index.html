@@ -1724,7 +1724,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3174,6 +3174,27 @@ function totalDuration() {
 // Volgorde: som van fases (leidend) → totalSeconds → minutes*60.
 function getSessionTotalSeconds(preset) {
   if (!preset) return 0;
+  const base = breathPartSeconds(preset);
+  return base > 0 ? base + closingRestOf(preset) : 0;
+}
+
+// App-brede standaard afsluitrust (seconden), overschreven vanuit app_settings.
+let globalClosingRest = 15;
+// De afsluitende rust die op dit protocol van toepassing is (0 = geen).
+// Alleen voor gewone ademprotocollen; meerfasige, klank/humming en de
+// meditatietimer regelen hun eigen afloop.
+function closingRestOf(preset) {
+  if (!preset || preset.meditationMode) return 0;
+  if (Array.isArray(preset.phases) && preset.phases.length > 0) return 0;
+  if (preset.exhaleFlow || preset.soundSteps) return 0;
+  if (breathPartSeconds(preset) <= 0) return 0;   // geen echte ademduur → geen rust
+  const v = preset.closingRest;
+  if (v != null) return Math.max(0, Number(v) || 0);
+  return Math.max(0, globalClosingRest || 0);
+}
+// De actieve/ademende duur zonder de afsluitrust.
+function breathPartSeconds(preset) {
+  if (!preset) return 0;
   if (Array.isArray(preset.phases) && preset.phases.length > 0) {
     return preset.phases.reduce((sum, ph) => sum + Number(ph.duration || 0), 0);
   }
@@ -3751,6 +3772,14 @@ function breathGuideAt(time) {
     if (activeSubPhase.key === "hold")   breath = 1;
     if (activeSubPhase.key === "exhale") breath = lerp(1, 0.22, eased);
     return { phase: activeSubPhase, within, total: cycleDur, progress, breath, cycleProgress: cycleDur ? clamp(cycleWithin / cycleDur) : 0 };
+  }
+
+  // Afsluitende rust: rustige, lage puls (geen ademsturing meer).
+  const _rest = closingRestOf(presets[activePreset]);
+  if (_rest > 0 && time >= breathPartSeconds(presets[activePreset])) {
+    const restPhase = { key: "pause", dur: _rest, cue: appSetting("rest_cue_word", "RUST"), label: "Rust", sub: "" };
+    const breath = 0.42 + 0.06 * Math.sin(time * Math.PI / 6);
+    return { phase: restPhase, within: time - breathPartSeconds(presets[activePreset]), total: _rest, progress: 0, breath, cycleProgress: 0 };
   }
 
   const { phase, within, cycleWithin, total } = getPhaseAt(time);
@@ -4341,6 +4370,25 @@ function updatePhase(time) {
     els.dotPause.classList.toggle("active", false);
     if (inBreath && running && phaseChanged) triggerPhaseCues(guide.phase);
     lastPhaseKey = phaseKey;
+    return;
+  }
+
+  // Afsluitende rust: na de ademende duur geen ademsturing meer — toon RUST tot
+  // het eindbericht, zodat elk protocol netjes op een rust eindigt.
+  const _restSec = closingRestOf(presets[activePreset]);
+  if (_restSec > 0 && time >= breathPartSeconds(presets[activePreset])) {
+    els.cue.classList.remove("hum", "sound");
+    els.soundRail.classList.remove("visible");
+    setCueWord(appSetting("rest_cue_word", "RUST"));
+    els.cueSub.textContent = appSetting("rest_sub_pause", "kom rustig terug");
+    els.phaseStat.textContent = "Rust";
+    els.toneStat.textContent = "—";
+    els.droneStat.textContent = "UIT";
+    els.dotIn.classList.remove("active"); els.dotHold.classList.remove("active");
+    els.dotOut.classList.remove("active"); els.dotPause.classList.remove("active");
+    if (lastPhaseKey === "exhale") { stopDroneEngine(); if (activePreset in bgAudioFiles) stopBgAudio(); }
+    if (running && lastPhaseKey !== "closingRest") triggerPhaseCues({ key: "pause", dur: _restSec });
+    lastPhaseKey = "closingRest";
     return;
   }
 
@@ -6005,6 +6053,7 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
     text: row.short_description || "", product: row.title, productText: row.long_description || "",
     accessTier: row.access_tier, requiresDeepAccess: !!row.requires_deep_access, requiresPremium: !!row.requires_premium,
     group: row.group_name || null, night: !!row.night, lockSchema: !!row.lock_schema,
+    closingRest: (row.closing_rest_seconds != null ? Number(row.closing_rest_seconds) : null),
     // Veiligheidswaarschuwing vooraf voor de intensieve testprotocollen
     requiresWarning: (typeof warningContent === "object") && !!warningContent[row.slug],
     // Zonder fases (cataloguskaart voor gasten) geen neptijd tonen
@@ -6089,6 +6138,9 @@ function textToHtml(text) {
 function applyContentSettings(settings) {
   appSettingsMap = Object.fromEntries((settings || []).map(s => [s.key, s.value]));
   const map = appSettingsMap;
+  // App-brede standaard afsluitrust
+  const cr = Number(map.default_closing_rest_seconds);
+  if (Number.isFinite(cr) && cr >= 0) globalClosingRest = cr;
   const set = (id, key) => {
     const el = document.getElementById(id);
     if (el && map[key] && String(map[key]).trim() !== "") el.innerHTML = textToHtml(map[key]);
@@ -6148,6 +6200,7 @@ function overlayProtocol(preset, row, phaseRows) {
   setStr(preset, "label", row.title);
   preset.night = !!row.night;
   if (row.lock_schema !== undefined) preset.lockSchema = !!row.lock_schema;
+  if (row.closing_rest_seconds !== undefined) preset.closingRest = row.closing_rest_seconds != null ? Number(row.closing_rest_seconds) : null;
   if (row.access_tier) preset.accessTier = row.access_tier;
   preset.requiresDeepAccess = !!row.requires_deep_access;
   preset.requiresPremium = !!row.requires_premium;
