@@ -667,6 +667,36 @@ select:focus, input[type="number"]:focus {
   margin-top: 2px;
 }
 
+/* Fase-aanduiding boven de cue: kleine pil met fase-positie + naam. */
+.phase-banner {
+  position: absolute;
+  top: 56px;
+  left: 0;
+  right: 0;
+  display: none;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+.phase-banner.visible { display: flex; }
+.phase-banner span {
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(18,55,52,.10);
+  border-radius: 999px;
+  padding: 5px 15px;
+  font-size: .8rem;
+  font-weight: 800;
+  letter-spacing: .01em;
+  color: var(--deep);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 14px rgba(18,55,52,.06);
+}
+.phase-banner b {
+  color: var(--amber);
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+
 .phase-dots {
   position: absolute;
   bottom: 90px;
@@ -758,6 +788,10 @@ select:focus, input[type="number"]:focus {
   border-radius: 0;
   z-index: 10001;
 }
+/* In immersive plakt de scrubber onderaan; knoppenrij + fase-bolletjes wat hoger
+   zodat de play/pauze-knop niet tegen de bredere scrubbalk aan zit. */
+#immersiveOverlay .stage-actions { bottom: 42px; }
+#immersiveOverlay .phase-dots { bottom: 116px; }
 
 .stage-progress-bar {
   height: 100%;
@@ -1724,7 +1758,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.6</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.7</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1735,6 +1769,9 @@ canvas {
         <div class="stage-header">
           <span class="stage-title" id="stageTitle">Relax Moment</span>
         </div>
+
+        <!-- Fase-aanduiding boven de cue: fase-positie + naam, duidelijk bij een faseovergang -->
+        <div class="phase-banner" id="phaseBanner" aria-live="polite"></div>
 
         <div class="breath-visual">
           <canvas id="waveCanvas" width="800" height="800" aria-hidden="true"></canvas>
@@ -2687,6 +2724,7 @@ const els = {
   cue: document.getElementById("cue"),
   cueWord: document.getElementById("cueWord"),
   cueSub: document.getElementById("cueSub"),
+  phaseBanner: document.getElementById("phaseBanner"),
   soundRail: document.getElementById("soundRail"),
   soundSteps: document.getElementById("soundSteps"),
   progressBar: document.getElementById("progressBar"),
@@ -3123,6 +3161,21 @@ function setCueWord(text) {
   else if (len <= 10) size = "clamp(.95rem, 3.8vw, 1.5rem)";
   else                size = "clamp(.78rem, 3.2vw, 1.2rem)";
   els.cueWord.style.fontSize = size;
+}
+
+// Fase-aanduiding boven de cue. index/total → "Fase 2/4", name → fasenaam.
+// Zonder name is er geen zichtbare fase (banner verborgen).
+function setPhaseBanner(name, index, total) {
+  const el = els.phaseBanner;
+  if (!el) return;
+  if (name) {
+    const pos = (index && total && total > 1) ? `<b>Fase ${index}/${total}</b> · ` : "";
+    el.innerHTML = `<span>${pos}${name}</span>`;
+    el.classList.add("visible");
+  } else {
+    el.classList.remove("visible");
+    el.textContent = "";
+  }
 }
 
 function fmt(value) {
@@ -4367,6 +4420,7 @@ function updatePhase(time) {
     setCueWord(inSession ? fmtClock(remaining) : appSetting("meditation_cue_word", "MEDITATIE"));
     els.cueSub.textContent = appSetting("meditation_cue_sub", "vrije aandacht");
     els.phaseStat.textContent = "Meditatie";
+    setPhaseBanner("");   // meditatie kent geen fase-overgangen
     if (running) { maybePlayMeditationIntervalTone(time); applyMeditationMusicEnvelope(time); }
     els.toneStat.textContent  = "—";
     els.droneStat.textContent = "UIT";
@@ -4388,6 +4442,9 @@ function updatePhase(time) {
     setCueWord(guide.phase.cue || ph.cue);
     els.cueSub.textContent  = guide.phase.sub  || ph.sub;
     els.phaseStat.textContent = guide.phase.label || ph.label;
+    // Fase-aanduiding boven de cue: positie in het protocol + fasenaam.
+    const _phList = presets[activePreset]?.phases || [];
+    setPhaseBanner(ph.label, _phList.indexOf(ph) + 1, _phList.length);
     els.toneStat.textContent = "—";
     els.droneStat.textContent = "UIT";
     // Idempotent togglen (geen remove-dan-readd per frame → geen geknipper op mobiel)
@@ -4410,6 +4467,7 @@ function updatePhase(time) {
     setCueWord(relaxWordOf(presets[activePreset]));
     els.cueSub.textContent = relaxSubOf(presets[activePreset]);
     els.phaseStat.textContent = "Ontspanning";
+    setPhaseBanner("Ontspanning");   // duidelijke markering van de afsluitende fase
     els.toneStat.textContent = "—";
     els.droneStat.textContent = "UIT";
     els.dotIn.classList.remove("active"); els.dotHold.classList.remove("active");
@@ -4438,6 +4496,7 @@ function updatePhase(time) {
   els.cueSub.textContent = displayPhase.sub;
   updateSoundGuide(protocol, phase, within);
   els.phaseStat.textContent = displayPhase.label;
+  setPhaseBanner("");   // enkelvoudig ademprotocol: geen aparte fases boven de cue
   els.toneStat.textContent = hum ? `${tone} Hz` : toneLabel(protocol);
   if (!toneOn) els.droneStat.textContent = protocol.freeExhale ? "RUST" : protocol.droneEnabled ? "SYNC" : "UIT";
 
@@ -4490,6 +4549,7 @@ function completeSession() {
   els.progressBar.style.width = "0%";
   els.timeStat.textContent = fmtClock(0);
   els.phaseStat.textContent = "Afgerond";
+  setPhaseBanner("");
   els.toneStat.textContent = "—";
   els.droneStat.textContent = "UIT";
   setCueWord((appSettingsMap.default_closing_title && appSettingsMap.default_closing_title.trim()) || "AFGEROND");
@@ -4736,8 +4796,12 @@ function draw(time) {
     // ademfases lopen juist op met de fase mee.
     const isCountdown = guide.phase.key === "free" || guide.phase.key === "meditation";
     const arcProgress = isCountdown ? (1 - guide.progress) : guide.progress;
+    // Inademing loopt met de klok mee, uitademing juist tegen de klok in —
+    // zo is de ademrichting ook aan de ring af te lezen.
+    const start = -Math.PI / 2;
+    const end = exhale ? start - arcProgress * Math.PI * 2 : start + arcProgress * Math.PI * 2;
     ctx.beginPath();
-    ctx.arc(cx, cy, progressRadius, -Math.PI / 2, -Math.PI / 2 + arcProgress * Math.PI * 2);
+    ctx.arc(cx, cy, progressRadius, start, end, exhale);
     ctx.strokeStyle = `rgba(${phaseColor},.68)`;
     ctx.lineWidth = 18;
     ctx.lineCap = "round";
