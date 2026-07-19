@@ -792,6 +792,13 @@ select:focus, input[type="number"]:focus {
    zodat de play/pauze-knop niet tegen de bredere scrubbalk aan zit. */
 #immersiveOverlay .stage-actions { bottom: 42px; }
 #immersiveOverlay .phase-dots { bottom: 116px; }
+/* Cap de adembol op de beschikbare hoogte (ruimte laten voor de fase-banner
+   bovenaan en de bolletjes/knoppen onderaan) en centreer 'm zonder de opwaartse
+   marge, zodat de bovenrand niet meer over de fase-banner heen valt. */
+#immersiveOverlay .breath-visual {
+  width: min(92%, calc(100dvh - 280px), 680px);
+  margin: 0;
+}
 
 .stage-progress-bar {
   height: 100%;
@@ -1758,7 +1765,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.7</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.8</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
