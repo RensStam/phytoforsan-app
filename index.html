@@ -812,6 +812,21 @@ select:focus, input[type="number"]:focus {
     margin: 0;
   }
 }
+/* Pc/tablet ZONDER immersive (de gewone praktijkweergave — op desktop wordt
+   immersive niet geactiveerd): de stage centreert de adembol, waardoor de
+   bovenrand onder de fase-banner op top:56 door liep. Extra ruimte bovenaan plus
+   een iets kleinere bol houdt banner, bol en knoppen netjes uit elkaar.
+   De immersive-regels hierboven winnen op specificiteit, die blijven ongemoeid. */
+@media (min-width: 641px) {
+  .breath-stage { padding-top: 110px; }
+  /* Bewust .breath-stage .breath-visual: de basisregel staat verderop in het
+     bestand en zou bij gelijke specificiteit winnen. #immersiveOverlay blijft
+     sterker, dus de immersive-maten hierboven blijven leidend. */
+  .breath-stage .breath-visual {
+    width: min(92%, 600px);
+    margin-bottom: 88px;
+  }
+}
 
 .stage-progress-bar {
   height: 100%;
@@ -1778,7 +1793,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.1</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
