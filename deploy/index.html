@@ -1724,7 +1724,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5638,35 +5638,48 @@ function isAdminUser() {
   return effectiveLevel() === "admin";
 }
 function updateAdminScrub() {
+  // Scrubber voor iedereen: sleep op de voortgangsbalk om door de sessie te bewegen.
   const bar = document.getElementById("stageProgress");
   if (!bar) return;
-  const on = isAdminUser();
-  bar.classList.toggle("admin-scrub", on);
-  bar.title = on ? "Spring naar een punt in de sessie (admin)" : "";
+  bar.classList.add("admin-scrub");
+  bar.title = "Sleep om door de sessie te bewegen";
 }
 // Laat de muziek meespringen naar de sessiepositie (voor de admin-scrubber),
 // zodat muziek en protocol synchroon blijven lopen.
 function syncMusicToElapsed(target) {
-  // Gekoppelde achtergrondtrack (HTML-audio, niet-meditatie)
+  const preset = presets[activePreset];
+  const cfg = preset?.bgMusic;
+  if (!cfg || !cfg.url) return;
+  const toggle = preset?.meditationMode ? document.getElementById("medBgSoundToggle") : els.breathSoundToggle;
+  const enabled = !!toggle?.checked;
+
+  // Gapless meditatie-loop (Web Audio)
+  if (preset?.meditationMode) {
+    if (medMusic.playing && medMusic.source && medMusic.buffer && medMusic.gain && audioCtx) {
+      const dur = medMusic.buffer.duration;
+      try { medMusic.source.stop(); medMusic.source.disconnect(); } catch {}
+      if (!medMusic.loop && target >= dur) {
+        medMusic.source = null;   // "één keer afspelen" en voorbij → stil
+      } else {
+        const offset = medMusic.loop ? (dur > 0 ? (((target % dur) + dur) % dur) : 0) : Math.min(target, Math.max(0, dur - 0.05));
+        const src = audioCtx.createBufferSource();
+        src.buffer = medMusic.buffer; src.loop = medMusic.loop;
+        src.connect(medMusic.gain);
+        try { src.start(0, offset); } catch { try { src.start(); } catch {} }
+        medMusic.source = src;
+      }
+      applyMeditationMusicEnvelope(target);
+    } else if (running && enabled) {
+      startSessionMusic();   // stond stil → (her)start op de huidige positie
+    }
+    return;
+  }
+
+  // Gekoppelde achtergrondtrack (HTML-audio, overige protocollen)
   if (sessionMusic.src && !sessionMusic.paused && isFinite(sessionMusic.duration) && sessionMusic.duration > 0) {
     try { sessionMusic.currentTime = sessionMusic.loop ? (target % sessionMusic.duration) : Math.min(target, sessionMusic.duration); } catch {}
-  }
-  // Gapless meditatie-loop (Web Audio): herstart op de bijbehorende positie
-  if (medMusic.playing && medMusic.buffer && medMusic.gain && audioCtx) {
-    const dur = medMusic.buffer.duration;
-    try { medMusic.source.stop(); medMusic.source.disconnect(); } catch {}
-    // Herhaal aan → positie binnen de loop; uit → absolute positie in de track.
-    if (!medMusic.loop && target >= dur) {
-      medMusic.source = null;   // track al voorbij (één keer afspelen) → stil
-    } else {
-      const offset = medMusic.loop ? (dur > 0 ? (target % dur) : 0) : Math.min(target, Math.max(0, dur - 0.05));
-      const src = audioCtx.createBufferSource();
-      src.buffer = medMusic.buffer; src.loop = medMusic.loop;
-      src.connect(medMusic.gain);
-      try { src.start(0, offset); } catch { try { src.start(); } catch {} }
-      medMusic.source = src;
-    }
-    applyMeditationMusicEnvelope(target);   // volume direct op de nieuwe positie
+  } else if (running && enabled) {
+    startSessionMusic();   // stond stil → (her)start op de huidige positie
   }
 }
 function seekSessionTo(remainingFraction, moveAudio = true) {
@@ -5700,13 +5713,14 @@ function seekSessionTo(remainingFraction, moveAudio = true) {
 (() => {
   const bar = document.getElementById("stageProgress");
   if (!bar) return;
+  bar.classList.add("admin-scrub");   // scrubber zichtbaar/bruikbaar voor iedereen
+  bar.title = "Sleep om door de sessie te bewegen";
   let scrubbing = false;
   const fractionFromEvent = (e) => {
     const r = bar.getBoundingClientRect();
     return (e.clientX - r.left) / Math.max(1, r.width);
   };
   bar.addEventListener("pointerdown", e => {
-    if (!isAdminUser()) return;
     scrubbing = true;
     try { bar.setPointerCapture(e.pointerId); } catch {}
     seekSessionTo(fractionFromEvent(e), true);   // klik → direct meespringen
