@@ -1724,7 +1724,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.4</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2835,7 +2835,7 @@ function sessionMusicVolume() {
 // Een HTML-audio element laat bij loop (zeker mp3) een hoorbaar gaatje vallen.
 // Een gedecodeerde AudioBuffer loopt sample-nauwkeurig en dus naadloos door.
 let medMusic = { source: null, gain: null, buffer: null, url: null, playing: false, loop: true };
-async function startMeditationMusicGapless(url, loop = true) {
+async function startMeditationMusicGapless(url, loop = true, offset = 0) {
   await ensureAudio();
   if (!audioCtx) return;
   if (medMusic.url !== url || !medMusic.buffer) {
@@ -2850,13 +2850,18 @@ async function startMeditationMusicGapless(url, loop = true) {
   medMusic.loop = loop;
   const gain = audioCtx.createGain();
   gain.gain.value = sessionMusicVolume();
+  gain.connect(audioCtx.destination);
+  medMusic.gain = gain; medMusic.playing = true;
+  const dur = medMusic.buffer.duration || 0;
+  // "Eén keer afspelen" met een offset voorbij de track → stil (geen bron).
+  if (!loop && dur > 0 && offset >= dur) { medMusic.source = null; return; }
+  const startOffset = loop ? (dur > 0 ? (((offset % dur) + dur) % dur) : 0) : Math.min(Math.max(0, offset), Math.max(0, dur - 0.05));
   const src = audioCtx.createBufferSource();
   src.buffer = medMusic.buffer;
   src.loop = loop;                 // aan = naadloos herhalen; uit = één keer
   src.connect(gain);
-  gain.connect(audioCtx.destination);
-  try { src.start(); } catch {}
-  medMusic.source = src; medMusic.gain = gain; medMusic.playing = true;
+  try { src.start(0, startOffset); } catch { try { src.start(); } catch {} }
+  medMusic.source = src;
 }
 function stopMeditationMusicGapless() {
   if (medMusic.source) { try { medMusic.source.stop(); } catch {} try { medMusic.source.disconnect(); } catch {} medMusic.source = null; }
@@ -2878,14 +2883,23 @@ function startSessionMusic() {
     ? document.getElementById("medBgSoundToggle")
     : els.breathSoundToggle;
   if (!toggle?.checked) return;
+  // Muziek begint op de huidige sessiepositie (belangrijk na scrubben of hervatten).
+  const offset = sessionElapsed();
   // Meditatietimer → gapless Web Audio-loop; respecteert het herhaal-vinkje.
-  if (presets[activePreset]?.meditationMode) { startMeditationMusicGapless(cfg.url, cfg.loop !== false); return; }
+  if (presets[activePreset]?.meditationMode) { startMeditationMusicGapless(cfg.url, cfg.loop !== false, offset); return; }
   // Overige protocollen → gewoon HTML-audio.
   if (sessionMusicFadeTimer) { clearInterval(sessionMusicFadeTimer); sessionMusicFadeTimer = null; }
   sessionMusic.loop = cfg.loop !== false;
   if (!sessionMusic.src.endsWith(cfg.url) && sessionMusic.src !== cfg.url) { sessionMusic.src = cfg.url; }
   sessionMusic.volume = sessionMusicVolume();
-  sessionMusic.play().catch(() => {});
+  sessionMusic.play().then(() => {
+    if (offset <= 0.2 || !isFinite(sessionMusic.duration) || sessionMusic.duration <= 0) return;
+    try { sessionMusic.currentTime = sessionMusic.loop ? (offset % sessionMusic.duration) : Math.min(offset, sessionMusic.duration); } catch {}
+  }).catch(() => {});
+}
+// Huidige verstreken sessietijd (seconden).
+function sessionElapsed() {
+  return running ? elapsedBefore + (performance.now() - startTime) / 1000 : (elapsedBefore || 0);
 }
 
 // Meditatietimer: koppel het volume van de achtergrondmuziek aan de gekozen
@@ -3185,9 +3199,11 @@ let globalClosingRest = 15;
 // meditatietimer regelen hun eigen afloop.
 function closingRestOf(preset) {
   if (!preset || preset.meditationMode) return 0;
+  // Meerfasige protocollen (verdieping) hebben hun eigen slotfase; die laten we
+  // met rust. Gewone adem- én klankprotocollen (MAEN/AMEN/OM) krijgen wél een
+  // afsluitrust, zodat elke sessie netjes op rust eindigt → dan het eindbericht.
   if (Array.isArray(preset.phases) && preset.phases.length > 0) return 0;
-  if (preset.exhaleFlow || preset.soundSteps) return 0;
-  if (breathPartSeconds(preset) <= 0) return 0;   // geen echte ademduur → geen rust
+  if (breathPartSeconds(preset) <= 0) return 0;   // geen echte duur → geen rust
   const v = preset.closingRest;
   if (v != null) return Math.max(0, Number(v) || 0);
   return Math.max(0, globalClosingRest || 0);
@@ -4386,8 +4402,12 @@ function updatePhase(time) {
     els.droneStat.textContent = "UIT";
     els.dotIn.classList.remove("active"); els.dotHold.classList.remove("active");
     els.dotOut.classList.remove("active"); els.dotPause.classList.remove("active");
-    if (lastPhaseKey === "exhale") { stopDroneEngine(); if (activePreset in bgAudioFiles) stopBgAudio(); }
-    if (running && lastPhaseKey !== "closingRest") triggerPhaseCues({ key: "pause", dur: _restSec });
+    // Bij het ingaan van de rust: klank/drone stoppen en één keer de rustcue.
+    if (lastPhaseKey !== "closingRest") {
+      stopDroneEngine();
+      if (activePreset in bgAudioFiles) stopBgAudio();
+      if (running) triggerPhaseCues({ key: "pause", dur: _restSec });
+    }
     lastPhaseKey = "closingRest";
     return;
   }
@@ -5649,7 +5669,7 @@ function syncMusicToElapsed(target) {
     applyMeditationMusicEnvelope(target);   // volume direct op de nieuwe positie
   }
 }
-function seekSessionTo(remainingFraction) {
+function seekSessionTo(remainingFraction, moveAudio = true) {
   const total = sessionDuration();
   if (!total) return;
   // Klikpositie = nieuwe rand van de balk = resterende tijd
@@ -5659,7 +5679,9 @@ function seekSessionTo(remainingFraction) {
   stopBgAudio();
   lastPhaseKey = "seek";
   elapsedBefore = target;
-  syncMusicToElapsed(target);   // muziek meespringen met de tijd
+  // Muziek alleen herpositioneren als het slepen 'landt' (klik of loslaten) —
+  // tijdens het slepen zou elke beweging de bron herbouwen en hakkelen.
+  if (moveAudio) syncMusicToElapsed(target);
   // Intervalteller meditatie bijzetten zodat er geen inhaaltonen klinken
   if (presets[activePreset]?.meditationMode) {
     const step = (parseInt(document.getElementById("medIntervalInput")?.value, 10) || 5) * 60;
@@ -5687,13 +5709,17 @@ function seekSessionTo(remainingFraction) {
     if (!isAdminUser()) return;
     scrubbing = true;
     try { bar.setPointerCapture(e.pointerId); } catch {}
-    seekSessionTo(fractionFromEvent(e));
+    seekSessionTo(fractionFromEvent(e), true);   // klik → direct meespringen
     e.preventDefault();
   });
   bar.addEventListener("pointermove", e => {
-    if (scrubbing) seekSessionTo(fractionFromEvent(e));
+    if (scrubbing) seekSessionTo(fractionFromEvent(e), false);   // slepen → alleen tijd/beeld
   });
-  const endScrub = () => { scrubbing = false; };
+  const endScrub = () => {
+    if (!scrubbing) return;
+    scrubbing = false;
+    syncMusicToElapsed(elapsedBefore);   // bij loslaten muziek één keer op de eindpositie zetten
+  };
   bar.addEventListener("pointerup", endScrub);
   bar.addEventListener("pointercancel", endScrub);
 })();
