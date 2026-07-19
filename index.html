@@ -1724,7 +1724,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v3.9.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3194,6 +3194,18 @@ function getSessionTotalSeconds(preset) {
 
 // App-brede standaard afsluitrust (seconden), overschreven vanuit app_settings.
 let globalClosingRest = 15;
+// Woord + ondertekst van de ontspanningsfase (app-brede standaard; per protocol
+// te overschrijven). Eigen woord zodat het niet dubbel oogt met "RUST".
+let globalRelaxWord = "ONTSPANNING";
+let globalRelaxSub = "kom rustig tot rust";
+function relaxWordOf(preset) {
+  const v = preset && preset.relaxCueWord;
+  return (v != null && String(v).trim() !== "") ? String(v).trim() : globalRelaxWord;
+}
+function relaxSubOf(preset) {
+  const v = preset && preset.relaxCueSub;
+  return (v != null && String(v).trim() !== "") ? String(v).trim() : globalRelaxSub;
+}
 // De afsluitende rust die op dit protocol van toepassing is (0 = geen).
 // Alleen voor gewone ademprotocollen; meerfasige, klank/humming en de
 // meditatietimer regelen hun eigen afloop.
@@ -3790,10 +3802,10 @@ function breathGuideAt(time) {
     return { phase: activeSubPhase, within, total: cycleDur, progress, breath, cycleProgress: cycleDur ? clamp(cycleWithin / cycleDur) : 0 };
   }
 
-  // Afsluitende rust: rustige, lage puls (geen ademsturing meer).
+  // Ontspanningsfase: rustige, lage puls (geen ademsturing meer).
   const _rest = closingRestOf(presets[activePreset]);
   if (_rest > 0 && time >= breathPartSeconds(presets[activePreset])) {
-    const restPhase = { key: "pause", dur: _rest, cue: appSetting("rest_cue_word", "RUST"), label: "Rust", sub: "" };
+    const restPhase = { key: "relax", dur: _rest, cue: relaxWordOf(presets[activePreset]), label: "Ontspanning", sub: relaxSubOf(presets[activePreset]) };
     const breath = 0.42 + 0.06 * Math.sin(time * Math.PI / 6);
     return { phase: restPhase, within: time - breathPartSeconds(presets[activePreset]), total: _rest, progress: 0, breath, cycleProgress: 0 };
   }
@@ -4389,20 +4401,20 @@ function updatePhase(time) {
     return;
   }
 
-  // Afsluitende rust: na de ademende duur geen ademsturing meer — toon RUST tot
-  // het eindbericht, zodat elk protocol netjes op een rust eindigt.
+  // Ontspanningsfase: na de ademende duur geen ademsturing meer — toon het
+  // ontspanningswoord tot het eindbericht, zodat elk protocol hierop eindigt.
   const _restSec = closingRestOf(presets[activePreset]);
   if (_restSec > 0 && time >= breathPartSeconds(presets[activePreset])) {
     els.cue.classList.remove("hum", "sound");
     els.soundRail.classList.remove("visible");
-    setCueWord(appSetting("rest_cue_word", "RUST"));
-    els.cueSub.textContent = appSetting("rest_sub_pause", "kom rustig terug");
-    els.phaseStat.textContent = "Rust";
+    setCueWord(relaxWordOf(presets[activePreset]));
+    els.cueSub.textContent = relaxSubOf(presets[activePreset]);
+    els.phaseStat.textContent = "Ontspanning";
     els.toneStat.textContent = "—";
     els.droneStat.textContent = "UIT";
     els.dotIn.classList.remove("active"); els.dotHold.classList.remove("active");
     els.dotOut.classList.remove("active"); els.dotPause.classList.remove("active");
-    // Bij het ingaan van de rust: klank/drone stoppen en één keer de rustcue.
+    // Bij het ingaan van de ontspanningsfase: klank/drone stoppen en één keer een zachte cue.
     if (lastPhaseKey !== "closingRest") {
       stopDroneEngine();
       if (activePreset in bgAudioFiles) stopBgAudio();
@@ -6094,6 +6106,7 @@ function normalizeProtocol(row, phaseRows, categorySlug) {
     accessTier: row.access_tier, requiresDeepAccess: !!row.requires_deep_access, requiresPremium: !!row.requires_premium,
     group: row.group_name || null, night: !!row.night, lockSchema: !!row.lock_schema,
     closingRest: (row.closing_rest_seconds != null ? Number(row.closing_rest_seconds) : null),
+    relaxCueWord: row.relax_cue_word || null, relaxCueSub: row.relax_cue_sub || null,
     // Veiligheidswaarschuwing vooraf voor de intensieve testprotocollen
     requiresWarning: (typeof warningContent === "object") && !!warningContent[row.slug],
     // Zonder fases (cataloguskaart voor gasten) geen neptijd tonen
@@ -6181,6 +6194,9 @@ function applyContentSettings(settings) {
   // App-brede standaard afsluitrust
   const cr = Number(map.default_closing_rest_seconds);
   if (Number.isFinite(cr) && cr >= 0) globalClosingRest = cr;
+  // App-brede standaard ontspanningsfase-teksten
+  if (map.default_relax_cue_word && String(map.default_relax_cue_word).trim() !== "") globalRelaxWord = String(map.default_relax_cue_word).trim();
+  if (map.default_relax_cue_sub && String(map.default_relax_cue_sub).trim() !== "") globalRelaxSub = String(map.default_relax_cue_sub).trim();
   const set = (id, key) => {
     const el = document.getElementById(id);
     if (el && map[key] && String(map[key]).trim() !== "") el.innerHTML = textToHtml(map[key]);
@@ -6241,6 +6257,8 @@ function overlayProtocol(preset, row, phaseRows) {
   preset.night = !!row.night;
   if (row.lock_schema !== undefined) preset.lockSchema = !!row.lock_schema;
   if (row.closing_rest_seconds !== undefined) preset.closingRest = row.closing_rest_seconds != null ? Number(row.closing_rest_seconds) : null;
+  if (row.relax_cue_word !== undefined) preset.relaxCueWord = row.relax_cue_word || null;
+  if (row.relax_cue_sub !== undefined) preset.relaxCueSub = row.relax_cue_sub || null;
   if (row.access_tier) preset.accessTier = row.access_tier;
   preset.requiresDeepAccess = !!row.requires_deep_access;
   preset.requiresPremium = !!row.requires_premium;

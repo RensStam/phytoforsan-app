@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.3.1</span>
+    <span class="env-badge" id="backendVersion">backend v1.3.2</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -841,8 +841,10 @@ function readProtocolForm() {
     requires_premium: document.getElementById("f_prem").value === "true",
     night: document.getElementById("f_night").value === "true",
     lock_schema: document.getElementById("f_lock").value === "true",
-    // Afsluitende rust (uit het fasebeheer, per protocol). Leeg → null (globale standaard).
-    closing_rest_seconds: (() => { const el = document.getElementById("f_closing_rest"); if (!el || el.value === "") return null; const n = Number(el.value); return Number.isFinite(n) ? n : null; })()
+    // Ontspanningsfase (uit het fasebeheer, per protocol). Leeg → null (globale standaard).
+    closing_rest_seconds: (() => { const el = document.getElementById("f_closing_rest"); if (!el || el.value === "") return null; const n = Number(el.value); return Number.isFinite(n) ? n : null; })(),
+    relax_cue_word: (() => { const el = document.getElementById("f_relax_word"); return el && el.value.trim() !== "" ? el.value.trim() : null; })(),
+    relax_cue_sub: (() => { const el = document.getElementById("f_relax_sub"); return el && el.value.trim() !== "" ? el.value.trim() : null; })()
   };
 }
 
@@ -935,10 +937,13 @@ async function renderPhases() {
   }
   const typeOpt = (v)=>["breath","free","humming","sound","silence","integration","warning"].map(t=>`<option ${t===v?"selected":""}>${t}</option>`).join("");
   const invalid = phases.some(f=>Number(f.duration_seconds)<=0);
-  // Standaard afsluitrust uit app_settings; per protocol te overschrijven.
-  const defRestRow = (await dbList("app_settings")).find(s => s.key === "default_closing_rest_seconds");
-  const defRest = defRestRow && defRestRow.value ? Number(defRestRow.value) : 15;
+  // Standaarden ontspanningsfase uit app_settings; per protocol te overschrijven.
+  const appS = await dbList("app_settings");
+  const sVal = (k) => { const r = appS.find(s => s.key === k); return r ? r.value : null; };
+  const defRest = sVal("default_closing_rest_seconds") ? Number(sVal("default_closing_rest_seconds")) : 15;
   const closingRest = (curProt && curProt.closing_rest_seconds != null) ? Number(curProt.closing_rest_seconds) : defRest;
+  const relaxWord = (curProt && curProt.relax_cue_word) ? curProt.relax_cue_word : (sVal("default_relax_cue_word") || "ONTSPANNING");
+  const relaxSub = (curProt && curProt.relax_cue_sub) ? curProt.relax_cue_sub : (sVal("default_relax_cue_sub") || "kom rustig tot rust");
   wrap.innerHTML = `<h3>Fases — <span id="phasesTotalDur">totale duur ${fmtDur(totalSeconds(phases))} (${totalSeconds(phases)} s)</span> · ${phases.length} fases ${invalid?'<span class="pill archived">ongeldige fase</span>':''}</h3>
     <p class="muted" style="margin:0 0 8px">Bij een <b>ademfase</b> vul je het <b>aantal ademcycli</b> in — de duur wordt dan exact cycli × cyclusduur (in+hold+uit+pauze). Bij een vrije/rustfase gebruik je "Duur (s)". De totale sessieduur is absoluut en loopt live mee, zodat je de muziek er exact op kunt afstemmen.</p>
     ${phases.map(f=>`<div class="phase-row" data-ph="${f.id}">
@@ -969,8 +974,14 @@ async function renderPhases() {
       <div style="margin-top:8px;display:flex;gap:8px"><button class="btn small danger ph_del">Fase verwijderen</button></div>
     </div>`).join("")}
     <button class="btn secondary small" id="addPhase" style="margin-top:8px">+ Fase toevoegen</button>
-    <div class="row" style="margin-top:12px"><div><label>Afsluitende rust (s) <span class="muted">— sessie eindigt hierop, daarna het eindbericht</span></label><input id="f_closing_rest" type="number" min="0" value="${closingRest}"></div><div></div></div>
-    <p class="muted" style="margin-top:6px">Wijzigingen in de fases (en de afsluitrust) worden mee opgeslagen met de knop <b>Opslaan</b> bovenaan.</p>`;
+    <h4 style="margin:14px 0 4px">Ontspanningsfase <span class="muted" style="font-weight:400">— de afsluitende fase; hierna volgt het eindbericht</span></h4>
+    <div class="row4">
+      <div><label>Duur (s)</label><input id="f_closing_rest" type="number" min="0" value="${closingRest}"></div>
+      <div><label>Woord in de cirkel</label><input id="f_relax_word" value="${esc(relaxWord)}" placeholder="ONTSPANNING"></div>
+      <div><label>Ondertekst</label><input id="f_relax_sub" value="${esc(relaxSub)}" placeholder="kom rustig tot rust"></div>
+      <div></div>
+    </div>
+    <p class="muted" style="margin-top:6px">Leeg laten = de app-brede standaard (Instellingen). Duur 0 = geen ontspanningsfase. Wijzigingen (fases + ontspanningsfase) worden mee opgeslagen met de knop <b>Opslaan</b> bovenaan.</p>`;
   const addPhaseBtn = document.getElementById("addPhase");
   if (addPhaseBtn) addPhaseBtn.addEventListener("click", async () => {
     await savePhasesFromDom(); // bestaande wijzigingen niet verliezen
@@ -1019,7 +1030,7 @@ function updatePhasesTotal() {
   const rest = Number(document.getElementById("f_closing_rest")?.value) || 0;
   const totaal = sum + rest;
   const el = document.getElementById("phasesTotalDur");
-  if (el) el.textContent = `totale duur ${fmtDur(totaal)} (${totaal} s) — fases ${fmtDur(sum)} + rust ${rest}s`;
+  if (el) el.textContent = `totale duur ${fmtDur(totaal)} (${totaal} s) — fases ${fmtDur(sum)} + ontspanning ${rest}s`;
   const audioEl = document.getElementById("audioSessionDur");
   if (audioEl) audioEl.textContent = `${fmtDur(totaal)} (${totaal} s)`;
 }
@@ -1419,7 +1430,10 @@ async function renderSettings() {
     rest_sub_pause: "Ondertekst rust na uitademing",
     meditation_cue_word: "Cue-woord meditatietimer",
     meditation_cue_sub: "Ondertekst meditatietimer",
-    opening_enabled: "Openingsscherm tonen (true/false)"
+    opening_enabled: "Openingsscherm tonen (true/false)",
+    default_closing_rest_seconds: "Ontspanningsfase — duur (s)",
+    default_relax_cue_word: "Ontspanningsfase — woord in de cirkel",
+    default_relax_cue_sub: "Ontspanningsfase — ondertekst"
   };
   // Huidige standaardteksten — worden voorgevuld zodat de velden niet leeg zijn.
   const DEFAULTS = {
@@ -1435,6 +1449,9 @@ async function renderSettings() {
     meditation_cue_word: "MEDITATIE",
     meditation_cue_sub: "vrije aandacht",
     opening_enabled: "true",
+    default_closing_rest_seconds: "15",
+    default_relax_cue_word: "ONTSPANNING",
+    default_relax_cue_sub: "kom rustig tot rust",
     about_text:
 `De weg naar binnen begint met een klank
 
@@ -1507,6 +1524,9 @@ Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
     <h3 style="margin-top:18px">Woorden in de sessiecirkel (app-breed)</h3>
     <p class="muted">Het rustwoord geldt voor alle protocollen tegelijk. Alle andere cirkelwoorden stel je bij het protocol zelf in: de IN/UIT-woorden en subteksten bij de fases, de woorden van de meditatietimer en de klankwoorden van MAEN, AMEN en OM in het protocolformulier.</p>
     ${cueKeys.map(fieldHtml).join("")}
+    <h3 style="margin-top:18px">Ontspanningsfase (app-brede standaard)</h3>
+    <p class="muted">Elke sessie eindigt met een ontspanningsfase, daarna het eindbericht. Deze waarden gelden voor alle protocollen; per protocol kun je ze bij het fasebeheer overschrijven. Duur 0 = geen ontspanningsfase.</p>
+    ${["default_closing_rest_seconds","default_relax_cue_word","default_relax_cue_sub"].map(fieldHtml).join("")}
     <h3 style="margin-top:18px">Openingsscherm</h3>
     <p class="muted">Een ademende cirkel met het PhytoForsan-blaadje opent de app. Zet "tonen" op false om het openingsscherm uit te schakelen. Wijzigingen zijn zichtbaar vanaf de eerstvolgende keer dat de app opnieuw wordt geopend.</p>
     ${["opening_enabled"].map(fieldHtml).join("")}
