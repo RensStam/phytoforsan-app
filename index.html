@@ -1794,7 +1794,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3533,32 +3533,6 @@ function phases() {
   ];
 }
 
-const cardIllustrations = {
-  longExhale: `<img src="tegels/lange-uitademing.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  resonanceBreath: `<img src="tegels/resonantie-adem.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  sleepBreath: `<img src="tegels/Slaapadem.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  flowingBreath: `<img src="tegels/vloeiende-adem.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  bellyRegulationBreath: `<img src="tegels/buikregulatie-adem.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  bijPiekeren: `<img src="tegels/bij-piekeren.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  lichaamTotRust: `<img src="tegels/lichaam-tot-rust.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  relax: `<img src="tegels/relax-moment.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  lang: `<img src="tegels/deep-relax.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  focus: `<img src="tegels/korte-reset.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  focusReset: `<img src="tegels/focus-reset.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  herstel: `<img src="tegels/stillness-flow.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  vanOnrustNaarRust: `<img src="tegels/van-onrust-naar-rust.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  maen: `<img src="tegels/maen.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  amen: `<img src="tegels/amen.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  om: `<img src="tegels/om-grid.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  meditationTimer: `<img src="tegels/meditatietimer.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  vanEmotiesNaarOntspanning: `<img src="tegels/van-emoties-naar-ontspanning.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  bijOverprikkeling: `<img src="tegels/bij-overprikkeling.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  voorHetSlapen: `<img src="tegels/voor-het-slapen.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  nachtelijkWakkerWorden: `<img src="tegels/nachtelijk-wakker-worden.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  herstelmoment: `<img src="tegels/herstelmoment.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  holotropicBreathTest: `<img src="tegels/holotropische-ademtest.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-  activeBreathTest: `<img src="tegels/actieve-ademtest.webp" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`,
-};
 const presetMeta = {
   longExhale:      { duration: "5 min",  desc: "Ontspanning door langere uitademing." },
   resonanceBreath: { duration: "5 min",  desc: "Gelijkmatig ademritme voor balans." },
@@ -3582,9 +3556,12 @@ const defaultCardIllustration = `<svg viewBox="0 0 60 60" xmlns="http://www.w3.o
 
 function renderLibraryCard(id, item, experimental = false, locked = false) {
   const meta = presetMeta[id] || { duration: "", desc: "" };
+  // Tegels komen uit Supabase (media_files → protocols.image_id). De service worker
+  // cachet ze, en de offline-kopie van de protocoldata houdt de koppeling intact,
+  // dus dit werkt ook zonder netwerk. Zonder gekoppelde afbeelding: neutrale vorm.
   const illus = item.image
     ? `<img src="${item.image}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:12px" alt="">`
-    : (cardIllustrations[id] || defaultCardIllustration);
+    : defaultCardIllustration;
   // Duur afleiden uit de centrale functie; meditatie houdt vrije duur
   const totalSec = getSessionTotalSeconds(item);
   // Vergrendelde cataloguskaart zonder bekende duur: toon het benodigde niveau
@@ -5512,6 +5489,7 @@ document.getElementById("authRegisterBtn")?.addEventListener("click", async () =
 document.getElementById("authLogoutBtn")?.addEventListener("click", async () => {
   if (appSb) { try { await appSb.auth.signOut(); } catch {} }
   appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = [];
+  clearBackendSnapshot();   // offline-kopie kan verdiepings-/Plus-protocollen bevatten
   afterAccessChange();
   setGateMsg("authMsg", "Uitgelogd.", "ok");
 });
@@ -6067,6 +6045,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.b
 document.getElementById("profileLogoutBtn")?.addEventListener("click", async () => {
   if (appSb) { try { await appSb.auth.signOut(); } catch {} }
   appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = [];
+  clearBackendSnapshot();   // offline-kopie kan verdiepings-/Plus-protocollen bevatten
   afterAccessChange();
 });
 
@@ -6460,10 +6439,45 @@ function applyAdminData(data) {
   }
   return { overlaid, added, removed };
 }
+// ── Offline-kopie van de backoffice-data ──
+// Zonder netwerk faalt fetchBackendData(). Zonder kopie zou de app terugvallen op
+// de oude, hardgecodeerde protocollen én zouden de (wél gecachte) Supabase-tegels
+// nooit worden opgevraagd, want de koppeling protocol→afbeelding staat in de data.
+// De kopie kan verdiepings-/Plus-protocollen bevatten en wordt daarom bij
+// uitloggen gewist (zie clearBackendSnapshot).
+const BACKEND_SNAPSHOT_KEY = "phyto_backend_snapshot";
+function saveBackendSnapshot(data) {
+  try { localStorage.setItem(BACKEND_SNAPSHOT_KEY, JSON.stringify(data)); } catch {}
+}
+function readBackendSnapshot() {
+  try {
+    const d = JSON.parse(localStorage.getItem(BACKEND_SNAPSHOT_KEY));
+    return (d && Array.isArray(d.prot) && d.prot.length) ? d : null;
+  } catch { return null; }
+}
+function clearBackendSnapshot() {
+  try { localStorage.removeItem(BACKEND_SNAPSHOT_KEY); } catch {}
+}
+window.clearBackendSnapshot = clearBackendSnapshot;
+
 async function bootstrapBackend() {
   try {
     const cfg = (typeof getActiveConfig === "function") ? getActiveConfig() : null;
-    const data = (cfg && cfg.useBackend) ? await fetchBackendData() : readLocalAdminData();
+    let data = null;
+    if (cfg && cfg.useBackend) {
+      try {
+        data = await fetchBackendData();
+        if (data && data.prot.length) saveBackendSnapshot(data);
+      } catch (netErr) {
+        data = null;   // netwerkfout → hieronder de offline-kopie proberen
+      }
+      if (!data || !data.prot.length) {
+        const snap = readBackendSnapshot();
+        if (snap) { data = snap; console.info("PhytoForsan: offline — opgeslagen protocolgegevens gebruikt."); }
+      }
+    } else {
+      data = readLocalAdminData();
+    }
     if (!data || !data.prot.length) return; // geen backoffice-data → lokale protocollen blijven actief
     const res = applyAdminData(data);
     applyDefaultVolume(data.app_settings);
