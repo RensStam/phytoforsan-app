@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.3.4</span>
+    <span class="env-badge" id="backendVersion">backend v1.3.5</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -593,17 +593,18 @@ async function editProtocol(id) {
       <div><label title="Gebruiker kan het ademritme/opbouwschema niet aanpassen">Opbouwschema vergrendelen</label><select id="f_lock"><option value="false" ${!p.lock_schema?"selected":""}>nee</option><option value="true" ${p.lock_schema?"selected":""}>ja</option></select></div>
     </div>
     <div id="f_img_preview" style="margin-top:8px"></div>
-    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" id="saveProtocol">Opslaan</button>
-      ${id?'<button class="btn secondary" id="exportProtocol">Exporteren</button>':""}
-      ${id?'<button class="btn secondary" id="archiveProtocol">Archiveren</button>':""}
-    </div>
-    <p class="msg hidden" id="protMsg"></p>
     <div id="audioWrap"></div>
     <div id="voiceWrap"></div>
     <div id="cueWordsWrap"></div>
     <div id="soundWordsWrap"></div>
     <div id="phasesWrap"></div>
+    <!-- Opslaan onderaan: alle secties hierboven (incl. fases) horen erbij -->
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="saveProtocol">Opslaan</button>
+      ${id?'<button class="btn secondary" id="exportProtocol">Exporteren</button>':""}
+      ${id?'<button class="btn secondary" id="archiveProtocol">Archiveren</button>':""}
+    </div>
+    <p class="msg hidden" id="protMsg"></p>
   </div>`;
   document.getElementById("backList").addEventListener("click", renderProtocols);
   const imgSel = document.getElementById("f_img");
@@ -981,7 +982,7 @@ async function renderPhases() {
       <div><label>Ondertekst</label><input id="f_relax_sub" value="${esc(relaxSub)}" placeholder="kom rustig tot rust"></div>
       <div></div>
     </div>
-    <p class="muted" style="margin-top:6px">Leeg laten = de app-brede standaard (Instellingen). Duur 0 = geen ontspanningsfase. Wijzigingen (fases + ontspanningsfase) worden mee opgeslagen met de knop <b>Opslaan</b> bovenaan.</p>`;
+    <p class="muted" style="margin-top:6px">Leeg laten = de app-brede standaard (Instellingen). Duur 0 = geen ontspanningsfase. Wijzigingen (fases + ontspanningsfase) worden mee opgeslagen met de knop <b>Opslaan</b> onderaan.</p>`;
   const addPhaseBtn = document.getElementById("addPhase");
   if (addPhaseBtn) addPhaseBtn.addEventListener("click", async () => {
     await savePhasesFromDom(); // bestaande wijzigingen niet verliezen
