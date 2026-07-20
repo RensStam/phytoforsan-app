@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.3.5</span>
+    <span class="env-badge" id="backendVersion">backend v1.3.6</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -584,7 +584,7 @@ async function editProtocol(id) {
       <div><label>Toegangsniveau</label><select id="f_tier">${tierOpt(p.access_tier)}</select></div>
       <div><label>Status</label><select id="f_status">${statusOpt(p.status)}</select></div>
       <div><label>Sortering</label><input id="f_sort" type="number" value="${p.sort_order||0}"></div>
-      <div><label>Afbeelding</label><select id="f_img"><option value="">— geen —</option>${opt(media,p.image_id,m=>m.filename)}</select></div>
+      <div></div>
     </div>
     <div class="row4">
       <div><label>requires_deep_access</label><select id="f_deep"><option value="false" ${!p.requires_deep_access?"selected":""}>nee</option><option value="true" ${p.requires_deep_access?"selected":""}>ja</option></select></div>
@@ -592,7 +592,12 @@ async function editProtocol(id) {
       <div><label>Nacht-tint</label><select id="f_night"><option value="false" ${!p.night?"selected":""}>nee</option><option value="true" ${p.night?"selected":""}>ja</option></select></div>
       <div><label title="Gebruiker kan het ademritme/opbouwschema niet aanpassen">Opbouwschema vergrendelen</label><select id="f_lock"><option value="false" ${!p.lock_schema?"selected":""}>nee</option><option value="true" ${p.lock_schema?"selected":""}>ja</option></select></div>
     </div>
-    <div id="f_img_preview" style="margin-top:8px"></div>
+    <h4 style="margin:18px 0 4px">Tegel-afbeelding</h4>
+    <p class="muted" style="margin:0 0 8px">De afbeelding op de bibliotheekkaart. Kies een bestand dat je eerder hebt toegevoegd bij <b>Afbeeldingen &amp; documenten</b>. Staat het er niet tussen? Voeg het daar eerst toe met type <code>image</code>${media.length ? "" : " — er staat nu nog geen enkele afbeelding klaar"}.</p>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+      <select id="f_img" style="max-width:320px"><option value="">— geen —</option>${opt(media,p.image_id,m=>m.filename)}</select>
+      <div id="f_img_preview"></div>
+    </div>
     <div id="audioWrap"></div>
     <div id="voiceWrap"></div>
     <div id="cueWordsWrap"></div>
