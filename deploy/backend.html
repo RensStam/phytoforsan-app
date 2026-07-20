@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.3.6</span>
+    <span class="env-badge" id="backendVersion">backend v1.3.7</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -263,6 +263,9 @@ document.getElementById("deniedLogout").addEventListener("click", doLogout);
 // UI / tabs
 // =====================================================================
 let editingProtocolId = null;
+// Wordt true zodra er in het protocolformulier iets is gewijzigd; voorkomt dat
+// vorige/volgende/terug stilzwijgend niet-opgeslagen bewerkingen weggooit.
+let protoDirty = false;
 const tabBody = document.getElementById("tabBody");
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => openTab(b.dataset.tab)));
 function openTab(tab) {
@@ -559,14 +562,22 @@ async function handleImportFile(ev) {
 async function editProtocol(id) {
   const cats = await dbList("categories");
   const media = await dbList("media_files", { type:"image" });
-  let p = id ? (await dbList("protocols")).find(x=>x.id===id) : null;
+  // Zelfde volgorde als de protocollijst, zodat vorige/volgende logisch aanvoelt.
+  const allProt = (await dbList("protocols")).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+  let p = id ? allProt.find(x=>x.id===id) : null;
+  const idx = p ? allProt.findIndex(x=>x.id===p.id) : -1;
+  const prevProt = idx > 0 ? allProt[idx-1] : null;
+  const nextProt = (idx >= 0 && idx < allProt.length-1) ? allProt[idx+1] : null;
   if (!p) p = { id:null, slug:"", title:"", category_id:cats[0]?.id||null, group_name:"", short_description:"", long_description:"", evidence_text:"", safety_text:"", closing_text:"", access_tier:"free", requires_deep_access:false, requires_premium:false, status:"draft", sort_order:0, image_id:null, night:false };
   editingProtocolId = p.id;
   const opt = (arr,val,fn)=>arr.map(o=>`<option value="${o.id}" ${o.id===val?"selected":""}>${esc(fn(o))}</option>`).join("");
   const statusOpt = (v)=>["draft","published","hidden","archived"].map(s=>`<option ${s===v?"selected":""}>${s}</option>`).join("");
   const tierOpt = (v)=>["free","deep","premium","admin"].map(s=>`<option ${s===v?"selected":""}>${s}</option>`).join("");
   tabBody.innerHTML = `<div class="card">
-    <div class="toolbar"><button class="btn secondary small" id="backList">← Terug</button><h2 class="grow">${id?"Protocol bewerken":"Nieuw protocol"}</h2></div>
+    <div class="toolbar"><button class="btn secondary small" id="backList">← Terug</button><h2 class="grow">${id?"Protocol bewerken":"Nieuw protocol"}</h2>${id ? `
+      <span class="muted" style="font-size:.8rem;font-weight:700;white-space:nowrap">${idx+1} / ${allProt.length}</span>
+      <button class="btn secondary small" id="prevProt" ${prevProt?`title="${esc(prevProt.title)}"`:"disabled title='Begin van de lijst'"}>← Vorige</button>
+      <button class="btn secondary small" id="nextProt" ${nextProt?`title="${esc(nextProt.title)}"`:"disabled title='Einde van de lijst'"}>Volgende →</button>` : ""}</div>
     <div class="row">
       <div><label>Titel *</label><input id="f_title" value="${esc(p.title)}"></div>
       <div><label>Slug * (vaste ID${id ? ", niet wijzigen" : ""})</label><input id="f_slug" value="${esc(p.slug)}"${id ? " readonly title='De slug is een vaste technische ID en koppelt het protocol aan tegels, klank en beveiliging. Hernoem via Titel.' style='background:#f0f0f0;color:#777;cursor:not-allowed'" : ""}></div>
@@ -611,7 +622,24 @@ async function editProtocol(id) {
     </div>
     <p class="msg hidden" id="protMsg"></p>
   </div>`;
-  document.getElementById("backList").addEventListener("click", renderProtocols);
+  // Wijzigingen volgen op de kaart zelf: die wordt bij elke render vervangen,
+  // dus de listener verdwijnt vanzelf mee (geen stapeling).
+  protoDirty = false;
+  const formCard = tabBody.querySelector(".card");
+  const markDirty = () => { protoDirty = true; };
+  formCard.addEventListener("input", markDirty);
+  formCard.addEventListener("change", markDirty);
+  const leaveGuard = () => !protoDirty || confirm("Er zijn wijzigingen die nog niet zijn opgeslagen. Die gaan verloren als je verdergaat.\n\nToch doorgaan?");
+  document.getElementById("backList").addEventListener("click", () => { if (leaveGuard()) renderProtocols(); });
+  if (id) {
+    const goTo = async (target) => {
+      if (!target || !leaveGuard()) return;
+      await editProtocol(target.id);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    if (prevProt) document.getElementById("prevProt").addEventListener("click", () => goTo(prevProt));
+    if (nextProt) document.getElementById("nextProt").addEventListener("click", () => goTo(nextProt));
+  }
   const imgSel = document.getElementById("f_img");
   const imgPrev = document.getElementById("f_img_preview");
   const renderImgPrev = () => {
@@ -914,6 +942,7 @@ async function saveProtocolForm() {
       }
     }
     msg.className = "msg ok"; msg.textContent = "Opgeslagen."; msg.classList.remove("hidden");
+    protoDirty = false;   // opgeslagen → doorklikken hoeft niet meer te waarschuwen
     renderPhases();
   } catch (e) { msg.className="msg err"; msg.textContent="Fout bij opslaan: "+(e.message||e); msg.classList.remove("hidden"); }
 }
