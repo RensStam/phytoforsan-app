@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.3.3</span>
+    <span class="env-badge" id="backendVersion">backend v1.3.4</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -176,19 +176,6 @@ async function dbUpsert(table, rec) {
   mockSave(db);
   return rec;
 }
-// Gerichte kolom-update: veiliger dan upsert als je maar één veld wilt zetten
-// (upsert zou de hele rij als payload sturen).
-async function dbUpdate(table, id, patch) {
-  patch.updated_at = now();
-  if (cfg.useBackend && sb) {
-    const { error } = await sb.from(table).update(patch).eq("id", id);
-    if (error) throw error;
-    return;
-  }
-  const db = mockDb();
-  const i = (db[table] || []).findIndex(r => r.id === id);
-  if (i >= 0) { db[table][i] = { ...db[table][i], ...patch }; mockSave(db); }
-}
 async function dbDelete(table, id) {
   if (cfg.useBackend && sb) {
     const { error } = await sb.from(table).delete().eq("id", id);
@@ -208,84 +195,6 @@ async function uploadToStorage(file, folder) {
   const { error } = await sb.storage.from("media").upload(path, file, { upsert: true, contentType: file.type || undefined });
   if (error) throw error;
   return sb.storage.from("media").getPublicUrl(path).data.publicUrl;
-}
-
-// =====================================================================
-// Eenmalige import van de lokale tegel-afbeeldingen naar Supabase
-// =====================================================================
-// Sleutel = protocol-slug, waarde = bestandsnaam in de map tegels/ die naast de
-// backoffice staat. Deze mapping komt overeen met cardIllustrations in index.html.
-const TEGEL_MAP = {
-  longExhale: "lange-uitademing.webp",
-  resonanceBreath: "resonantie-adem.webp",
-  sleepBreath: "Slaapadem.webp",
-  flowingBreath: "vloeiende-adem.webp",
-  bellyRegulationBreath: "buikregulatie-adem.webp",
-  bijPiekeren: "bij-piekeren.webp",
-  lichaamTotRust: "lichaam-tot-rust.webp",
-  relax: "relax-moment.webp",
-  lang: "deep-relax.webp",
-  focus: "korte-reset.webp",
-  focusReset: "focus-reset.webp",
-  herstel: "stillness-flow.webp",
-  vanOnrustNaarRust: "van-onrust-naar-rust.webp",
-  maen: "maen.webp",
-  amen: "amen.webp",
-  om: "om-grid.webp",
-  meditationTimer: "meditatietimer.webp",
-  vanEmotiesNaarOntspanning: "van-emoties-naar-ontspanning.webp",
-  bijOverprikkeling: "bij-overprikkeling.webp",
-  voorHetSlapen: "voor-het-slapen.webp",
-  nachtelijkWakkerWorden: "nachtelijk-wakker-worden.webp",
-  herstelmoment: "herstelmoment.webp",
-  holotropicBreathTest: "holotropische-ademtest.webp",
-  activeBreathTest: "actieve-ademtest.webp"
-};
-
-// Vast pad (geen timestamp) zodat opnieuw importeren overschrijft i.p.v. dubbelt.
-async function uploadTegel(blob, filename) {
-  if (!(cfg.useBackend && sb)) throw new Error("Importeren vereist Supabase (niet in testmodus).");
-  const path = `afbeeldingen/tegels/${filename}`;
-  const { error } = await sb.storage.from("media").upload(path, blob, { upsert: true, contentType: blob.type || "image/webp" });
-  if (error) throw error;
-  return sb.storage.from("media").getPublicUrl(path).data.publicUrl;
-}
-
-// Uploadt elke tegel, maakt/werkt de media_files-rij bij en koppelt hem aan het
-// protocol met dezelfde slug. Idempotent: hergebruikt bestaande rijen op filename.
-async function importTegels(onProgress) {
-  const media = await dbList("media_files");
-  const prots = await dbList("protocols");
-  const byFilename = Object.fromEntries(media.filter(m => m.filename).map(m => [m.filename, m]));
-  const bySlug = Object.fromEntries(prots.map(p => [String(p.slug || "").toLowerCase(), p]));
-  const entries = Object.entries(TEGEL_MAP);
-  let uploaded = 0, linked = 0;
-  const fails = [], unmatched = [];
-  for (let i = 0; i < entries.length; i++) {
-    const [slug, filename] = entries[i];
-    onProgress(`Bezig… ${i + 1}/${entries.length} — ${filename}`);
-    try {
-      const res = await fetch(`tegels/${filename}`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`bestand niet gevonden (${res.status})`);
-      const blob = await res.blob();
-      const url = await uploadTegel(blob, filename);
-      const existing = byFilename[filename];
-      const rec = {
-        filename, type: "image", storage_path: url, data_url: null,
-        alt_text: existing?.alt_text || "", source: existing?.source || "",
-        license: existing?.license || "", notes: existing?.notes || ""
-      };
-      if (existing?.id) rec.id = existing.id;
-      const saved = await dbUpsert("media_files", rec);
-      uploaded++;
-      const prot = bySlug[slug.toLowerCase()];
-      if (!prot) { unmatched.push(slug); continue; }
-      if (saved?.id) { await dbUpdate("protocols", prot.id, { image_id: saved.id }); linked++; }
-    } catch (e) {
-      fails.push(`${filename}: ${e.message || e}`);
-    }
-  }
-  return { uploaded, linked, total: entries.length, fails, unmatched };
 }
 
 // =====================================================================
@@ -1200,32 +1109,14 @@ const mediaThumb = (m, size=40) => {
     ? `<img src="${esc(src)}" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:6px;background:#eee" alt="">`
     : `<span class="muted">—</span>`;
 };
-let lastTegelImport = null;   // resultaat van de laatste import, één keer tonen
 async function renderMedia() {
   const media = await dbList("media_files");
-  const imp = lastTegelImport; lastTegelImport = null;
-  tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Afbeeldingen &amp; documenten</h2><button class="btn secondary" id="importTegels">Tegels importeren</button><button class="btn" id="newMedia">+ Nieuw bestand</button></div>
+  tabBody.innerHTML = `<div class="card"><div class="toolbar"><h2 class="grow">Afbeeldingen &amp; documenten</h2><button class="btn" id="newMedia">+ Nieuw bestand</button></div>
     <p class="muted">Bestanden die je toont of bewaart: vooral de tegel-afbeeldingen van protocollen (kies je in het protocolformulier bij "Afbeelding"), plus documenten zoals licentiebewijzen.</p>
-    <p class="muted">Met <b>Tegels importeren</b> zet je in één keer alle ${Object.keys(TEGEL_MAP).length} meegeleverde tegel-afbeeldingen in Supabase Storage en koppel je ze aan het protocol met dezelfde slug. Opnieuw uitvoeren is veilig: bestanden worden overschreven en bestaande rijen hergebruikt, dus er komen geen dubbelen bij.</p>
-    <p class="msg ${imp ? (imp.fails.length ? "err" : "ok") : "hidden"}" id="tegelLog">${imp ? esc(`${imp.uploaded}/${imp.total} afbeeldingen geüpload, ${imp.linked} gekoppeld aan een protocol.` + (imp.unmatched.length ? ` Geen protocol gevonden voor: ${imp.unmatched.join(", ")}.` : "") + (imp.fails.length ? ` Mislukt: ${imp.fails.join(" | ")}` : "")) : ""}</p>
     <table><thead><tr><th></th><th>Bestand</th><th>Type</th><th>Bron/pad</th><th>Licentie</th><th class="actions"></th></tr></thead>
     <tbody>${media.map(m=>`<tr><td>${mediaThumb(m)}</td><td>${esc(m.filename)}</td><td>${esc(m.type)}</td><td class="muted">${esc(m.data_url ? "(geüpload)" : m.storage_path)}</td><td>${esc(m.license)}</td><td class="actions"><div class="row-actions"><button class="btn small secondary" data-edit="${m.id}">Bewerken</button><button class="btn small danger" data-del="${m.id}">Verwijderen</button></div></td></tr>`).join("")||'<tr><td colspan="6" class="muted">Nog geen media.</td></tr>'}</tbody></table></div>
     <div id="mediaForm"></div>`;
   document.getElementById("newMedia").addEventListener("click", ()=>editMedia(null));
-  document.getElementById("importTegels").addEventListener("click", async () => {
-    const n = Object.keys(TEGEL_MAP).length;
-    if (!confirm(`${n} tegel-afbeeldingen uploaden naar Supabase Storage en koppelen aan de bijbehorende protocollen?\n\nOpnieuw uitvoeren is veilig: bestaande bestanden worden overschreven, er komen geen dubbele rijen bij.`)) return;
-    const btn = document.getElementById("importTegels");
-    const log = document.getElementById("tegelLog");
-    btn.disabled = true; log.className = "msg"; log.textContent = "Bezig…";
-    try {
-      lastTegelImport = await importTegels(txt => { log.textContent = txt; });
-      await renderMedia();
-    } catch (e) {
-      log.className = "msg err"; log.textContent = "Mislukt: " + (e.message || e);
-      btn.disabled = false;
-    }
-  });
   tabBody.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editMedia(b.dataset.edit)));
   tabBody.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",async()=>{ if(confirm("Dit mediabestand verwijderen?")){ await dbDelete("media_files", b.dataset.del); renderMedia(); }}));
 }
