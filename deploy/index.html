@@ -1794,7 +1794,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2806,6 +2806,10 @@ const els = {
 };
 
 let activePreset = "longExhale";
+// "longExhale" hierboven is slechts een startwaarde, geen bewuste keuze. Deze vlag
+// wordt pas waar als de gebruiker echt een protocol kiest (kaart/play/deel-link),
+// zodat het standaardprotocol uit de backoffice de startwaarde mag overrulen.
+let userChoseProtocol = false;
 let meditationDuration = 10;
 let lastMedIntervalIdx = 0;   // laatst gespeelde intervaltoon (meditatietimer)
 let sessionLogged = false;
@@ -3684,6 +3688,7 @@ function lockRhythm(locked) {
 function applyPreset(id, userSelected = false) {
   stopBgAudio();
   activePreset = id;
+  if (userSelected) userChoseProtocol = true;
   const locked = Boolean(presets[id]?.exhaleFlow) && !Boolean(presets[id]?.breathingOnly);
   lockRhythm(locked);
   const isBreathing = Boolean(presets[id]?.breathingOnly);
@@ -4879,6 +4884,7 @@ function handleLibraryClick(event) {
   // Verdieping-slotje: opent toegangsscherm i.p.v. de sessie
   if (!requireDeepAccess(presets[id])) return;
   if (playBtn) {
+    userChoseProtocol = true;
     applyPreset(id);
     start();
     return;
@@ -6499,9 +6505,12 @@ async function bootstrapBackend() {
     const defKey = defSlug
       ? (presets[defSlug] ? defSlug : Object.keys(presets).find(k => k.toLowerCase() === defSlug.toLowerCase()))
       : "";
-    applyPreset((activePreset && presets[activePreset]) ? activePreset
+    // Heeft de gebruiker al zelf gekozen? Respecteer die keuze. Zo niet, dan wint
+    // het standaardprotocol (de ster) boven de vaste startwaarde "longExhale".
+    applyPreset(
+      (userChoseProtocol && presets[activePreset]) ? activePreset
       : (defKey && presets[defKey]) ? defKey
-      : Object.keys(presets)[0]);
+      : (presets[activePreset] ? activePreset : Object.keys(presets)[0]));
     console.info(`PhytoForsan: backend-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw, ${res.removed} verborgen).`);
   } catch (e) {
     console.info("PhytoForsan: backoffice-load mislukt, lokale protocollen blijven actief.", e);
