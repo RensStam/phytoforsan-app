@@ -50,6 +50,8 @@
   .reorder { display:inline-flex; flex-direction:column; gap:3px; }
   .reorder button { padding:2px 7px; font-size:.72rem; line-height:1; }
   .reorder button:disabled { opacity:.35; cursor:default; }
+  .star-btn { background:none; border:none; cursor:pointer; font-size:1.15rem; line-height:1; padding:4px 6px; color:var(--muted); }
+  .star-btn.on { color:#e0a021; }
   .grow { flex:1; }
 </style>
 </head>
@@ -57,7 +59,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.1</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.2</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -446,12 +448,12 @@ async function renderProtocols() {
           <button class="btn small secondary" data-down="${p.id}" ${sameCatNext?"":"disabled"} title="Omlaag">▼</button>
         </div>
       </td>
-      <td><b>${esc(p.title)}</b>${isDefault?' <span class="pill published" title="Wordt als eerste geopend in de app">standaard</span>':''}<div class="muted">${esc(p.slug)}</div></td>
+      <td><b>${esc(p.title)}</b><div class="muted">${esc(p.slug)}</div></td>
       <td>${esc(p.access_tier)}</td>
       <td>${fmtDur(totalSeconds(ph))} · ${ph.length} fases</td>
       <td><span class="pill ${p.status}">${p.status}</span></td>
       <td class="actions"><div class="row-actions">
-        <button class="btn small secondary" data-default="${p.id}" ${isDefault?'disabled title="Dit is het standaardprotocol"':'title="Als standaard instellen"'}>${isDefault?'★ Standaard':'☆ Standaard'}</button>
+        <button class="star-btn${isDefault?' on':''}" data-default="${p.id}" title="${isDefault?'Standaardprotocol':'Als standaard instellen'}" aria-label="Als standaard instellen">${isDefault?'★':'☆'}</button>
         <button class="btn small secondary" data-edit="${p.id}">Bewerken</button>${p.status === "archived" ? `<button class="btn small secondary" data-restore="${p.id}">Herstellen</button><button class="btn small danger" data-del="${p.id}">Verwijderen</button>` : ""}</div></td>
     </tr>`;
   });
