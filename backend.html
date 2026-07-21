@@ -53,7 +53,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.3.9</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.0</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -561,7 +561,9 @@ async function handleImportFile(ev) {
 
 async function editProtocol(id) {
   const cats = await dbList("categories");
-  const media = await dbList("media_files", { type:"image" });
+  // Alfabetisch op bestandsnaam, zodat de tegel-keuzelijst makkelijk te doorzoeken is.
+  const media = (await dbList("media_files", { type:"image" }))
+    .sort((a,b)=>String(a.filename||"").localeCompare(String(b.filename||""), "nl", { sensitivity:"base", numeric:true }));
   // Zelfde volgorde als de protocollijst, zodat vorige/volgende logisch aanvoelt.
   const allProt = (await dbList("protocols")).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
   let p = id ? allProt.find(x=>x.id===id) : null;
