@@ -46,6 +46,10 @@
   .phase-row { border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; }
   .hidden { display:none !important; }
   .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+  tr.cat-head td { background:rgba(18,55,52,.05); font-weight:900; color:var(--deep); font-size:.74rem; text-transform:uppercase; letter-spacing:.06em; padding:8px 10px; }
+  .reorder { display:inline-flex; flex-direction:column; gap:3px; }
+  .reorder button { padding:2px 7px; font-size:.72rem; line-height:1; }
+  .reorder button:disabled { opacity:.35; cursor:default; }
   .grow { flex:1; }
 </style>
 </head>
@@ -53,7 +57,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.0</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.1</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -175,6 +179,18 @@ async function dbUpsert(table, rec) {
   if (i >= 0) db[table][i] = { ...db[table][i], ...rec }; else db[table].push(rec);
   mockSave(db);
   return rec;
+}
+// Gerichte kolom-update (bijv. alleen sort_order), veiliger dan een volledige upsert.
+async function dbUpdate(table, id, patch) {
+  patch.updated_at = now();
+  if (cfg.useBackend && sb) {
+    const { error } = await sb.from(table).update(patch).eq("id", id);
+    if (error) throw error;
+    return;
+  }
+  const db = mockDb();
+  const i = (db[table] || []).findIndex(r => r.id === id);
+  if (i >= 0) { db[table][i] = { ...db[table][i], ...patch }; mockSave(db); }
 }
 async function dbDelete(table, id) {
   if (cfg.useBackend && sb) {
@@ -393,22 +409,53 @@ async function renderDashboard() {
 }
 
 // ---------- Protocollen ----------
+// Categorievolgorde exact gelijk aan de frontend (secties in index.html).
+const CATEGORY_ORDER = ["ademhaling","humming","klank","meditatie","verdieping"];
+const catRankOf = (slug) => { const i = CATEGORY_ORDER.indexOf(slug); return i < 0 ? 999 : i; };
+
 async function renderProtocols() {
   editingProtocolId = null;
-  const [prot, cats] = await Promise.all([dbList("protocols"), dbList("categories")]);
+  const [prot, cats, settings] = await Promise.all([dbList("protocols"), dbList("categories"), dbList("app_settings")]);
   const allPhases = await dbList("protocol_phases");
-  const catName = (id) => cats.find(c=>c.id===id)?.title || "—";
-  const rows = prot.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)).map(p => {
+  const catById = Object.fromEntries(cats.map(c=>[c.id, c]));
+  const catName = (id) => catById[id]?.title || "—";
+  const catSlug = (id) => catById[id]?.slug || "";
+  const defaultSlug = (settings.find(s=>s.key==="default_protocol")||{}).value || "";
+  // Sorteren: eerst op categorie (frontend-volgorde), dan op sort_order, dan titel.
+  const sorted = prot.slice().sort((a,b)=>
+    catRankOf(catSlug(a.category_id)) - catRankOf(catSlug(b.category_id))
+    || (a.sort_order||0) - (b.sort_order||0)
+    || String(a.title||"").localeCompare(String(b.title||""), "nl"));
+
+  let rows = "", lastCat = null;
+  sorted.forEach((p, i) => {
+    const cKey = catSlug(p.category_id);
+    if (cKey !== lastCat) {
+      rows += `<tr class="cat-head"><td colspan="6">${esc(catName(p.category_id))}</td></tr>`;
+      lastCat = cKey;
+    }
+    const prev = sorted[i-1], next = sorted[i+1];
+    const sameCatPrev = prev && catSlug(prev.category_id) === cKey;
+    const sameCatNext = next && catSlug(next.category_id) === cKey;
     const ph = allPhases.filter(x=>x.protocol_id===p.id);
-    return `<tr>
-      <td><b>${esc(p.title)}</b><div class="muted">${esc(p.slug)}</div></td>
-      <td>${esc(catName(p.category_id))}</td>
+    const isDefault = p.slug && p.slug === defaultSlug;
+    rows += `<tr>
+      <td>
+        <div class="reorder">
+          <button class="btn small secondary" data-up="${p.id}" ${sameCatPrev?"":"disabled"} title="Omhoog">▲</button>
+          <button class="btn small secondary" data-down="${p.id}" ${sameCatNext?"":"disabled"} title="Omlaag">▼</button>
+        </div>
+      </td>
+      <td><b>${esc(p.title)}</b>${isDefault?' <span class="pill published" title="Wordt als eerste geopend in de app">standaard</span>':''}<div class="muted">${esc(p.slug)}</div></td>
       <td>${esc(p.access_tier)}</td>
       <td>${fmtDur(totalSeconds(ph))} · ${ph.length} fases</td>
       <td><span class="pill ${p.status}">${p.status}</span></td>
-      <td class="actions"><div class="row-actions"><button class="btn small secondary" data-edit="${p.id}">Bewerken</button>${p.status === "archived" ? `<button class="btn small secondary" data-restore="${p.id}">Herstellen</button><button class="btn small danger" data-del="${p.id}">Verwijderen</button>` : ""}</div></td>
+      <td class="actions"><div class="row-actions">
+        <button class="btn small secondary" data-default="${p.id}" ${isDefault?'disabled title="Dit is het standaardprotocol"':'title="Als standaard instellen"'}>${isDefault?'★ Standaard':'☆ Standaard'}</button>
+        <button class="btn small secondary" data-edit="${p.id}">Bewerken</button>${p.status === "archived" ? `<button class="btn small secondary" data-restore="${p.id}">Herstellen</button><button class="btn small danger" data-del="${p.id}">Verwijderen</button>` : ""}</div></td>
     </tr>`;
-  }).join("");
+  });
+
   tabBody.innerHTML = `<div class="card">
     <div class="toolbar"><h2 class="grow">Protocollen</h2>
       <button class="btn secondary" id="exportAll">Exporteer alles</button>
@@ -416,7 +463,8 @@ async function renderProtocols() {
       <input type="file" id="importFile" accept="application/json,.json" style="display:none">
       <button class="btn" id="newProtocol">+ Nieuw protocol</button></div>
     <div id="importMsg" class="muted" style="margin-bottom:8px"></div>
-    <table><thead><tr><th>Titel</th><th>Categorie</th><th>Toegang</th><th>Duur</th><th>Status</th><th class="actions"></th></tr></thead>
+    <p class="muted" style="margin:0 0 8px">Gegroepeerd per categorie in dezelfde volgorde als de app. Met ▲▼ verplaats je een protocol binnen zijn categorie; ☆ maakt het het standaardprotocol dat als eerste opent.</p>
+    <table><thead><tr><th></th><th>Titel</th><th>Toegang</th><th>Duur</th><th>Status</th><th class="actions"></th></tr></thead>
     <tbody>${rows || '<tr><td colspan="6" class="muted">Nog geen protocollen.</td></tr>'}</tbody></table>
   </div>`;
   document.getElementById("newProtocol").addEventListener("click", () => editProtocol(null));
@@ -440,6 +488,33 @@ async function renderProtocols() {
     }
   }));
   tabBody.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editProtocol(b.dataset.edit)));
+  tabBody.querySelectorAll("[data-up]").forEach(b => b.addEventListener("click", () => moveProtocol(b.dataset.up, "up")));
+  tabBody.querySelectorAll("[data-down]").forEach(b => b.addEventListener("click", () => moveProtocol(b.dataset.down, "down")));
+  tabBody.querySelectorAll("[data-default]").forEach(b => b.addEventListener("click", async () => {
+    const p = prot.find(x => x.id === b.dataset.default);
+    if (!p || !p.slug) return;
+    await dbUpsert("app_settings", { key: "default_protocol", value: p.slug });
+    renderProtocols();
+  }));
+}
+
+// Verplaatst een protocol één plek omhoog/omlaag binnen zijn categorie. De hele
+// categorie wordt daarna 0..n hernummerd zodat de volgorde vast en uniek is —
+// dezelfde sort_order die de frontend gebruikt om binnen een sectie te ordenen.
+async function moveProtocol(id, dir) {
+  const prot = await dbList("protocols");
+  const p = prot.find(x => x.id === id);
+  if (!p) return;
+  const group = prot.filter(x => x.category_id === p.category_id)
+    .sort((a,b)=> (a.sort_order||0)-(b.sort_order||0) || String(a.title||"").localeCompare(String(b.title||""), "nl"));
+  const i = group.findIndex(x => x.id === id);
+  const j = dir === "up" ? i-1 : i+1;
+  if (j < 0 || j >= group.length) return;
+  [group[i], group[j]] = [group[j], group[i]];
+  for (let k = 0; k < group.length; k++) {
+    if ((group[k].sort_order||0) !== k) await dbUpdate("protocols", group[k].id, { sort_order: k });
+  }
+  renderProtocols();
 }
 
 // ---------- Export / Import (los van seed) ----------

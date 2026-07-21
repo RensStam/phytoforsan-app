@@ -1794,7 +1794,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3587,7 +3587,9 @@ function renderLibraryCard(id, item, experimental = false, locked = false) {
 
 function renderProtocols() {
   const visible = ([, p]) => !p.hidden || SHOW_HIDDEN_PROTOCOLS;
-  const byCategory = (cat) => Object.entries(presets).filter(([, p]) => p.category === cat).filter(visible);
+  // Binnen een categorie op sortOrder ordenen — exact zoals de backoffice-lijst.
+  const byCategory = (cat) => Object.entries(presets).filter(([, p]) => p.category === cat).filter(visible)
+    .sort((a, b) => (a[1].sortOrder || 0) - (b[1].sortOrder || 0));
   const breathingEl    = document.getElementById("breathingList");
   const relaxEl        = document.getElementById("protocolList");
   const klankEl        = document.getElementById("soundList");
@@ -6428,6 +6430,7 @@ function applyAdminData(data) {
       target = np;
       if (matchKey) overlaid++; else added++;
     }
+    target.sortOrder = Number(row.sort_order) || 0;  // volgorde binnen de categorie (zoals in de backoffice)
     target.bgMusic = bgByProtocol[row.id] || null;   // achtergrondmuziek koppelen (of wissen)
     target.voice = voiceByProtocol[row.id] || null;  // gesproken begeleiding koppelen (of wissen)
   }
@@ -6489,7 +6492,16 @@ async function bootstrapBackend() {
     // van de backend-data al gerenderd (zonder tegel-afbeeldingen). Zonder deze
     // hertekening blijven ze op het neutrale standaardicoon staan.
     if (document.getElementById("homeRecoList") && typeof initHome === "function") initHome();
-    applyPreset(activePreset && presets[activePreset] ? activePreset : Object.keys(presets)[0]);
+    // Standaardprotocol uit de backoffice (app_settings.default_protocol, op slug).
+    // Alleen gebruiken als startkeuze; een al gekozen preset of gedeelde link wint.
+    const defRow = (data.app_settings || []).find(s => s.key === "default_protocol");
+    const defSlug = defRow && defRow.value ? String(defRow.value) : "";
+    const defKey = defSlug
+      ? (presets[defSlug] ? defSlug : Object.keys(presets).find(k => k.toLowerCase() === defSlug.toLowerCase()))
+      : "";
+    applyPreset((activePreset && presets[activePreset]) ? activePreset
+      : (defKey && presets[defKey]) ? defKey
+      : Object.keys(presets)[0]);
     console.info(`PhytoForsan: backend-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw, ${res.removed} verborgen).`);
   } catch (e) {
     console.info("PhytoForsan: backoffice-load mislukt, lokale protocollen blijven actief.", e);
