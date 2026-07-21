@@ -59,7 +59,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.2</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.3</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1531,6 +1531,26 @@ async function renderCodes() {
 async function renderSettings() {
   const s = await dbList("app_settings");
   const map = Object.fromEntries(s.map(x=>[x.key,x.value]));
+  // Standaardprotocol-keuzelijst opbouwen: gepubliceerde protocollen, gegroepeerd
+  // per categorie in dezelfde volgorde als de app en de protocollijst.
+  const [allProt, allCats] = await Promise.all([dbList("protocols"), dbList("categories")]);
+  const catBySlug = Object.fromEntries(allCats.map(c=>[c.slug, c]));
+  const catOfProt = (p) => allCats.find(c=>c.id===p.category_id);
+  const curDefault = map.default_protocol || "";
+  const groups = {};
+  allProt.filter(p=>p.status==="published").forEach(p=>{
+    const slug = catOfProt(p)?.slug || "overig";
+    (groups[slug] = groups[slug] || []).push(p);
+  });
+  const groupOrder = CATEGORY_ORDER.concat(Object.keys(groups).filter(sl=>!CATEGORY_ORDER.includes(sl)));
+  const defaultProtoOptions = groupOrder.filter(sl=>groups[sl]).map(sl=>{
+    const title = catBySlug[sl]?.title || sl;
+    const items = groups[sl].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))
+      .map(p=>`<option value="${esc(p.slug)}" ${p.slug===curDefault?"selected":""}>${esc(p.title)}</option>`).join("");
+    return `<optgroup label="${esc(title)}">${items}</optgroup>`;
+  }).join("");
+  const defaultProtoHtml = `<label>Standaardprotocol — dit opent als eerste in de app</label>
+    <select data-key="default_protocol"><option value="" ${curDefault?"":"selected"}>— geen (eerste protocol in de lijst) —</option>${defaultProtoOptions}</select>`;
   const labels = {
     app_name: "App-naam",
     default_closing_title: "Standaard afsluittitel",
@@ -1638,6 +1658,10 @@ Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
   const textareaHtml = (k) => `<label>${labels[k]||k}</label><textarea data-key="${k}" style="min-height:120px">${esc(val(k))}</textarea>`;
   const cueKeys = ["rest_cue_word","rest_sub_hold","rest_sub_pause"];
   tabBody.innerHTML = `<div class="card"><h2>App-instellingen</h2>
+    <h3 style="margin-top:0">Standaardprotocol</h3>
+    <p class="muted">Bepaalt op welk protocol de app opent voor wie nog niets heeft gekozen. Een bewuste keuze van de gebruiker (kaart, play of een deel-link) gaat hier altijd vóór. Je kunt dit ook snel wisselen met de ster (★) in de protocollijst.</p>
+    ${defaultProtoHtml}
+    <h3 style="margin-top:18px">Algemeen</h3>
     ${keys.map(fieldHtml).join("")}
     <p class="muted" style="margin-top:6px">Het geluidsvolume geldt als startwaarde voor nieuwe gebruikers; ze kunnen het zelf nog bijstellen.</p>
     <h3 style="margin-top:18px">Woorden in de sessiecirkel (app-breed)</h3>
