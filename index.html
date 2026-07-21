@@ -1794,7 +1794,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.6</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.7</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5944,6 +5944,12 @@ function accountDisplayName() {
   try { return (JSON.parse(localStorage.getItem("phytoforsan_profile")) || {}).name || ""; } catch { return ""; }
 }
 
+// Dagdeel voor het dynamische standaardprotocol — zelfde grenzen als de begroeting.
+function currentDaypart() {
+  const h = new Date().getHours();
+  return h < 6 ? "night" : h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
+}
+
 function updateGreeting() {
   const h = new Date().getHours();
   const word = h < 6 ? "Goedenacht" : h < 12 ? "Goedemorgen" : h < 18 ? "Goedemiddag" : "Goedenavond";
@@ -6498,17 +6504,20 @@ async function bootstrapBackend() {
     // van de backend-data al gerenderd (zonder tegel-afbeeldingen). Zonder deze
     // hertekening blijven ze op het neutrale standaardicoon staan.
     if (document.getElementById("homeRecoList") && typeof initHome === "function") initHome();
-    // Standaardprotocol uit de backoffice (app_settings.default_protocol, op slug).
-    // Alleen gebruiken als startkeuze; een al gekozen preset of gedeelde link wint.
-    const defRow = (data.app_settings || []).find(s => s.key === "default_protocol");
-    const defSlug = defRow && defRow.value ? String(defRow.value) : "";
-    const defKey = defSlug
-      ? (presets[defSlug] ? defSlug : Object.keys(presets).find(k => k.toLowerCase() === defSlug.toLowerCase()))
-      : "";
-    // Heeft de gebruiker al zelf gekozen? Respecteer die keuze. Zo niet, dan wint
-    // het standaardprotocol (de ster) boven de vaste startwaarde "longExhale".
+    // Startprotocol bepalen (alles op slug, uit de backoffice/app_settings).
+    const setVal = (k) => { const r = (data.app_settings || []).find(s => s.key === k); return r && r.value != null ? String(r.value) : ""; };
+    const toKey = (slug) => slug ? (presets[slug] ? slug : Object.keys(presets).find(k => k.toLowerCase() === slug.toLowerCase())) : "";
+    // Laag: vaste ster.
+    const defKey = toKey(setVal("default_protocol"));
+    // Laag: dynamisch per dagdeel (alleen als in de backoffice ingeschakeld).
+    let dynKey = "";
+    if (setVal("default_dynamic_enabled") === "true") {
+      dynKey = toKey(setVal("default_protocol_" + currentDaypart()));
+    }
+    // Prioriteit: 1) bewuste keuze/deel-link  2) dagdeel  3) vaste ster  4) fallback.
     applyPreset(
       (userChoseProtocol && presets[activePreset]) ? activePreset
+      : (dynKey && presets[dynKey]) ? dynKey
       : (defKey && presets[defKey]) ? defKey
       : (presets[activePreset] ? activePreset : Object.keys(presets)[0]));
     console.info(`PhytoForsan: backend-data toegepast (${res.overlaid} bijgewerkt, ${res.added} nieuw, ${res.removed} verborgen).`);

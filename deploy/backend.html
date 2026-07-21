@@ -59,7 +59,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.3</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.4</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1543,14 +1543,29 @@ async function renderSettings() {
     (groups[slug] = groups[slug] || []).push(p);
   });
   const groupOrder = CATEGORY_ORDER.concat(Object.keys(groups).filter(sl=>!CATEGORY_ORDER.includes(sl)));
-  const defaultProtoOptions = groupOrder.filter(sl=>groups[sl]).map(sl=>{
+  // Herbruikbare optgroups; per keuzelijst wordt de juiste optie geselecteerd.
+  const protoOptions = (selectedSlug) => groupOrder.filter(sl=>groups[sl]).map(sl=>{
     const title = catBySlug[sl]?.title || sl;
     const items = groups[sl].sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))
-      .map(p=>`<option value="${esc(p.slug)}" ${p.slug===curDefault?"selected":""}>${esc(p.title)}</option>`).join("");
+      .map(p=>`<option value="${esc(p.slug)}" ${p.slug===selectedSlug?"selected":""}>${esc(p.title)}</option>`).join("");
     return `<optgroup label="${esc(title)}">${items}</optgroup>`;
   }).join("");
+  const protoSelect = (key, selectedSlug) =>
+    `<select data-key="${key}"><option value="" ${selectedSlug?"":"selected"}>— geen (vaste standaard) —</option>${protoOptions(selectedSlug)}</select>`;
   const defaultProtoHtml = `<label>Standaardprotocol — dit opent als eerste in de app</label>
-    <select data-key="default_protocol"><option value="" ${curDefault?"":"selected"}>— geen (eerste protocol in de lijst) —</option>${defaultProtoOptions}</select>`;
+    <select data-key="default_protocol"><option value="" ${curDefault?"":"selected"}>— geen (eerste protocol in de lijst) —</option>${protoOptions(curDefault)}</select>`;
+  // Dynamisch per dagdeel (grenzen gelijk aan de begroeting: nacht<6, ochtend<12, middag<18, avond).
+  const dynOn = map.default_dynamic_enabled === "true";
+  const dayparts = [["morning","Ochtend (06–12u)"],["afternoon","Middag (12–18u)"],["evening","Avond (18–24u)"],["night","Nacht (00–06u)"]];
+  const dynamicHtml = `
+    <label>Meebewegen met het dagdeel</label>
+    <select data-key="default_dynamic_enabled" id="dynToggle">
+      <option value="false" ${dynOn?"":"selected"}>Uit — altijd het vaste standaardprotocol (ster)</option>
+      <option value="true" ${dynOn?"selected":""}>Aan — kies per dagdeel een protocol</option>
+    </select>
+    <div id="dynDayparts" style="margin-top:8px;${dynOn?"":"display:none"}">
+      ${dayparts.map(([k,lbl])=>`<label>${lbl}</label>${protoSelect("default_protocol_"+k, map["default_protocol_"+k]||"")}`).join("")}
+    </div>`;
   const labels = {
     app_name: "App-naam",
     default_closing_title: "Standaard afsluittitel",
@@ -1659,8 +1674,11 @@ Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
   const cueKeys = ["rest_cue_word","rest_sub_hold","rest_sub_pause"];
   tabBody.innerHTML = `<div class="card"><h2>App-instellingen</h2>
     <h3 style="margin-top:0">Standaardprotocol</h3>
-    <p class="muted">Bepaalt op welk protocol de app opent voor wie nog niets heeft gekozen. Een bewuste keuze van de gebruiker (kaart, play of een deel-link) gaat hier altijd vóór. Je kunt dit ook snel wisselen met de ster (★) in de protocollijst.</p>
+    <p class="muted">Bepaalt op welk protocol de app opent voor wie nog niets heeft gekozen. Een bewuste keuze van de gebruiker (kaart, play of een deel-link) gaat hier altijd vóór. Je kunt de vaste standaard ook snel wisselen met de ster (★) in de protocollijst.</p>
     ${defaultProtoHtml}
+    <h3 style="margin-top:18px">Dynamisch — meebewegen met het dagdeel</h3>
+    <p class="muted">Zet dit aan om afhankelijk van het tijdstip een ander protocol te laten openen (bijv. 's ochtends activerend, 's avonds een slaapprotocol). Laat een dagdeel leeg, dan valt dat moment terug op de vaste standaard hierboven. Volgorde: eigen keuze &gt; dagdeel &gt; vaste ster.</p>
+    ${dynamicHtml}
     <h3 style="margin-top:18px">Algemeen</h3>
     ${keys.map(fieldHtml).join("")}
     <p class="muted" style="margin-top:6px">Het geluidsvolume geldt als startwaarde voor nieuwe gebruikers; ze kunnen het zelf nog bijstellen.</p>
@@ -1677,6 +1695,12 @@ Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
     <p class="muted">Laat een veld leeg om de standaardtekst van de app te gebruiken. Een lege regel begint een nieuwe alinea.<br>Opmaak: <b>**vet**</b>, <i>*schuin*</i>, en <code>[kleur=#e08c2a]gekleurde tekst[/kleur]</code>. E-mail en links worden automatisch klikbaar.</p>
     ${textKeys.map(textareaHtml).join("")}
     <button class="btn" id="saveSettings" style="margin-top:10px">Opslaan</button><p class="msg hidden" id="setMsg"></p></div>`;
+  // Dagdeel-keuzelijsten tonen/verbergen op basis van de aan/uit-schakelaar.
+  const dynToggle = document.getElementById("dynToggle");
+  if (dynToggle) dynToggle.addEventListener("change", () => {
+    const box = document.getElementById("dynDayparts");
+    if (box) box.style.display = dynToggle.value === "true" ? "" : "none";
+  });
   document.getElementById("saveSettings").addEventListener("click", async ()=>{
     for (const el of tabBody.querySelectorAll("[data-key]")) await dbUpsert("app_settings", { key:el.dataset.key, value:el.value });
     const m=document.getElementById("setMsg"); m.className="msg ok"; m.textContent="Instellingen opgeslagen."; m.classList.remove("hidden");
