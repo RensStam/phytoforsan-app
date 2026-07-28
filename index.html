@@ -5541,7 +5541,13 @@ document.getElementById("authRegisterBtn")?.addEventListener("click", async () =
   if (error) { setGateMsg("authMsg", friendlyAuthError(error.message, "register"), "err"); return; }
   if (data.session?.user) { await loadAppProfile(data.session.user); setGateMsg("authMsg", "Account aangemaakt en ingelogd. Je hebt nu ook toegang tot de verdiepingssessies.", "ok"); }
   else {
-    notifyIfExistingAccount(email);
+    // Bij een bestaand e-mailadres geeft Supabase geen fout, maar een user-object
+    // zonder identities terug (bewust, tegen account-enumeratie). Dat is ons signaal.
+    const alreadyExists = Array.isArray(data.user?.identities) && data.user.identities.length === 0;
+    if (alreadyExists) {
+      notifyIfExistingAccount(email); // Edge Function, stuurt straks een eigen mail zodra SMTP is ingesteld
+      appSb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname }).catch(() => {});
+    }
     setGateMsg("authMsg", "Account aangemaakt! We hebben een bevestigingsmail gestuurd naar " + email + ". Klik de link in die mail; je komt daarna terug op deze pagina en kunt inloggen. (Geen mail? Kijk in de spam box.)", "ok");
   }
 });
