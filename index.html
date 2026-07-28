@@ -5540,8 +5540,23 @@ document.getElementById("authRegisterBtn")?.addEventListener("click", async () =
   const { data, error } = await appSb.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
   if (error) { setGateMsg("authMsg", friendlyAuthError(error.message, "register"), "err"); return; }
   if (data.session?.user) { await loadAppProfile(data.session.user); setGateMsg("authMsg", "Account aangemaakt en ingelogd. Je hebt nu ook toegang tot de verdiepingssessies.", "ok"); }
-  else { setGateMsg("authMsg", "Account aangemaakt! We hebben een bevestigingsmail gestuurd naar " + email + ". Klik de link in die mail; je komt daarna terug op deze pagina en kunt inloggen. (Geen mail? Kijk in de spam box.)", "ok"); }
+  else {
+    notifyIfExistingAccount(email);
+    setGateMsg("authMsg", "Account aangemaakt! We hebben een bevestigingsmail gestuurd naar " + email + ". Klik de link in die mail; je komt daarna terug op deze pagina en kunt inloggen. (Geen mail? Kijk in de spam box.)", "ok");
+  }
 });
+
+// Stille melding richting de backend: als dit e-mailadres al een account heeft,
+// stuurt de Edge Function daar een "je hebt al een account"-mail naartoe.
+// Faalt bewust geruisloos -- dit mag de registratieflow nooit blokkeren.
+function notifyIfExistingAccount(email) {
+  if (!window.CONFIG?.supabaseUrl || !window.CONFIG?.supabaseAnonKey) return;
+  fetch(`${window.CONFIG.supabaseUrl}/functions/v1/clever-processor`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${window.CONFIG.supabaseAnonKey}` },
+    body: JSON.stringify({ email }),
+  }).catch(() => {});
+}
 
 document.getElementById("authLogoutBtn")?.addEventListener("click", async () => {
   if (appSb) { try { await appSb.auth.signOut(); } catch {} }
