@@ -374,7 +374,7 @@ button { cursor: pointer; }
     box-shadow:0 24px 60px rgba(0,0,0,.3); border-radius:18px;
   }
 }
-.home-greeting { font-size: 1.35rem; font-weight: 900; color: var(--deep); margin: 0 0 4px; }
+.home-greeting { font-size: 1.35rem; font-weight: 900; color: var(--deep); margin: 0 0 4px; padding-right: 44px; }
 .home-leaf { font-size: 1.1rem; }
 .home-question { font-size: .92rem; font-weight: 700; color: rgba(18,55,52,.75); margin: 14px 0 10px; }
 .mood-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
@@ -1694,7 +1694,7 @@ canvas {
       <button class="home-gear" onclick="switchMobileTab('profile')" aria-label="Profiel">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
-      <h2 class="home-greeting" id="homeGreeting">Goedemorgen <span class="home-leaf">&#127807;</span></h2>
+      <h2 class="home-greeting" id="homeGreeting">Goedemorgen&nbsp;<span class="home-leaf">&#127807;</span></h2>
       <p class="home-question">Hoe voel je je vandaag?</p>
       <div class="mood-grid" id="moodGrid">
         <button class="mood-btn" data-mood="rustig"><span class="mood-icon">&#128522;</span>Rustig</button>
@@ -5540,7 +5540,7 @@ document.getElementById("authRegisterBtn")?.addEventListener("click", async () =
   const { data, error } = await appSb.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
   if (error) { setGateMsg("authMsg", friendlyAuthError(error.message, "register"), "err"); return; }
   if (data.session?.user) { await loadAppProfile(data.session.user); setGateMsg("authMsg", "Account aangemaakt en ingelogd. Je hebt nu ook toegang tot de verdiepingssessies.", "ok"); }
-  else { setGateMsg("authMsg", "Account aangemaakt! We hebben een bevestigingsmail gestuurd naar " + email + ". Klik de link in die mail; je komt daarna terug op deze pagina en kunt inloggen. (Geen mail? Kijk in spam.)", "ok"); }
+  else { setGateMsg("authMsg", "Account aangemaakt! We hebben een bevestigingsmail gestuurd naar " + email + ". Klik de link in die mail; je komt daarna terug op deze pagina en kunt inloggen. (Geen mail? Kijk in de spam box.)", "ok"); }
 });
 
 document.getElementById("authLogoutBtn")?.addEventListener("click", async () => {
@@ -5606,7 +5606,7 @@ document.getElementById("forgotSendBtn")?.addEventListener("click", async () => 
   const { error } = await appSb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
   if (error) setGateMsg("authMsg", friendlyAuthError(error.message, "reset"), "err");
   else {
-    setGateMsg("authMsg", `Als er een account bestaat voor ${email}, ontvang je zo een e-mail met een link om een nieuw wachtwoord in te stellen. (Geen mail? Kijk in spam.)`, "ok");
+    setGateMsg("authMsg", `Als er een account bestaat voor ${email}, ontvang je zo een e-mail met een link om een nieuw wachtwoord in te stellen. (Geen mail? Kijk in de spam box.)`, "ok");
     const row = document.getElementById("pwForgotRow");
     if (row) row.style.display = "none";
   }
@@ -6005,7 +6005,7 @@ function updateGreeting() {
   const word = h < 6 ? "Goedenacht" : h < 12 ? "Goedemorgen" : h < 18 ? "Goedemiddag" : "Goedenavond";
   const name = accountDisplayName();
   const safeName = name ? ", " + name.replace(/[<>&]/g, "") : "";
-  document.getElementById("homeGreeting").innerHTML = `${word}${safeName} <span class="home-leaf">&#127807;</span>`;
+  document.getElementById("homeGreeting").innerHTML = `${word}${safeName}&nbsp;<span class="home-leaf">&#127807;</span>`;
 }
 
 function renderHomeRecommendations(mood) {
