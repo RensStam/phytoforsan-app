@@ -1,6 +1,5 @@
 // =====================================================================
 // PhytoForsan Relax — melding "je hebt al een account" (Supabase Edge Function)
-// Functienaam in Supabase: "clever-processor" (automatisch toegekend bij aanmaken).
 //
 // Aanroep: vanuit de app na een registratiepoging (Authorization: Bearer <anon-key>).
 // Zelf checkt deze functie (met de service-role) of het e-mailadres al een

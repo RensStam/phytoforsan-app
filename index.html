@@ -5557,7 +5557,7 @@ document.getElementById("authRegisterBtn")?.addEventListener("click", async () =
 // Faalt bewust geruisloos -- dit mag de registratieflow nooit blokkeren.
 function notifyIfExistingAccount(email) {
   if (!window.CONFIG?.supabaseUrl || !window.CONFIG?.supabaseAnonKey) return;
-  fetch(`${window.CONFIG.supabaseUrl}/functions/v1/clever-processor`, {
+  fetch(`${window.CONFIG.supabaseUrl}/functions/v1/notify-existing-account`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${window.CONFIG.supabaseAnonKey}` },
     body: JSON.stringify({ email }),
