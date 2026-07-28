@@ -329,6 +329,37 @@ button { cursor: pointer; }
   transition: background 120ms, color 120ms, border-color 120ms;
 }
 
+/* ── Alfa-melding ── */
+.alpha-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  padding: 8px 40px 8px 14px;
+  background: var(--soft);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: .82rem;
+  font-weight: 700;
+  text-align: center;
+  position: relative;
+}
+.alpha-banner strong { color: var(--amber); }
+.alpha-banner-close {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 6px;
+  border-radius: 999px;
+}
+.alpha-banner-close:hover { background: rgba(0,0,0,.06); }
+
 /* ── Voortgang ── */
 /* Home */
 .home-panel { padding: 22px; }
@@ -1633,6 +1664,25 @@ canvas {
 </style>
 </head>
 <body>
+<div id="alphaBanner" class="alpha-banner" role="status">
+  <span>&#129514; <strong>Alfaversie</strong> &mdash; deze app is nog in ontwikkeling en kan fouten bevatten.</span>
+  <button class="alpha-banner-close" id="alphaBannerClose" aria-label="Melding sluiten">&times;</button>
+</div>
+<script>
+(function () {
+  var KEY = "phyto_alpha_banner_dismissed";
+  var banner = document.getElementById("alphaBanner");
+  if (!banner) return;
+  if (localStorage.getItem(KEY) === "true") {
+    banner.style.display = "none";
+    return;
+  }
+  document.getElementById("alphaBannerClose").addEventListener("click", function () {
+    banner.style.display = "none";
+    localStorage.setItem(KEY, "true");
+  });
+})();
+</script>
 <main class="app">
 
   <div id="installBtn" style="display:none"></div>
