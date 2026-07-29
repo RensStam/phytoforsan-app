@@ -1844,7 +1844,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.8</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.9</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -5230,7 +5230,7 @@ document.getElementById("settingsBack")?.addEventListener("click", () => switchM
 document.getElementById("shareBtn")?.addEventListener("click", async () => {
   const preset = presets[activePreset];
   // Deel de app mét het gekozen protocol: de link opent dit protocol direct.
-  const base = "https://rensstam.github.io/phytoforsan-app/deploy/";
+  const base = "https://app.phytoforsan.nl/";
   const url = activePreset ? `${base}?p=${encodeURIComponent(activePreset)}` : base;
   const shareData = {
     title: "PhytoForsan Relax",
