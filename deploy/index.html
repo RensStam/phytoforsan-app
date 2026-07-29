@@ -1725,6 +1725,7 @@ canvas {
       </div>
       <button class="profile-edit-btn" id="profileEditBtn">Profiel bewerken</button>
       <button class="profile-edit-btn" id="profileLogoutBtn" style="display:none;margin-top:8px;background:transparent;border:1.5px solid rgba(18,55,52,.18)">Uitloggen</button>
+      <button class="profile-edit-btn" id="profileDeleteBtn" style="display:none;margin-top:8px;background:transparent;border:1.5px solid rgba(192,57,43,.35);color:#c0392b">Account verwijderen</button>
 
       <!-- Guest-stimulans: aanmoediging om in te loggen -->
       <div id="loginStimulus" class="profile-item profile-item-static" style="display:none;flex-direction:column;align-items:flex-start;gap:8px;background:rgba(105,182,38,.10);margin-top:16px">
@@ -1844,7 +1845,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.0.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.0</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -6084,6 +6085,7 @@ function renderProfile() {
   const sinceEl = document.getElementById("profileSince");
   const editBtn = document.getElementById("profileEditBtn");
   const logoutBtn = document.getElementById("profileLogoutBtn");
+  const deleteBtn = document.getElementById("profileDeleteBtn");
   const block = document.getElementById("profileBlock");
   const stimulus = document.getElementById("loginStimulus");
   const loggedIn = typeof appAuth !== "undefined" && appAuth.user;
@@ -6099,6 +6101,7 @@ function renderProfile() {
     if (accessEl) { accessEl.textContent = accessStatusText(); accessEl.style.display = "block"; }
     if (editBtn) { editBtn.textContent = "Account & toegangscode"; editBtn.style.display = ""; }
     if (logoutBtn) logoutBtn.style.display = "";
+    if (deleteBtn) deleteBtn.style.display = "";
     if (block) { block.style.display = ""; fillProfileForm(appAuth.profile); }
     if (stimulus) stimulus.style.display = "none";
   } else {
@@ -6109,6 +6112,7 @@ function renderProfile() {
     if (accessEl) accessEl.style.display = "none";
     if (editBtn) editBtn.style.display = "none";   // gast gebruikt de aanmoedig-knop
     if (logoutBtn) logoutBtn.style.display = "none";
+    if (deleteBtn) deleteBtn.style.display = "none";
     if (block) block.style.display = "none";
     if (stimulus) stimulus.style.display = "flex";
   }
@@ -6131,6 +6135,33 @@ document.getElementById("profileLogoutBtn")?.addEventListener("click", async () 
   appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = [];
   clearBackendSnapshot();   // offline-kopie kan verdiepings-/Plus-protocollen bevatten
   afterAccessChange();
+});
+
+// Account verwijderen: onomkeerbaar. Dubbele bevestiging, daarna server-side wissen.
+document.getElementById("profileDeleteBtn")?.addEventListener("click", async () => {
+  if (!appSb || !appAuth.user) return;
+  const ok1 = confirm(
+    "Je account definitief verwijderen?\n\n" +
+    "Je profiel, voortgang en toegang worden permanent gewist. Dit kan niet ongedaan worden gemaakt.\n\n" +
+    "Betaalgegevens bewaren we los van je account voor de wettelijke administratie.");
+  if (!ok1) return;
+  const ok2 = confirm("Laatste bevestiging: je account en gegevens worden nu verwijderd.");
+  if (!ok2) return;
+  const btn = document.getElementById("profileDeleteBtn");
+  const oldText = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.textContent = "Bezig met verwijderen…"; }
+  try {
+    const { data, error } = await appSb.functions.invoke("delete-account", { body: {} });
+    if (error || !data?.ok) throw new Error(error?.message || (data && data.error) || "verwijderen mislukt");
+    try { await appSb.auth.signOut(); } catch {}
+    appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = [];
+    clearBackendSnapshot();
+    afterAccessChange();
+    alert("Je account is verwijderd. Bedankt dat je de app hebt gebruikt.");
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
+    alert("Verwijderen is niet gelukt: " + (e?.message || e) + "\n\nProbeer het later opnieuw of neem contact op via de app.");
+  }
 });
 
 // Profiel bewerken / account = inlog-/toegangscodescherm.
