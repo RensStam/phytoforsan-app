@@ -35,11 +35,15 @@ window.APP_ENV = _phytoConfigured() ? "supabase" : "mock";
 
 // Maakt (indien geconfigureerd) een Supabase-client. Vereist de supabase-js CDN.
 // Geeft null terug in testmodus of als de gegevens ontbreken.
-window.createSupabaseClient = function () {
+// Optionele storageKey → een eigen, losstaande inlogsessie voor die client.
+// De backoffice gebruikt dit zodat zijn login los staat van de frontend (zelfde
+// domein deelt anders dezelfde Supabase-sessie).
+window.createSupabaseClient = function (storageKey) {
   if (!_phytoConfigured()) return null;
   if (!window.supabase) return null;
   try {
-    return window.supabase.createClient(window.CONFIG.supabaseUrl, window.CONFIG.supabaseAnonKey);
+    const options = storageKey ? { auth: { storageKey: String(storageKey) } } : undefined;
+    return window.supabase.createClient(window.CONFIG.supabaseUrl, window.CONFIG.supabaseAnonKey, options);
   } catch (e) {
     console.warn("Supabase-client kon niet worden aangemaakt:", e);
     return null;

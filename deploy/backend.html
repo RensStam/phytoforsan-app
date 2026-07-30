@@ -59,7 +59,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.4</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.5</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -223,7 +223,8 @@ async function initAuth() {
     // Supabase staat aan → geen mock-login tonen.
     document.getElementById("mockLoginBtn").style.display = "none";
     document.getElementById("mockNotice").classList.add("hidden");
-    sb = createSupabaseClient();
+    // Eigen sessie-sleutel: de backoffice-login staat los van de frontend.
+    sb = createSupabaseClient("phytoforsan-backoffice-auth");
     if (!sb) {
       showLoginMsg("Supabase niet geconfigureerd. Vul je URL/anon key in js/config.js, of laat ze leeg voor lokale testmodus.");
     }
