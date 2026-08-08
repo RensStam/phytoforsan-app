@@ -1847,7 +1847,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.3</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -2965,8 +2965,22 @@ function sessionMusicVolume() {
 // ── Gapless muziek-loop voor de meditatietimer (Web Audio) ──
 // Een HTML-audio element laat bij loop (zeker mp3) een hoorbaar gaatje vallen.
 // Een gedecodeerde AudioBuffer loopt sample-nauwkeurig en dus naadloos door.
-let medMusic = { source: null, gain: null, buffer: null, url: null, playing: false, loop: true };
-async function startMeditationMusicGapless(url, loop = true, offset = 0) {
+// Crossfade-loop voor de meditatiemuziek: opeenvolgende rondes overlappen elkaar
+// kort, zodat het einde vloeiend in het begin overloopt i.p.v. een harde sprong
+// op het looppunt. Gelijk-vermogen curves (sin/cos) houden het volume constant
+// tijdens de overvloei.
+const MED_CROSSFADE_DEFAULT = 3;   // seconden overvloei (later per protocol regelbaar)
+const MED_XF_STEPS = 128;
+const MED_FADE_IN = new Float32Array(MED_XF_STEPS);
+const MED_FADE_OUT = new Float32Array(MED_XF_STEPS);
+for (let _i = 0; _i < MED_XF_STEPS; _i++) {
+  const _t = _i / (MED_XF_STEPS - 1);
+  MED_FADE_IN[_i]  = Math.sin(_t * Math.PI / 2);   // 0 → 1
+  MED_FADE_OUT[_i] = Math.cos(_t * Math.PI / 2);   // 1 → 0
+}
+let medMusic = { iters: [], gain: null, buffer: null, url: null, playing: false, loop: true, xf: MED_CROSSFADE_DEFAULT, schedTimer: null };
+
+async function startMeditationMusicGapless(url, loop = true, offset = 0, crossfade) {
   await ensureAudio();
   if (!audioCtx) return;
   if (medMusic.url !== url || !medMusic.buffer) {
@@ -2984,18 +2998,77 @@ async function startMeditationMusicGapless(url, loop = true, offset = 0) {
   gain.connect(audioCtx.destination);
   medMusic.gain = gain; medMusic.playing = true;
   const dur = medMusic.buffer.duration || 0;
-  // "Eén keer afspelen" met een offset voorbij de track → stil (geen bron).
-  if (!loop && dur > 0 && offset >= dur) { medMusic.source = null; return; }
-  const startOffset = loop ? (dur > 0 ? (((offset % dur) + dur) % dur) : 0) : Math.min(Math.max(0, offset), Math.max(0, dur - 0.05));
-  const src = audioCtx.createBufferSource();
-  src.buffer = medMusic.buffer;
-  src.loop = loop;                 // aan = naadloos herhalen; uit = één keer
-  src.connect(gain);
-  try { src.start(0, startOffset); } catch { try { src.start(); } catch {} }
-  medMusic.source = src;
+  if (dur <= 0) return;
+
+  if (!loop) {
+    // Eén keer afspelen vanaf de huidige positie; voorbij het einde → stil.
+    if (offset >= dur) return;
+    const g = audioCtx.createGain(); g.connect(gain);
+    const src = audioCtx.createBufferSource(); src.buffer = medMusic.buffer; src.connect(g);
+    const startOffset = Math.min(Math.max(0, offset), Math.max(0, dur - 0.05));
+    const entry = { src, g }; medMusic.iters.push(entry);
+    src.onended = () => { try { g.disconnect(); } catch {} const k = medMusic.iters.indexOf(entry); if (k >= 0) medMusic.iters.splice(k, 1); };
+    try { src.start(0, startOffset); } catch { try { src.start(); } catch {} }
+    return;
+  }
+
+  // Loop met crossfade: elke ronde start xf seconden vóór de vorige eindigt.
+  const xf = Math.max(0.2, Math.min(Number(crossfade) > 0 ? Number(crossfade) : MED_CROSSFADE_DEFAULT, dur * 0.45));
+  medMusic.xf = xf;
+  let startOffset = (((offset % dur) + dur) % dur);
+  if (startOffset > dur - 2 * xf) startOffset = 0;   // te dicht bij het einde → fris beginnen
+  const startTime = audioCtx.currentTime + 0.06;
+  const firstNext = medScheduleIteration(startTime, startOffset, true);
+  medScheduleNext(firstNext);
 }
+
+// Plant één loop-ronde: speelt de buffer vanaf fromOffset, met een gelijk-vermogen
+// fade-in (behalve de allereerste ronde) en een fade-out over de laatste xf sec.
+// Geeft terug wanneer de vólgende ronde moet starten (zodat ze overlappen).
+function medScheduleIteration(startTime, fromOffset, isFirst) {
+  if (!audioCtx || !medMusic.buffer || !medMusic.gain) return startTime;
+  const buf = medMusic.buffer, xf = medMusic.xf, dur = buf.duration;
+  const playDur = dur - fromOffset;
+  const g = audioCtx.createGain(); g.connect(medMusic.gain);
+  const src = audioCtx.createBufferSource(); src.buffer = buf; src.connect(g);
+  if (isFirst) {
+    g.gain.setValueAtTime(0, startTime);
+    g.gain.linearRampToValueAtTime(1, startTime + 0.02);   // anti-klik, geen lange intro (dat doet de sessie-envelope)
+  } else {
+    g.gain.setValueCurveAtTime(MED_FADE_IN, startTime, xf);
+  }
+  const foStart = startTime + playDur - xf;
+  if (foStart > startTime + 0.05) g.gain.setValueCurveAtTime(MED_FADE_OUT, foStart, xf);
+  try { src.start(startTime, fromOffset); } catch {}
+  try { src.stop(startTime + playDur + 0.08); } catch {}
+  const entry = { src, g }; medMusic.iters.push(entry);
+  src.onended = () => { try { g.disconnect(); } catch {} const k = medMusic.iters.indexOf(entry); if (k >= 0) medMusic.iters.splice(k, 1); };
+  return startTime + playDur - xf;
+}
+
+// Lookahead-planner: houd altijd ~12s aan rondes vooruit gepland in de audio-klok.
+// Web Audio speelt die exact af, ook als de JS-timer op de achtergrond wordt
+// geknepen (scherm uit tijdens meditatie) — zo hapert de loop niet.
+function medScheduleNext(nextStart) {
+  const HORIZON = 12;
+  const tick = () => {
+    if (!medMusic.playing || !medMusic.gain || !audioCtx) return;
+    while (nextStart < audioCtx.currentTime + HORIZON) {
+      nextStart = medScheduleIteration(nextStart, 0, false);
+    }
+    medMusic.schedTimer = window.setTimeout(tick, 2000);
+  };
+  tick();
+}
+
 function stopMeditationMusicGapless() {
-  if (medMusic.source) { try { medMusic.source.stop(); } catch {} try { medMusic.source.disconnect(); } catch {} medMusic.source = null; }
+  if (medMusic.schedTimer) { clearTimeout(medMusic.schedTimer); medMusic.schedTimer = null; }
+  for (const it of medMusic.iters) {
+    try { it.src.onended = null; it.src.stop(); } catch {}
+    try { it.src.disconnect(); } catch {}
+    try { it.g.disconnect(); } catch {}
+  }
+  medMusic.iters = [];
   if (medMusic.gain) { try { medMusic.gain.disconnect(); } catch {} medMusic.gain = null; }
   medMusic.playing = false;
 }
@@ -3017,7 +3090,7 @@ function startSessionMusic() {
   // Muziek begint op de huidige sessiepositie (belangrijk na scrubben of hervatten).
   const offset = sessionElapsed();
   // Meditatietimer → gapless Web Audio-loop; respecteert het herhaal-vinkje.
-  if (presets[activePreset]?.meditationMode) { startMeditationMusicGapless(cfg.url, cfg.loop !== false, offset); return; }
+  if (presets[activePreset]?.meditationMode) { startMeditationMusicGapless(cfg.url, cfg.loop !== false, offset, cfg.crossfade); return; }
   // Overige protocollen → gewoon HTML-audio.
   if (sessionMusicFadeTimer) { clearInterval(sessionMusicFadeTimer); sessionMusicFadeTimer = null; }
   sessionMusic.loop = cfg.loop !== false;
@@ -3101,14 +3174,18 @@ function playVoiceCue(phase) {
 let sessionMusicFadeTimer = null;
 function stopSessionMusic(reset = true, fadeSeconds = 2.5) {
   // Gapless meditatiemuziek (Web Audio) mee afronden.
-  if (medMusic.playing || medMusic.source) {
+  if (medMusic.playing || medMusic.iters.length) {
+    if (medMusic.schedTimer) { clearTimeout(medMusic.schedTimer); medMusic.schedTimer = null; }
     if (!fadeSeconds || !medMusic.gain || !audioCtx) {
       stopMeditationMusicGapless();
     } else {
       medMusic.gain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, Math.max(0.05, fadeSeconds / 4));
-      const src = medMusic.source, g = medMusic.gain;
-      medMusic.source = null; medMusic.gain = null; medMusic.playing = false;
-      window.setTimeout(() => { try { src.stop(); src.disconnect(); g.disconnect(); } catch {} }, fadeSeconds * 1000 + 150);
+      const iters = medMusic.iters, g = medMusic.gain;
+      medMusic.iters = []; medMusic.gain = null; medMusic.playing = false;
+      window.setTimeout(() => {
+        for (const it of iters) { try { it.src.onended = null; it.src.stop(); it.src.disconnect(); } catch {} try { it.g.disconnect(); } catch {} }
+        try { g.disconnect(); } catch {}
+      }, fadeSeconds * 1000 + 150);
     }
   }
   if (!sessionMusic.src) return;
@@ -5848,20 +5925,9 @@ function syncMusicToElapsed(target) {
 
   // Gapless meditatie-loop (Web Audio)
   if (preset?.meditationMode) {
-    if (medMusic.playing && medMusic.source && medMusic.buffer && medMusic.gain && audioCtx) {
-      const dur = medMusic.buffer.duration;
-      try { medMusic.source.stop(); medMusic.source.disconnect(); } catch {}
-      if (!medMusic.loop && target >= dur) {
-        medMusic.source = null;   // "één keer afspelen" en voorbij → stil
-      } else {
-        const offset = medMusic.loop ? (dur > 0 ? (((target % dur) + dur) % dur) : 0) : Math.min(target, Math.max(0, dur - 0.05));
-        const src = audioCtx.createBufferSource();
-        src.buffer = medMusic.buffer; src.loop = medMusic.loop;
-        src.connect(medMusic.gain);
-        try { src.start(0, offset); } catch { try { src.start(); } catch {} }
-        medMusic.source = src;
-      }
-      applyMeditationMusicEnvelope(target);
+    if (medMusic.playing && medMusic.buffer && audioCtx) {
+      // Herstart de crossfade-loop op de nieuwe positie (stopt de oude rondes zelf).
+      startMeditationMusicGapless(cfg.url, cfg.loop !== false, target, cfg.crossfade);
     } else if (running && enabled) {
       startSessionMusic();   // stond stil → (her)start op de huidige positie
     }
