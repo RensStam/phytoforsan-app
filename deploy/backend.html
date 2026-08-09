@@ -59,7 +59,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.5</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.6</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -901,6 +901,13 @@ async function renderProtocolAudio() {
   const opt = (sel) => `<option value="">— geen —</option>` + tracks.map(t => `<option value="${t.id}" ${t.id===sel?"selected":""}>${esc(trackLabel(t))}</option>`).join("");
   const track = link && tracks.find(t => t.id === link.audio_track_id);
   const sessieSec = totalSeconds(await dbList("protocol_phases", { protocol_id: editingProtocolId }));
+  // Overvloei (crossfade) alleen tonen bij de meditatietimer — die speelt via Web
+  // Audio met crossfade-loop; andere protocollen gebruiken het niet.
+  const curProt = (await dbList("protocols")).find(x => x.id === editingProtocolId);
+  const isMed = curProt ? await isMeditatieProtocol(curProt) : false;
+  const xfVal = link && link.crossfade_seconds != null ? Number(link.crossfade_seconds) : 3;
+  const xfHtml = isMed ? `
+    <div class="row" style="margin-top:8px"><div><label>Overvloei bij herhalen (s) <span class="muted">— het einde vloeit over in het begin i.p.v. een harde sprong</span></label><input id="pa_xf" type="number" min="0" max="30" step="0.5" value="${xfVal}"></div><div></div></div>` : "";
   wrap.innerHTML = `<h3>Achtergrondmuziek</h3>
     <p class="muted">Speelt zacht mee tijdens de hele sessie. Upload eerst een track in het tabblad Audio.</p>
     <p class="muted">Sessieduur van dit protocol: <b id="audioSessionDur">${fmtDur(sessieSec)} (${sessieSec} s)</b> — stem je geluidsfragment hierop af. Loopt de track (herhalen aan), dan hoeft dat niet exact.</p>
@@ -909,6 +916,7 @@ async function renderProtocolAudio() {
       <div><label>Volume (0–100%)</label><input id="pa_vol" type="number" min="0" max="100" value="${link ? Math.round((link.volume??0.35)*100) : 35}"></div>
     </div>
     <label class="switch-label" style="display:flex;align-items:center;gap:8px;margin-top:8px"><input id="pa_loop" type="checkbox" ${ (link ? link.loop !== false : true) ? "checked" : "" }> Herhalen tot het einde van de sessie (uit = één keer afspelen)</label>
+    ${xfHtml}
     <div id="pa_preview" style="margin-top:8px">${track && track.storage_path ? `<audio controls src="${esc(track.storage_path)}" style="width:100%"></audio>` : ""}</div>
     <div style="margin-top:8px"><button class="btn small" id="pa_save">Muziek opslaan</button></div>
     <p class="msg hidden" id="pa_msg"></p>`;
@@ -926,7 +934,10 @@ async function renderProtocolAudio() {
       // bestaande background-koppeling(en) opruimen, dan eventueel nieuwe zetten
       for (const l of links) await dbDelete("protocol_audio", l.id);
       const loop = document.getElementById("pa_loop").checked;
-      if (trackId) await dbUpsert("protocol_audio", { protocol_id: editingProtocolId, audio_track_id: trackId, audio_role: "background", enabled: true, loop, volume: vol });
+      const rec = { protocol_id: editingProtocolId, audio_track_id: trackId, audio_role: "background", enabled: true, loop, volume: vol };
+      const xfEl = document.getElementById("pa_xf");
+      if (xfEl) rec.crossfade_seconds = Math.max(0, Number(xfEl.value) || 0);
+      if (trackId) await dbUpsert("protocol_audio", rec);
       msg.className="msg ok"; msg.textContent="Muziekkoppeling opgeslagen."; msg.classList.remove("hidden");
       renderProtocolAudio();
     } catch (e) { msg.className="msg err"; msg.textContent="Fout: "+(e.message||e); msg.classList.remove("hidden"); }
