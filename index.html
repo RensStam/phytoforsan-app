@@ -1847,7 +1847,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.6</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -3000,7 +3000,12 @@ function renderMedMusicChips() {
   const active = activeBgVariant(preset);
   const activeLabel = active ? active.label : null;
   box.textContent = "";
-  variants.forEach((v, i) => {
+  // Knoppen chronologisch tonen (ochtend → middag → avond → nacht); varianten
+  // zonder dagdeel achteraan. De opslagvolgorde (sort) is de tiebreaker.
+  const dpRank = { morning: 0, afternoon: 1, evening: 2, night: 3 };
+  const display = variants.slice().sort((a, b) =>
+    ((dpRank[a.daypart] ?? 9) - (dpRank[b.daypart] ?? 9)) || ((a.sort || 0) - (b.sort || 0)));
+  display.forEach((v, i) => {
     const btn = document.createElement("button");
     btn.type = "button";
     const on = (v.label === activeLabel);
