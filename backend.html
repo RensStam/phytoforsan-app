@@ -59,7 +59,7 @@
 <header>
   <h1>PhytoForsan · Backend</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.6</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.7</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -905,6 +905,66 @@ async function renderProtocolAudio() {
   // Audio met crossfade-loop; andere protocollen gebruiken het niet.
   const curProt = (await dbList("protocols")).find(x => x.id === editingProtocolId);
   const isMed = curProt ? await isMeditatieProtocol(curProt) : false;
+
+  // Meditatietimer: meerdere muziekvarianten (naam + dagdeel + track + volume +
+  // loop + crossfade). De app kiest automatisch op dagdeel; gebruiker kan wisselen.
+  if (isMed) {
+    const dayparts = [["","— geen (alleen handmatig) —"],["morning","Ochtend"],["afternoon","Middag"],["evening","Avond"],["night","Nacht"]];
+    const daypartOpt = (sel) => dayparts.map(([v,l]) => `<option value="${v}" ${v===(sel||"")?"selected":""}>${esc(l)}</option>`).join("");
+    const trackOpt = (sel) => `<option value="">— geen —</option>` + tracks.map(t => `<option value="${t.id}" ${t.id===sel?"selected":""}>${esc(trackLabel(t))}</option>`).join("");
+    const sorted = links.slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    const rowHtml = (v) => `
+      <div class="pa-variant" style="border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">
+        <div class="row">
+          <div><label>Naam (voor de gebruiker)</label><input class="pav-label" value="${esc(v.variant_label||"")}" placeholder="bv. Ochtend"></div>
+          <div><label>Dagdeel <span class="muted">— app kiest deze dan automatisch</span></label><select class="pav-daypart">${daypartOpt(v.daypart)}</select></div>
+        </div>
+        <div class="row">
+          <div><label>Track</label><select class="pav-track">${trackOpt(v.audio_track_id)}</select></div>
+          <div><label>Volume (0–100%)</label><input class="pav-vol" type="number" min="0" max="100" value="${v.volume!=null?Math.round(v.volume*100):35}"></div>
+        </div>
+        <div class="row">
+          <div><label>Overvloei (s)</label><input class="pav-xf" type="number" min="0" max="30" step="0.5" value="${v.crossfade_seconds!=null?Number(v.crossfade_seconds):3}"></div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px"><label class="switch-label" style="display:flex;align-items:center;gap:6px"><input class="pav-loop" type="checkbox" ${v.loop!==false?"checked":""}> Herhalen</label><button class="btn small danger pav-del" type="button">Verwijderen</button></div>
+        </div>
+      </div>`;
+    wrap.innerHTML = `<h3>Achtergrondmuziek — varianten</h3>
+      <p class="muted">De meditatietimer kan meerdere muziekvarianten hebben (bv. Ochtend, Avond). De app kiest automatisch de variant die bij het dagdeel hoort; de gebruiker kan zelf wisselen. Upload tracks in het tabblad Audio.</p>
+      <div id="pa_variants">${sorted.map(rowHtml).join("") || rowHtml({})}</div>
+      <div style="margin-top:6px"><button class="btn small secondary" id="pa_add" type="button">+ Variant toevoegen</button></div>
+      <div style="margin-top:10px"><button class="btn small" id="pa_save">Muziek opslaan</button></div>
+      <p class="msg hidden" id="pa_msg"></p>`;
+    const container = document.getElementById("pa_variants");
+    const wireDel = () => container.querySelectorAll(".pav-del").forEach(b => { b.onclick = () => b.closest(".pa-variant").remove(); });
+    wireDel();
+    document.getElementById("pa_add").addEventListener("click", () => {
+      const tmp = document.createElement("div"); tmp.innerHTML = rowHtml({}); container.appendChild(tmp.firstElementChild); wireDel();
+    });
+    document.getElementById("pa_save").addEventListener("click", async () => {
+      const msg = document.getElementById("pa_msg");
+      try {
+        for (const l of links) await dbDelete("protocol_audio", l.id);
+        let idx = 0;
+        for (const row of container.querySelectorAll(".pa-variant")) {
+          const trackId = row.querySelector(".pav-track").value;
+          if (!trackId) continue;
+          const vol = Math.min(1, Math.max(0, Number(row.querySelector(".pav-vol").value)/100 || 0));
+          await dbUpsert("protocol_audio", {
+            protocol_id: editingProtocolId, audio_track_id: trackId, audio_role: "background", enabled: true,
+            variant_label: row.querySelector(".pav-label").value.trim() || null,
+            daypart: row.querySelector(".pav-daypart").value || null,
+            volume: vol, loop: row.querySelector(".pav-loop").checked,
+            crossfade_seconds: Math.max(0, Number(row.querySelector(".pav-xf").value) || 0),
+            sort_order: idx++,
+          });
+        }
+        msg.className="msg ok"; msg.textContent="Muziekvarianten opgeslagen."; msg.classList.remove("hidden");
+        renderProtocolAudio();
+      } catch (e) { msg.className="msg err"; msg.textContent="Fout: "+(e.message||e); msg.classList.remove("hidden"); }
+    });
+    return;
+  }
+
   const xfVal = link && link.crossfade_seconds != null ? Number(link.crossfade_seconds) : 3;
   const xfHtml = isMed ? `
     <div class="row" style="margin-top:8px"><div><label>Overvloei bij herhalen (s) <span class="muted">— het einde vloeit over in het begin i.p.v. een harde sprong</span></label><input id="pa_xf" type="number" min="0" max="30" step="0.5" value="${xfVal}"></div><div></div></div>` : "";

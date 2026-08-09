@@ -1847,7 +1847,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.5</span>
         <div class="stage-logo">
           <img src="logo.svg"
                alt="PhytoForsan" aria-hidden="true"
@@ -1992,6 +1992,12 @@ canvas {
               <div class="value-line value-line--wide"><input id="medIntervalInput" type="range" min="1" max="15" step="1" value="5"><output id="medIntervalOut">elke 5 minuten</output></div>
             </label>
           </div>
+        </section>
+        <!-- Meditatietimer: keuze van achtergrondmuziek (alleen bij meerdere varianten) -->
+        <section class="control-group" id="medMusicSection" style="display:none">
+          <p class="section-title">Muziek</p>
+          <p class="med-note">Standaard volgt de muziek het dagdeel. Je kunt zelf wisselen.</p>
+          <div id="medMusicChips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
         </section>
         <section class="control-group" id="rhythmSection">
           <div class="section-title-row">
@@ -2956,11 +2962,58 @@ let bgFadeTimer = null;
 // hele sessie, los van de hum-/klanklogica.
 const sessionMusic = new Audio();
 sessionMusic.preload = "none";
+// Door de gebruiker gekozen muziekvariant (label) — alleen deze sessie; bij een
+// verse start (herladen) valt het weer terug op de dagdeel-standaard.
+let medMusicVariant = null;
+// De nu actieve achtergrondvariant van een protocol. Eén variant → die. Meerdere
+// (meditatietimer) → sessiekeuze, anders het dagdeel, anders de eerste.
+function activeBgVariant(preset) {
+  const variants = preset?.bgMusic?.variants;
+  if (!variants || !variants.length) return null;
+  if (variants.length === 1) return variants[0];
+  if (medMusicVariant != null) {
+    const chosen = variants.find(v => v.label === medMusicVariant);
+    if (chosen) return chosen;
+  }
+  const dp = currentDaypart();
+  const byDp = variants.find(v => v.daypart === dp);
+  if (byDp) return byDp;
+  return variants[0];
+}
 function sessionMusicVolume() {
-  const cfg = presets[activePreset]?.bgMusic;
+  const cfg = activeBgVariant(presets[activePreset]);
   if (!cfg) return 0;
   const base = Math.max(0, Number(els.volumeInput.value) / 100);
   return Math.min(1, base * (cfg.volume == null ? 0.35 : cfg.volume));
+}
+
+// Meditatietimer: keuzeknoppen voor de muziekvariant. Alleen zichtbaar bij ≥2
+// varianten. De actieve variant (sessiekeuze of dagdeel) is gemarkeerd.
+function renderMedMusicChips() {
+  const section = document.getElementById("medMusicSection");
+  const box = document.getElementById("medMusicChips");
+  if (!section || !box) return;
+  const preset = presets[activePreset];
+  const variants = (preset?.meditationMode && preset?.bgMusic?.variants) ? preset.bgMusic.variants : [];
+  if (variants.length < 2) { section.style.display = "none"; box.textContent = ""; return; }
+  section.style.display = "";
+  const active = activeBgVariant(preset);
+  const activeLabel = active ? active.label : null;
+  box.textContent = "";
+  variants.forEach((v, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    const on = (v.label === activeLabel);
+    btn.style.cssText = "padding:8px 16px;border-radius:999px;border:1.5px solid rgba(18,55,52,.18);background:#fff;color:var(--deep);font-weight:800;font-size:.82rem;cursor:pointer;transition:background .12s,color .12s";
+    if (on) btn.style.cssText += ";background:var(--deep);color:#fff;border-color:var(--deep)";
+    btn.textContent = v.label || `Variant ${i + 1}`;
+    btn.addEventListener("click", () => {
+      medMusicVariant = v.label || null;
+      renderMedMusicChips();
+      if (medMusic.playing) startSessionMusic();   // wisselt de muziek direct als hij speelt
+    });
+    box.appendChild(btn);
+  });
 }
 // ── Gapless muziek-loop voor de meditatietimer (Web Audio) ──
 // Een HTML-audio element laat bij loop (zeker mp3) een hoorbaar gaatje vallen.
@@ -3079,7 +3132,7 @@ function setMeditationMusicGain(v) {
 }
 
 function startSessionMusic() {
-  const cfg = presets[activePreset]?.bgMusic;
+  const cfg = activeBgVariant(presets[activePreset]);
   if (!cfg || !cfg.url) return;
   // Gekoppeld aan de Achtergrondgeluid-toggle: de meditatietimer heeft een
   // eigen schakelaar (in Signalen), overige protocollen de gewone toggle.
@@ -3828,7 +3881,7 @@ function applyPreset(id, userSelected = false) {
   const breathingControls = document.getElementById("breathingControls");
   if (breathingControls) breathingControls.style.display = presets[id]?.meditationMode ? "none" : "";
   // Achtergrondgeluid: alléén als er per protocol een track is gekoppeld.
-  const heeftBgTrack = !!presets[id]?.bgMusic;
+  const heeftBgTrack = !!(presets[id]?.bgMusic?.variants?.length);
   const breathSoundRow = document.getElementById("breathSoundRow");
   if (breathSoundRow) breathSoundRow.style.display = heeftBgTrack ? "" : "none";
   // Bij een gekoppelde track staat het achtergrondgeluid standaard aan.
@@ -5099,9 +5152,10 @@ function updateMeditationSoundUI() {
   if (intervalRow) intervalRow.style.display = intervalToggle?.checked ? "" : "none";
   if (intervalOut && intervalInput) intervalOut.textContent = `elke ${intervalInput.value} ${Number(intervalInput.value) === 1 ? "minuut" : "minuten"}`;
   // Achtergrondgeluid: alleen tonen als het backend een track heeft gekoppeld
-  const hasBgMusic = Boolean(presets[activePreset]?.bgMusic?.url);
+  const hasBgMusic = Boolean(activeBgVariant(presets[activePreset])?.url);
   const bgRow = document.getElementById("medBgSoundRow");
   if (bgRow) bgRow.style.display = hasBgMusic ? "" : "none";
+  renderMedMusicChips();   // muziekvariant-keuze (alleen bij ≥2 varianten)
   const bgActive = hasBgMusic && document.getElementById("medBgSoundToggle")?.checked;
   // Volume alleen tonen als er daadwerkelijk geluid actief is (meditatiemodus)
   const volumeSection = document.getElementById("volumeSection");
@@ -5918,7 +5972,7 @@ function updateAdminScrub() {
 // zodat muziek en protocol synchroon blijven lopen.
 function syncMusicToElapsed(target) {
   const preset = presets[activePreset];
-  const cfg = preset?.bgMusic;
+  const cfg = activeBgVariant(preset);
   if (!cfg || !cfg.url) return;
   const toggle = preset?.meditationMode ? document.getElementById("medBgSoundToggle") : els.breathSoundToggle;
   const enabled = !!toggle?.checked;
@@ -6598,11 +6652,22 @@ function applyAdminData(data) {
     const url = tr && tr.storage_path && /^https?:/.test(tr.storage_path) ? tr.storage_path : null;
     if (!url) continue;
     if (l.audio_role === "background") {
-      bgByProtocol[l.protocol_id] = { url, volume: (l.volume == null ? 0.35 : Number(l.volume)), loop: l.loop !== false, crossfade: (l.crossfade_seconds == null ? undefined : Number(l.crossfade_seconds)) };
+      const variant = {
+        label: l.variant_label || null,
+        url,
+        volume: (l.volume == null ? 0.35 : Number(l.volume)),
+        loop: l.loop !== false,
+        crossfade: (l.crossfade_seconds == null ? undefined : Number(l.crossfade_seconds)),
+        daypart: l.daypart || null,
+        sort: Number(l.sort_order) || 0,
+      };
+      (bgByProtocol[l.protocol_id] = bgByProtocol[l.protocol_id] || { variants: [] }).variants.push(variant);
     } else if (voiceRoleKey[l.audio_role]) {
       (voiceByProtocol[l.protocol_id] = voiceByProtocol[l.protocol_id] || {})[voiceRoleKey[l.audio_role]] = url;
     }
   }
+  // Varianten in de door de backoffice ingestelde volgorde (sort_order) zetten.
+  Object.values(bgByProtocol).forEach(b => b.variants.sort((a, c) => (a.sort || 0) - (c.sort || 0)));
   // Bestaande preset-sleutel ongeacht hoofd-/kleine letters vinden (voorkomt kopieën
   // als een slug per ongeluk anders is geschreven, bv. longExhale vs longexhale).
   const keyByLower = {};
