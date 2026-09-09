@@ -1,0 +1,39 @@
+name: Keep Supabase awake
+
+# Houdt het gratis Supabase-project wakker. Supabase pauzeert free-tier
+# projecten na ~7 dagen zonder database-activiteit. Deze workflow doet elke
+# dag één klein REST-verzoek naar de database; dat telt als activiteit en
+# voorkomt automatisch pauzeren. Gebruikt de publieke (publishable) sleutel,
+# die toch al in de frontend zit — geen geheim nodig.
+#
+# LET OP:
+# - Dit VOORKOMT pauzeren; het kan een al gepauzeerd project niet wekken
+#   (dat doe je eenmalig met "Restore" in het Supabase-dashboard).
+# - GitHub schakelt geplande workflows uit na 60 dagen zonder repo-activiteit.
+#   Zolang je regelmatig deployt is dat geen probleem. Anders: open het
+#   tabblad Actions en klik deze workflow handmatig aan ("Run workflow").
+
+on:
+  schedule:
+    - cron: "17 7 * * *"   # elke dag om 07:17 UTC
+  workflow_dispatch: {}      # ook handmatig te starten via het Actions-tabblad
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: https://bbumyqthhyizsmgyqfue.supabase.co
+          SUPABASE_KEY: sb_publishable_F53OcwgOGEkpoFkBJgceQw_qjKpQvv0
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/protocols?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+          echo "Supabase antwoordde met HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::Onverwachte status $code — project mogelijk gepauzeerd of sleutel/endpoint gewijzigd."
+            exit 1
+          fi
+          echo "Project is wakker gehouden."
