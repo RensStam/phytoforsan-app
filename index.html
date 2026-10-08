@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html lang="nl"><head>
+<script>
+// Verhuisd: oude adressen doorsturen naar restavia.web.app
+(function(){var h=location.hostname;if(h==="app.phytoforsan.nl"||h==="rensstam.github.io"){var p=location.pathname.replace(/^\/phytoforsan-app/,"").replace(/^\/deploy/,"");location.replace("https://restavia.web.app"+(p||"/")+location.search+location.hash);}})();
+</script><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#FAFAF7">
@@ -5867,11 +5871,7 @@ function openMyPaymentReceipt() {
   };
   const w = window.open("", "_blank");
   if (!w) { setGateMsg("plusMsg", "Sta pop-ups toe om je betaalbewijs te openen.", "err"); return; }
-  w.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8">
-<script>
-// Verhuisd: oude adressen doorsturen naar restavia.web.app
-(function(){var h=location.hostname;if(h==="app.phytoforsan.nl"||h==="rensstam.github.io"){var p=location.pathname.replace(/^\/phytoforsan-app/,"").replace(/^\/deploy/,"");location.replace("https://restavia.web.app"+(p||"/")+location.search+location.hash);}})();
-</script><title>Betaalbewijs Restavia Plus</title>
+  w.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Betaalbewijs Restavia Plus</title>
 <style>
   body{font-family:system-ui,-apple-system,sans-serif;color:#3E6A93;max-width:640px;margin:40px auto;padding:0 20px}
   .bon{margin-bottom:40px}
