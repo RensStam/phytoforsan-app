@@ -1650,15 +1650,38 @@ canvas {
   }
 }
 .protocol-start-actions {
-  margin-top: 44px;
-  padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+  margin: 18px 0 8px;
+}
+.session-settings { margin-top: 6px; }
+.session-settings-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: .86rem;
+  font-weight: 700;
+  color: var(--restavia-dark-blue);
+  transition: background .2s;
+}
+.session-settings-summary::-webkit-details-marker { display: none; }
+.session-settings-summary::after { content: "▾"; font-size: .8rem; transition: transform .2s; }
+.session-settings[open] > .session-settings-summary::after { transform: rotate(180deg); }
+.session-settings-summary:hover { background: var(--restavia-aqua); }
+.session-settings[open] > .session-settings-summary { margin-bottom: 8px; }
+@media (min-width: 641px) {
+  .session-settings-summary { justify-content: flex-start; padding-left: 0; }
 }
 .primary-session-button {
   width: 100%;
-  min-height: 46px;
+  min-height: 52px;
   border: none;
   border-radius: 999px;
-  background: var(--deep);
+  background: var(--restavia-primary);
   color: #fff;
   font-size: .95rem;
   font-weight: 600;
@@ -1878,7 +1901,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.3.5</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.4.0</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -1974,6 +1997,11 @@ canvas {
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="mobile-preset-header" id="mobilePresetHeader" style="display:none"></div>
+      <div class="protocol-start-actions" id="protocolStartActions" style="display:none">
+        <button class="primary-session-button" id="startSessionBtn" type="button">Start sessie</button>
+      </div>
+    <details class="session-settings" id="sessionSettings" open>
+    <summary class="session-settings-summary">Sessie-instellingen</summary>
     <div class="controls-grid">
         <!-- Meditatietimer: sessieduur via slider (alleen zichtbaar bij meditationMode) -->
         <section class="control-group" id="meditationDurationSection" style="display:none">
@@ -1996,7 +2024,7 @@ canvas {
         <!-- Meditatietimer: zachte klankmarkeringen (start-, eind- en intervaltoon) -->
         <section class="control-group" id="meditationSignalsSection" style="display:none">
           <p class="section-title">Signalen</p>
-          <p class="med-note">Zachte toon als rustige markering. De app stuurt je ademhaling niet.</p>
+          <p class="med-note" id="medSignalsNote">Zachte toon als rustige markering. De app stuurt je ademhaling niet.</p>
           <div class="switch-row">
             <label class="switch-label">
               <span>Starttoon</span>
@@ -2106,9 +2134,7 @@ canvas {
           <input id="droneToggle" type="checkbox">
         </div>
       </div>
-      <div class="protocol-start-actions" id="protocolStartActions" style="display:none">
-        <button class="primary-session-button" id="startSessionBtn" type="button">Start sessie</button>
-      </div>
+    </details>
   </section>
 
   <!-- Voortgang -->
@@ -2184,7 +2210,7 @@ canvas {
 <div id="postSessionCta" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99990;width:min(420px,92vw);background:#fff;border:1px solid rgba(79,126,168,.14);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.18);padding:14px 16px">
   <button id="postSessionCtaClose" aria-label="Sluiten" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:1.1rem;color:#999;cursor:pointer">&times;</button>
   <strong style="display:block;font-size:.92rem;color:#4F7EAB">Mooi gedaan! ☁️</strong>
-  <span style="display:block;font-size:.83rem;color:#444;margin:4px 0 10px">Maak een gratis account om je voortgang te bewaren en op al je apparaten terug te zien.</span>
+  <span style="display:block;font-size:.83rem;color:#243E4A;margin:4px 0 10px">Maak een gratis account om je voortgang te bewaren en op al je apparaten terug te zien.</span>
   <button id="postSessionCtaBtn" class="primary-session-button" type="button" style="width:100%">Account aanmaken / inloggen</button>
 </div>
 
@@ -2197,7 +2223,7 @@ canvas {
     <!-- Blok 1: Inloggen / registreren -->
     <div class="deep-gate-block">
       <h3 class="deep-gate-h">Inloggen of registreren</h3>
-      <p class="deep-gate-note">De basisprotocollen werken zonder account. Met een gratis account krijg je er de verdiepingssessies bij; de intensieve protocollen horen bij Plus.</p>
+      <p class="deep-gate-note">De basisprotocollen werken zonder account. Met een gratis account krijg je er de verdiepingssessies bij; Restavia Plus geeft toegang tot de volledige bibliotheek.</p>
       <input class="deep-gate-input" id="authEmail" type="email" placeholder="E-mailadres" autocomplete="username">
       <input class="deep-gate-input" id="authPass" type="password" placeholder="Wachtwoord" autocomplete="current-password">
       <div style="display:flex;gap:8px;margin-top:6px">
@@ -2226,7 +2252,8 @@ canvas {
     <!-- Blok 2: Restavia Plus (alleen ingelogd) -->
     <div class="deep-gate-block" id="plusBlock" style="display:none">
       <h3 class="deep-gate-h">Restavia Plus</h3>
-      <p class="deep-gate-note">Plus geeft een jaar lang toegang tot álle protocollen, inclusief de intensieve sessies (zoals de Holotropische en Actieve Ademtest). Betalen gaat veilig via Mollie (o.a. iDEAL).</p>
+      <p class="deep-gate-note">Restavia Plus geeft een jaar lang toegang tot de volledige bibliotheek en alle verdiepende sessies. Betalen gaat veilig via Mollie (o.a. iDEAL).</p>
+      <p class="deep-gate-note" style="font-size:.76rem;opacity:.75">Intensieve testprotocollen zijn aanvullend afgeschermd met veiligheidsinformatie.</p>
       <button class="primary-session-button" id="plusActivateBtn" type="button">Plus activeren</button>
       <button class="deep-gate-secondary" id="plusReceiptBtn" type="button" style="display:none;margin-top:8px">Betaalbewijs bekijken</button>
       <p class="deep-gate-msg" id="plusMsg" style="display:none"></p>
@@ -3976,6 +4003,17 @@ function applyPreset(id, userSelected = false) {
   const rhythmSectionEl = document.getElementById("rhythmSection");
   if (meditationDurationSection) meditationDurationSection.style.display = isMeditation ? "" : "none";
   if (meditationSignalsSection) meditationSignalsSection.style.display = isMeditation ? "" : "none";
+  // Signaaltekst contextafhankelijk: alleen bij de vrije meditatietimer stuurt de app de adem niet
+  const medSignalsNote = document.getElementById("medSignalsNote");
+  if (medSignalsNote) {
+    const freeTimer = preset.id === "meditationTimer" || (!preset.phases && !(Number(preset.inhale) > 0) && !(Number(preset.exhale) > 0));
+    medSignalsNote.textContent = freeTimer
+      ? "Zachte toon als rustige markering. De app stuurt je ademhaling niet."
+      : "Zachte toon als rustige markering tijdens de sessie.";
+  }
+  // Sessie-instellingen: op mobiel standaard ingeklapt (eerst kiezen en starten)
+  const sessionSettings = document.getElementById("sessionSettings");
+  if (sessionSettings) sessionSettings.open = !isMobile();
   // Opbouwschema vergrendeld (per protocol): gebruiker kan het ademritme niet
   // aanpassen — de ritme-sliders worden dan verborgen.
   const schemaLocked = Boolean(preset.lockSchema);
@@ -5469,11 +5507,11 @@ function accessStatusText() {
   const acc = appAuth.access;
   // Plus (betaald): ook de intensieve protocollen
   if (acc && acc.level === "premium") {
-    if (acc.source === "mollie_payment") return `Restavia Plus is actief tot ${fmtDatum(acc.ends_at)} — je hebt toegang tot álle protocollen, inclusief de intensieve.`;
+    if (acc.source === "mollie_payment") return `Restavia Plus is actief tot ${fmtDatum(acc.ends_at)} — je hebt toegang tot de volledige bibliotheek en alle verdiepende sessies.`;
     return acc.ends_at ? `Plus is actief tot ${fmtDatum(acc.ends_at)} — toegang tot alle protocollen.` : "Plus is actief — toegang tot alle protocollen.";
   }
   // Deep (ingelogd): verdiepingssessies wel, intensieve protocollen niet
-  return "Je bent ingelogd en hebt toegang tot de verdiepingssessies. De intensieve protocollen horen bij Restavia Plus.";
+  return "Je bent ingelogd en hebt toegang tot de verdiepingssessies. Met Restavia Plus krijg je toegang tot de volledige bibliotheek.";
 }
 // Werk statusregel + knoppen bij aan de hand van de huidige toegang.
 function updateAccessUI() {
