@@ -13,6 +13,7 @@ Restavia
 Een initiatief van Domein Stam
 Staverdenseweg 94
 8075 AS Elspeet
+restavia@domeinstam.nl
 
 © 2026 Restavia (Domein Stam). Alle rechten voorbehouden.'
 where key = 'contact_text';

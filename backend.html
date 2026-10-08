@@ -65,7 +65,7 @@
 <header>
   <h1>Restavia · Beheer</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.14</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.15</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1455,7 +1455,7 @@ function openPaymentReceipt(p, prof) {
   const btw = bedrag - excl;
   const fmtE = (n) => "€ " + n.toFixed(2).replace(".", ",");
   const datum = p.created_at ? new Date(p.created_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }) : "—";
-  const nr = "PF-" + String(p.created_at || "").slice(0, 10).replace(/-/g, "") + "-" + String(p.provider_payment_id || p.id).replace(/^tr_/, "").slice(0, 6).toUpperCase();
+  const nr = "RV-" + String(p.created_at || "").slice(0, 10).replace(/-/g, "") + "-" + String(p.provider_payment_id || p.id).replace(/^tr_/, "").slice(0, 6).toUpperCase();
   const product = p.product_type === "relax_plus_year" ? "Restavia Plus — 1 jaar toegang" : (p.product_type || "—");
   const klantHtml = prof ? [
     [prof.first_name, prof.last_name].filter(Boolean).join(" ") || null,
@@ -1481,7 +1481,7 @@ function openPaymentReceipt(p, prof) {
 <h1>Betaalbewijs</h1>
 <p class="muted">Nummer <b>${nr}</b> · ${datum} · Mollie-referentie ${esc(p.provider_payment_id || "—")} · status ${esc(p.status)}</p>
 <div class="kop">
-  <div><b>Restavia</b><br>een initiatief van Domein Stam<br>Staverdenseweg 94, 8075 AS Elspeet<!-- TODO: KvK-nummer Domein Stam aanvullen --></div>
+  <div><b>Restavia</b><br>een initiatief van Domein Stam<br>Staverdenseweg 94, 8075 AS Elspeet<br>restavia@domeinstam.nl<!-- TODO: KvK-nummer Domein Stam aanvullen --></div>
   <div><b>Klant</b><br>${klantHtml}</div>
 </div>
 <table><thead><tr><th>Omschrijving</th><th style="text-align:right">Bedrag</th></tr></thead>
@@ -1723,6 +1723,7 @@ Restavia
 Een initiatief van Domein Stam
 Staverdenseweg 94
 8075 AS Elspeet
+restavia@domeinstam.nl
 
 © 2026 Restavia (Domein Stam). Alle rechten voorbehouden.`,
     faq_text:

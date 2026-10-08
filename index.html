@@ -1863,7 +1863,7 @@ canvas {
           <summary><span class="profile-item-icon">&#9993;&#65039;</span><span>Contact</span><span class="profile-item-arrow">&#8250;</span></summary>
           <div class="profile-item-body" id="contactBody" style="font-size:.86rem">
             <p style="font-weight:800;color:var(--deep);margin:0 0 6px">Contact</p>
-            <p style="margin:0;line-height:1.7">Restavia<br>Een initiatief van Domein Stam<br>Staverdenseweg 94<br>8075 AS Elspeet</p>
+            <p style="margin:0;line-height:1.7">Restavia<br>Een initiatief van Domein Stam<br>Staverdenseweg 94<br>8075 AS Elspeet<br><a href="mailto:restavia@domeinstam.nl">restavia@domeinstam.nl</a></p>
             <p style="margin:10px 0 0;line-height:1.7;opacity:.7">© 2026 Restavia (Domein Stam). Alle rechten voorbehouden.</p>
           </div>
         </details>
@@ -1906,7 +1906,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.4.6</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.4.7</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -5905,13 +5905,13 @@ function openMyPaymentReceipt() {
     const bedrag = Number(pay.amount || 0);
     const excl = bedrag / 1.21, btw = bedrag - excl;
     const datum = pay.created_at ? new Date(pay.created_at).toLocaleDateString("nl-NL", { day:"numeric", month:"long", year:"numeric" }) : "—";
-    const nr = "PF-" + String(pay.created_at || "").slice(0,10).replace(/-/g,"") + "-" + String(pay.provider_payment_id || "").replace(/^tr_/,"").slice(0,6).toUpperCase();
+    const nr = "RV-" + String(pay.created_at || "").slice(0,10).replace(/-/g,"") + "-" + String(pay.provider_payment_id || "").replace(/^tr_/,"").slice(0,6).toUpperCase();
     const product = pay.product_type === "relax_plus_year" ? "Restavia Plus — 1 jaar toegang" : (pay.product_type || "—");
     return `<div class="bon">
       <h1>Betaalbewijs</h1>
       <p class="muted">Nummer <b>${nr}</b> · ${datum} · Mollie-referentie ${esc(pay.provider_payment_id || "—")}</p>
       <div class="kop">
-        <div><b>Restavia</b><br>een initiatief van Domein Stam<br>Staverdenseweg 94, 8075 AS Elspeet<!-- TODO: KvK-nummer Domein Stam aanvullen --></div>
+        <div><b>Restavia</b><br>een initiatief van Domein Stam<br>Staverdenseweg 94, 8075 AS Elspeet<br>restavia@domeinstam.nl<!-- TODO: KvK-nummer Domein Stam aanvullen --></div>
         <div><b>Klant</b><br>${klantHtml}</div>
       </div>
       <table><thead><tr><th>Omschrijving</th><th style="text-align:right">Bedrag</th></tr></thead>
@@ -5939,7 +5939,7 @@ function openMyPaymentReceipt() {
   @media print{button{display:none}}
 </style></head><body>
 ${pays.map(blok).join("")}
-<p class="muted">Vragen over je betaling? Neem contact met ons op via de app.</p>
+<p class="muted">Vragen over je betaling? Mail naar restavia@domeinstam.nl.</p>
 <button onclick="print()" style="margin-top:10px;padding:10px 18px;border-radius:999px;border:1px solid #3E6A93;background:#3E6A93;color:#fff;font-weight:700;cursor:pointer">Afdrukken / opslaan als PDF</button>
 </body></html>`);
   w.document.close();
