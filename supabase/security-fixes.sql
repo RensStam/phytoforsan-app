@@ -1,3 +1,5 @@
+-- LET OP: de rustcode-onderdelen in dit bestand zijn vervallen (zie remove-rustcodes.sql).
+-- Voer dit bestand niet opnieuw uit zonder die delen te verwijderen.
 -- =====================================================================
 -- Restavia — beveiligingsfixes (audit 2026-07-12)
 -- Voer dit uit in de Supabase SQL Editor. Opnieuw uitvoeren is veilig.

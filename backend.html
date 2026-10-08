@@ -65,7 +65,7 @@
 <header>
   <h1>Restavia · Beheer</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.15</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.16</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -105,7 +105,6 @@
       <button data-tab="audio">Muziek &amp; geluid</button>
       <button data-tab="media">Afbeeldingen &amp; documenten</button>
       <button data-tab="users">Gebruikers</button>
-      <button data-tab="codes">Rustcodes</button>
       <button data-tab="settings">Instellingen</button>
     </nav>
     <div id="tabBody"></div>
@@ -116,7 +115,7 @@
 // =====================================================================
 // Data-service: werkt in local_mock (localStorage) of via Supabase.
 // =====================================================================
-const TABLES = ["categories","protocols","protocol_phases","audio_tracks","protocol_audio","media_files","license_records","app_settings","profiles","user_access","access_codes","usage_sessions","user_entitlements","payment_records"];
+const TABLES = ["categories","protocols","protocol_phases","audio_tracks","protocol_audio","media_files","license_records","app_settings","profiles","user_access","usage_sessions","user_entitlements","payment_records"];
 let sb = null;                  // supabase client (of null in mock)
 let session = null;             // { email, role, access_level }
 const cfg = getActiveConfig();
@@ -295,7 +294,7 @@ const tabBody = document.getElementById("tabBody");
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => openTab(b.dataset.tab)));
 function openTab(tab) {
   document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
-  ({ dashboard:renderDashboard, protocols:renderProtocols, audio:renderAudio, media:renderMedia, users:renderUsers, codes:renderCodes, settings:renderSettings }[tab] || renderDashboard)();
+  ({ dashboard:renderDashboard, protocols:renderProtocols, audio:renderAudio, media:renderMedia, users:renderUsers, settings:renderSettings }[tab] || renderDashboard)();
 }
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 function totalSeconds(phases) { return (phases||[]).reduce((s,p)=>s+Number(p.duration_seconds||0),0); }
@@ -1369,7 +1368,7 @@ async function renderUsers() {
   } catch (e) { plusErr = e.message || String(e); }
   const nuIso = new Date().toISOString();
   const fmtD = (d) => d ? new Date(d).toLocaleDateString("nl-NL") : "—";
-  const bronLabel = { trial: "proefperiode", rustcode: "rustcode", mollie_payment: "Plus (betaald)", admin: "Plus (toegekend)" };
+  const bronLabel = { trial: "proefperiode", mollie_payment: "Plus (betaald)", google_play: "Plus (Google Play)", admin: "Plus (toegekend)", manual: "Plus (handmatig)" };
   const activeEnt = (uid) => ents
     .filter(e => e.user_id === uid && e.status === "active" && (e.starts_at || "") <= nuIso && (!e.ends_at || e.ends_at > nuIso))
     .sort((a, b) => (b.ends_at || "9999").localeCompare(a.ends_at || "9999"))[0];
@@ -1542,67 +1541,6 @@ async function editUser(id) {
     try { await dbUpsert("profiles", rec); msg.className="msg ok"; msg.textContent="Opgeslagen."; msg.classList.remove("hidden"); }
     catch(e){ msg.className="msg err"; msg.textContent="Fout bij opslaan: "+(e.message||e); msg.classList.remove("hidden"); }
   });
-}
-
-// ---------- Toegangscodes ----------
-async function renderCodes() {
-  let codes = [];
-  let err = null;
-  try { codes = await dbList("access_codes"); } catch (e) { err = e.message || String(e); }
-  const fmtDate = (d) => d ? new Date(d).toLocaleDateString("nl-NL") : "—";
-  const rows = codes.sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||"")).map(c => `<tr>
-      <td><b>${esc(c.code)}</b></td>
-      <td>${c.days || 30}</td>
-      <td>${esc(c.label)}</td>
-      <td>${c.active ? "ja" : "nee"}</td>
-      <td>${c.uses||0}${c.max_uses ? " / "+c.max_uses : ""}</td>
-      <td>${fmtDate(c.expires_at)}</td>
-      <td class="actions"><div class="row-actions">
-        <button class="btn small secondary" data-toggle="${c.id}">${c.active?"Deactiveren":"Activeren"}</button>
-        <button class="btn small danger" data-del="${c.id}">Verwijderen</button>
-      </div></td>
-    </tr>`).join("");
-  tabBody.innerHTML = `<div class="card">
-    <div class="toolbar"><h2 class="grow">Rustcodes</h2></div>
-    <p class="muted">Een rustcode geeft tijdelijk extra toegang, bijvoorbeeld bij een productactie. Ingelogde gebruikers krijgen het ingestelde aantal dagen aan hun account gekoppeld; gasten ontgrendelen ermee de Verdieping op hun apparaat.${err?` <span class="pill archived">tabel ontbreekt — draai supabase/access-codes.sql en supabase/plus.sql</span>`:""}</p>
-    <div class="row4" style="align-items:end">
-      <div><label>Code</label><input id="c_code" placeholder="bv. RUST-2026"></div>
-      <div><label>Dagen toegang</label><input id="c_days" type="number" min="1" value="30"></div>
-      <div><label>Label (optioneel)</label><input id="c_label"></div>
-      <div><label>Max. gebruik (leeg = ∞)</label><input id="c_max" type="number" min="1"></div>
-    </div>
-    <div class="row4" style="margin-top:8px;align-items:end">
-      <div><label>Vervaldatum code (optioneel)</label><input id="c_exp" type="date"></div>
-      <div></div>
-      <div></div>
-      <div><button class="btn" id="c_add">+ Rustcode toevoegen</button></div>
-    </div>
-    <p class="msg hidden" id="c_msg"></p>
-    <table style="margin-top:12px"><thead><tr><th>Code</th><th>Dagen</th><th>Label</th><th>Actief</th><th>Gebruik</th><th>Vervalt</th><th class="actions"></th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="7" class="muted">Nog geen rustcodes.</td></tr>'}</tbody></table>
-  </div>`;
-  document.getElementById("c_add").addEventListener("click", async () => {
-    const msg = document.getElementById("c_msg");
-    const code = document.getElementById("c_code").value.trim();
-    if (!code) { msg.className="msg err"; msg.textContent="Vul een code in."; msg.classList.remove("hidden"); return; }
-    const rec = {
-      code, tier: "deep",   // kolom is verplicht maar doet niets meer; toegang loopt via entitlements
-      days: Number(document.getElementById("c_days").value) || 30,
-      label: document.getElementById("c_label").value.trim() || null,
-      max_uses: Number(document.getElementById("c_max").value) || null,
-      expires_at: document.getElementById("c_exp").value || null,
-      active: true
-    };
-    try { await dbUpsert("access_codes", rec); renderCodes(); }
-    catch (e) { msg.className="msg err"; msg.textContent="Fout: "+(e.message||e); msg.classList.remove("hidden"); }
-  });
-  tabBody.querySelectorAll("[data-toggle]").forEach(b => b.addEventListener("click", async () => {
-    const c = codes.find(x => x.id === b.dataset.toggle);
-    await dbUpsert("access_codes", { ...c, active: !c.active }); renderCodes();
-  }));
-  tabBody.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
-    if (confirm("Code verwijderen?")) { await dbDelete("access_codes", b.dataset.del); renderCodes(); }
-  }));
 }
 
 // ---------- Instellingen ----------

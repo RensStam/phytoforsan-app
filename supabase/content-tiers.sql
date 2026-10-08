@@ -9,10 +9,10 @@
 --    mét slotje in de bibliotheek staan.
 --  • De INHOUD (protocol_phases: de fases, tijden en instructies) gaat
 --    uitsluitend naar ingelogde gebruikers met een actieve entitlement
---    (proefperiode, rustcode of Plus), een handmatig niveau of adminrol.
+--    (proefperiode of Plus), een handmatig niveau of adminrol.
 -- =====================================================================
 
--- Heeft de huidige gebruiker extra toegang (trial/rustcode/Plus/handmatig/admin)?
+-- Heeft de huidige gebruiker extra toegang (trial/Plus/handmatig/admin)?
 create or replace function public.user_has_extra_access()
 returns boolean
 language sql stable security definer set search_path = public as $$

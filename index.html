@@ -1700,10 +1700,10 @@ canvas {
 .card-lock { font-size: 1.1rem; opacity: .55; align-self: center; padding: 0 6px; }
 .deep-gate-card { background: #fff; border-radius: 18px; max-width: 480px; width: 100%; padding: 26px 22px; box-shadow: 0 24px 60px rgba(0,0,0,.22); margin: 16px 0; }
 .deep-gate-eyebrow { font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--deep); margin: 0 0 12px; }
-.deep-gate-intro { font-size: .85rem; line-height: 1.55; color: #333; margin: 0 0 12px; }
+.deep-gate-intro { font-size: .85rem; line-height: 1.55; color: var(--restavia-text); margin: 0 0 12px; }
 .deep-gate-block { border-top: 1px solid rgba(79,126,168,.1); padding-top: 16px; margin-top: 16px; }
 .deep-gate-h { font-size: .92rem; font-weight: 900; color: var(--deep); margin: 0 0 10px; }
-.deep-gate-note { font-size: .76rem; color: rgba(79,126,168,.6); margin: 0 0 10px; }
+.deep-gate-note { font-size: .8rem; line-height: 1.5; color: #3F5A6B; margin: 0 0 10px; }
 .deep-gate-safety { margin: 0 0 12px; font-size: .8rem; }
 .deep-gate-safety summary { cursor: pointer; font-weight: 800; color: var(--deep); }
 .deep-gate-safety p { font-size: .8rem; line-height: 1.5; color: #444; margin: 8px 0 0; }
@@ -1906,7 +1906,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.4.7</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.5.1</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -2227,7 +2227,8 @@ canvas {
 
     <!-- Blok 1: Inloggen / registreren -->
     <div class="deep-gate-block">
-      <h3 class="deep-gate-h">Inloggen of registreren</h3>
+      <h3 class="deep-gate-h" id="authBlockTitle">Inloggen of registreren</h3>
+      <div id="authLoginFields">
       <p class="deep-gate-note">De basisprotocollen werken zonder account. Met een gratis account krijg je er de verdiepingssessies bij; Restavia Plus geeft toegang tot de volledige bibliotheek.</p>
       <input class="deep-gate-input" id="authEmail" type="email" placeholder="E-mailadres" autocomplete="username">
       <input class="deep-gate-input" id="authPass" type="password" placeholder="Wachtwoord" autocomplete="current-password">
@@ -2235,11 +2236,12 @@ canvas {
         <button class="primary-session-button" id="authLoginBtn" type="button" style="flex:1">Inloggen</button>
         <button class="deep-gate-secondary" id="authRegisterBtn" type="button" style="flex:1;margin:0">Registreren</button>
       </div>
-      <button type="button" id="authForgotBtn" style="background:none;border:none;color:rgba(79,126,168,.65);font-size:.78rem;font-weight:700;text-decoration:underline;cursor:pointer;margin-top:10px;padding:0">Wachtwoord vergeten?</button>
+      <button type="button" id="authForgotBtn" style="background:none;border:none;color:#31566F;font-size:.78rem;font-weight:700;text-decoration:underline;cursor:pointer;margin-top:10px;padding:0">Wachtwoord vergeten?</button>
       <div id="pwForgotRow" style="display:none;margin-top:10px">
         <p class="deep-gate-note">Vul het e-mailadres van je account in; we sturen je een link om een nieuw wachtwoord in te stellen.</p>
         <input class="deep-gate-input" id="forgotEmailInput" type="email" placeholder="E-mailadres" autocomplete="off">
         <button class="primary-session-button" id="forgotSendBtn" type="button" style="margin-top:6px">Stuur herstel-link</button>
+      </div>
       </div>
       <button class="deep-gate-secondary" id="authLogoutBtn" type="button" style="margin-top:8px;display:none">Uitloggen</button>
       <p class="deep-gate-msg" id="authMsg" style="display:none"></p>
@@ -2258,25 +2260,16 @@ canvas {
     <div class="deep-gate-block" id="plusBlock" style="display:none">
       <h3 class="deep-gate-h">Restavia Plus</h3>
       <p class="deep-gate-note">Restavia Plus geeft een jaar lang toegang tot de volledige bibliotheek en alle verdiepende sessies. Betalen gaat veilig via Mollie (o.a. iDEAL).</p>
-      <p class="deep-gate-note" style="font-size:.76rem;opacity:.75">Intensieve testprotocollen zijn aanvullend afgeschermd met veiligheidsinformatie.</p>
-      <button class="primary-session-button" id="plusActivateBtn" type="button">Plus activeren</button>
-      <button class="deep-gate-secondary" id="plusReceiptBtn" type="button" style="display:none;margin-top:8px">Betaalbewijs bekijken</button>
-      <p class="deep-gate-msg" id="plusMsg" style="display:none"></p>
-    </div>
-
-    <!-- Blok 3: Rustcode verzilveren -->
-    <div class="deep-gate-block" id="deepInviteBlock">
-      <h3 class="deep-gate-h">Rustcode verzilveren</h3>
-      <p class="deep-gate-note">Heb je een rustcode, bijvoorbeeld bij een product of actie? Log in (gratis) en verzilver de code — de extra toegang wordt dan aan je account gekoppeld.</p>
+      <p class="deep-gate-note" style="font-size:.76rem">Intensieve testprotocollen zijn aanvullend afgeschermd met veiligheidsinformatie.</p>
       <details class="deep-gate-safety">
         <summary>Veiligheidsinformatie</summary>
         <p>Gebruik deze sessies niet tijdens autorijden, fietsen, zwemmen, baden of het bedienen van machines.</p>
         <p>Gebruik deze sessies niet bij zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, psychosegevoeligheid, ernstige paniekklachten of wanneer je snel flauwvalt of dissocieert.</p>
         <p>Stop direct bij druk op de borst, sterke duizeligheid, paniek, misselijkheid, hevige tintelingen, kramp, verwarring of een gevoel van controleverlies.</p>
       </details>
-      <input class="deep-gate-input" id="accessCodeInput" type="text" placeholder="Vul je rustcode in" autocapitalize="characters">
-      <button class="primary-session-button" id="accessCodeSubmit" type="button" style="margin-top:6px">Rustcode verzilveren</button>
-      <p class="deep-gate-msg" id="accessCodeMsg" style="display:none"></p>
+      <button class="primary-session-button" id="plusActivateBtn" type="button">Plus activeren</button>
+      <button class="deep-gate-secondary" id="plusReceiptBtn" type="button" style="display:none;margin-top:8px">Betaalbewijs bekijken</button>
+      <p class="deep-gate-msg" id="plusMsg" style="display:none"></p>
     </div>
 
     <button class="deep-gate-secondary" id="deepGateClose" type="button" style="margin-top:16px">Sluiten</button>
@@ -2302,16 +2295,7 @@ canvas {
 // =====================================================
 // 1. CONFIGURATIE EN CONSTANTEN
 // =====================================================
-const APP_MODE = "local_test";        // local_test | backend
 const SHOW_DEV_UNLOCK = false;         // true alleen lokaal tijdens ontwikkeling
-const ENABLE_TEST_INVITE = true;       // tijdelijke testcode/invite-link voor testers
-const API_BASE_URL = "";               // FASE 2: later voor Supabase/backend
-
-// TEMPORARY LOCAL TEST INVITE
-// Alleen bedoeld voor fase 1 via GitHub Pages/local_test.
-// Dit is geen echte beveiliging. Niet gebruiken voor betaalde toegang.
-// Later vervangen door backendstatus "granted".
-const LOCAL_TEST_INVITE_CODES = ["PHYTO-TEST-2026"];
 
 const SHOW_HIDDEN_PROTOCOLS = localStorage.getItem("phytoforsan_show_hidden") !== "false";
 
@@ -2354,7 +2338,7 @@ function updateUserProfile(partial) {
 }
 // ── Drie toegangslagen: free < deep < premium(Plus) < admin ──
 //   free    → gast: basisprotocollen
-//   deep    → ingelogd (of rustcode): + de verdiepingssessies
+//   deep    → ingelogd (gratis account): + de verdiepingssessies
 //   premium → betaald (Plus): + de intensieve protocollen
 // De centrale bron is get_user_access() in Supabase; het profielveld en de
 // inlogstatus vullen dat aan.
@@ -2389,71 +2373,17 @@ function hasAcceptedDeepSafetyNotice() {
   return getUserProfile().acceptedDeepSafetyNotice === true;
 }
 
-// Geldigheid van een tijdelijke lokale testcode (geen echte beveiliging).
-function validateLocalTestInvite(code) {
-  if (APP_MODE !== "local_test") return false;
-  if (!ENABLE_TEST_INVITE) return false;
-  const normalized = String(code || "").trim().toUpperCase();
-  return LOCAL_TEST_INVITE_CODES.includes(normalized);
-}
-
-// Ontgrendel Verdieping lokaal op dit apparaat (tijdelijke testtoegang).
-function unlockDeepAccessLocalTest(email = null) {
-  updateUserProfile({
-    email: email ? String(email).trim().toLowerCase() : getUserProfile().email,
-    userType: "deep",
-    accessLevel: "deep",
-    deepAccess: true,
-    deepAccessStatus: "granted_local_test",
-    deepAccessGrantedAt: new Date().toISOString()
-  });
-  localStorage.setItem("phytoforsan_deep_access_source", "local_test_invite");
-}
-
-// Invite-link ?deepInvite=CODE — handig voor testers, geen echte beveiliging.
-function checkLocalTestInviteFromUrl() {
-  if (APP_MODE !== "local_test" || !ENABLE_TEST_INVITE) return;
-  const params = new URLSearchParams(window.location.search);
-  const inviteCode = params.get("deepInvite");
-  if (!inviteCode) return;
-  if (validateLocalTestInvite(inviteCode)) {
-    unlockDeepAccessLocalTest();
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-}
-
-// Toegangsstatus. In local_test puur lokaal; fase 2 koppelt aan backend.
-async function checkDeepAccessStatus(email) {
-  if (APP_MODE === "local_test") {
-    const profile = getUserProfile();
-    return {
-      success: true,
-      deepAccess: profile.deepAccess === true,
-      status: profile.deepAccess ? "granted_local_test" : "not_connected"
-    };
-  }
-  // FASE 2: koppelen aan Supabase Edge Function "check-deep-access".
-  const response = await fetch(`${API_BASE_URL}/check-deep-access`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email })
-  });
-  return response.json();
-}
-
-// FASE 2 TODO: echte aanvraag naar backend ("request-deep-access").
-// In local_test wordt de aanvraag alleen lokaal opgeslagen en geeft GEEN toegang.
-function requestDeepAccess({ name, email, note, feedbackConsent }) {
-  updateUserProfile({
-    name: name ? String(name).trim() : null,
-    email: email ? String(email).trim().toLowerCase() : null,
-    feedbackConsent: !!feedbackConsent,
-    deepAccessStatus: "requested_local_test",
-    deepAccessRequestedAt: new Date().toISOString()
-  });
-  // APP_MODE === "backend": hier later fetch naar API_BASE_URL/request-deep-access.
-  return { success: true, local: true };
-}
+// Eenmalige opruiming: oude lokale code-/testtoegang (rustcodes, testinvites) uit
+// eerdere alfaversies mag geen rol meer spelen.
+(function cleanupLegacyCodeAccess() {
+  try {
+    ["phytoforsan_deep_access_source", "phyto_code_tier"].forEach(k => localStorage.removeItem(k));
+    const prof = JSON.parse(localStorage.getItem(USER_PROFILE_KEY) || "null");
+    if (prof && (prof.deepAccess || /local_test/.test(prof.deepAccessStatus || ""))) {
+      updateUserProfile({ deepAccess: false, deepAccessStatus: "none", userType: "guest", accessLevel: "free", deepAccessGrantedAt: null, deepAccessRequestedAt: null });
+    }
+  } catch {}
+})();
 
 // Guard: vóór het openen/starten van een Verdieping-protocol.
 // Geeft true als toegang is toegestaan; opent anders het toegangsscherm.
@@ -5490,13 +5420,13 @@ function setGateMsg(id, text, kind) {
 // PASSWORD_RECOVERY-event kan namelijk al vuren voordat wij luisteren.
 const authRecoveryFlow = /type=recovery/.test(window.location.hash) || /type=recovery/.test(window.location.search);
 
-// Gedeelde Supabase-client voor de app (auth + code inwisselen). null als niet geconfigureerd.
+// Gedeelde Supabase-client voor de app (auth + toegang). null als niet geconfigureerd.
 const appSb = (typeof createSupabaseClient === "function") ? createSupabaseClient() : null;
 
 function openDeepAccessGate(preset, tier) {
   const overlay = document.getElementById("deepAccessOverlay");
   if (!overlay) return;
-  ["authMsg", "accessCodeMsg"].forEach(id => setGateMsg(id, "", ""));
+  setGateMsg("authMsg", "", "");
   updateAccessUI();
   overlay.style.display = "flex";
 }
@@ -5505,18 +5435,28 @@ function closeDeepAccessGate() {
   if (overlay) overlay.style.display = "none";
 }
 // Statustekst voor de accountomgeving, op basis van de centrale toegang.
+// Toegangsbronnen: account (gratis), trial (proefperiode), mollie_payment / google_play /
+// admin / handmatig (Plus) en de adminrol. Rustcodes bestaan niet meer.
 function accessStatusText() {
   const fmtDatum = (iso) => iso ? new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }) : "";
-  if (!appAuth.user) return "Je gebruikt de app als gast: de basisprotocollen zijn vrij toegankelijk.";
+  if (!appAuth.user) return "Je gebruikt Restavia als gast: de basisprotocollen zijn vrij toegankelijk. Met een gratis account krijg je er de verdiepingssessies bij.";
   if (effectiveLevel() === "admin") return `Ingelogd als ${appAuth.user.email} — beheerder (volledige toegang).`;
   const acc = appAuth.access;
-  // Plus (betaald): ook de intensieve protocollen
   if (acc && acc.level === "premium") {
-    if (acc.source === "mollie_payment") return `Restavia Plus is actief tot ${fmtDatum(acc.ends_at)} — je hebt toegang tot de volledige bibliotheek en alle verdiepende sessies.`;
-    return acc.ends_at ? `Plus is actief tot ${fmtDatum(acc.ends_at)} — toegang tot alle protocollen.` : "Plus is actief — toegang tot alle protocollen.";
+    if (acc.source === "trial" && acc.ends_at) {
+      const dagen = Math.max(1, Math.ceil((new Date(acc.ends_at) - Date.now()) / 86400000));
+      return `Je proefperiode loopt nog ${dagen} ${dagen === 1 ? "dag" : "dagen"}.`;
+    }
+    return acc.ends_at ? `Restavia Plus is actief tot ${fmtDatum(acc.ends_at)}.` : "Restavia Plus is actief.";
   }
-  // Deep (ingelogd): verdiepingssessies wel, intensieve protocollen niet
-  return "Je bent ingelogd en hebt toegang tot de verdiepingssessies. Met Restavia Plus krijg je toegang tot de volledige bibliotheek.";
+  // Gratis account (ook na een verlopen proefperiode): verdiepingssessies, geen Plus
+  return "Je gebruikt de gratis versie van Restavia, inclusief de verdiepingssessies. Activeer Restavia Plus voor toegang tot de volledige bibliotheek.";
+}
+// Heeft de gebruiker al volledige toegang (betaalde/toegekende Plus of admin)?
+function hasActivePlus() {
+  if (effectiveLevel() === "admin") return true;
+  const acc = appAuth.access;
+  return !!(acc && acc.level === "premium" && acc.source !== "trial");
 }
 // Werk statusregel + knoppen bij aan de hand van de huidige toegang.
 function updateAccessUI() {
@@ -5524,14 +5464,21 @@ function updateAccessUI() {
   if (line) line.textContent = accessStatusText();
   const logoutBtn = document.getElementById("authLogoutBtn");
   if (logoutBtn) logoutBtn.style.display = appAuth.user ? "" : "none";
+  // Ingelogd: inlogformulier verbergen, alleen accountstatus + uitloggen
+  const loginFields = document.getElementById("authLoginFields");
+  if (loginFields) loginFields.style.display = appAuth.user ? "none" : "";
+  const authTitle = document.getElementById("authBlockTitle");
+  if (authTitle) authTitle.textContent = appAuth.user ? "Je account" : "Inloggen of registreren";
   const accBtn = document.getElementById("accountBtn");
   if (accBtn) accBtn.textContent = appAuth.user ? "Account" : "Inloggen";
-  // Plus-blok: alleen voor ingelogde gebruikers; knop wordt "verlengen" bij actieve Plus
+  // Plus-blok: alleen voor ingelogde gebruikers; de activeer-knop verdwijnt bij actieve Plus
   const plusBlock = document.getElementById("plusBlock");
   if (plusBlock) plusBlock.style.display = appAuth.user ? "" : "none";
   const plusBtn = document.getElementById("plusActivateBtn");
-  if (plusBtn) plusBtn.textContent = (appAuth.access && appAuth.access.source === "mollie_payment")
-    ? "Plus verlengen (+1 jaar)" : "Plus activeren";
+  if (plusBtn) {
+    plusBtn.textContent = "Restavia Plus activeren";
+    plusBtn.style.display = hasActivePlus() ? "none" : "";
+  }
   // Betaalbewijs alleen tonen als de gebruiker minstens één betaling heeft.
   const receiptBtn = document.getElementById("plusReceiptBtn");
   if (receiptBtn) receiptBtn.style.display = (appAuth.user && (appAuth.payments || []).length) ? "" : "none";
@@ -5806,39 +5753,6 @@ document.getElementById("authLogoutBtn")?.addEventListener("click", async () => 
   setGateMsg("authMsg", "Uitgelogd.", "ok");
 });
 
-document.getElementById("accessCodeSubmit")?.addEventListener("click", async () => {
-  const code = (document.getElementById("accessCodeInput").value || "").trim();
-  if (!code) { setGateMsg("accessCodeMsg", "Vul een rustcode in.", "err"); return; }
-  // Ingelogd: rustcode wordt als entitlement aan het account gekoppeld.
-  if (appSb && appAuth.user) {
-    setGateMsg("accessCodeMsg", "Rustcode controleren…", "");
-    try {
-      const { data, error } = await appSb.rpc("redeem_rest_code", { p_code: code });
-      if (!error && data && data.ok) {
-        await refreshUserAccess();
-        afterAccessChange();
-        setGateMsg("accessCodeMsg", `Rustcode verzilverd! Je hebt extra toegang tot ${new Date(data.ends_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}.`, "ok");
-        setTimeout(closeDeepAccessGate, 2000);
-        return;
-      }
-      if (!error && data && !data.ok) {
-        const uitleg = {
-          al_gebruikt: "Je hebt deze rustcode al eerder verzilverd.",
-          verlopen: "Deze rustcode is verlopen.",
-          op: "Deze rustcode is al het maximale aantal keren gebruikt.",
-          ongeldig: "Deze rustcode is niet geldig."
-        };
-        setGateMsg("accessCodeMsg", uitleg[data.reason] || "Deze rustcode is niet geldig.", "err");
-        return;
-      }
-    } catch { /* netwerkfout of functie ontbreekt: nette melding hieronder */ }
-    setGateMsg("accessCodeMsg", "Verzilveren is op dit moment niet beschikbaar. Probeer het later opnieuw.", "err");
-    return;
-  }
-  // Gast: rustcodes worden aan een account gekoppeld — de code wordt niet verbruikt.
-  setGateMsg("accessCodeMsg", "Maak eerst een gratis account aan (of log in) en verzilver de code daarna — de extra toegang wordt dan aan je account gekoppeld.", "err");
-});
-
 // ── Wachtwoord vergeten / herstellen ──
 // De link toont een eigen (leeg) e-mailveld: bewust los van het inlogveld,
 // zodat automatisch ingevulde adressen niet ongevraagd worden gebruikt.
@@ -5916,10 +5830,10 @@ function openMyPaymentReceipt() {
       </div>
       <table><thead><tr><th>Omschrijving</th><th style="text-align:right">Bedrag</th></tr></thead>
       <tbody>
-        <tr><td>${esc(product)}</td><td style="text-align:right">${fmtE(excl)}</td></tr>
-        <tr><td>BTW 21%</td><td style="text-align:right">${fmtE(btw)}</td></tr>
+        <tr><td>${esc(product)}</td><td style="text-align:right">${fmtE(bedrag)}</td></tr>
         <tr class="tot"><td>Totaal (betaald via Mollie)</td><td style="text-align:right">${fmtE(bedrag)}</td></tr>
       </tbody></table>
+      <p class="muted" style="margin:6px 0 0;text-align:right">Inclusief ${fmtE(btw)} btw (21%)</p>
     </div>`;
   };
   const w = window.open("", "_blank");
@@ -6471,7 +6385,6 @@ function updateNavVisibility() {
 window.addEventListener('resize', updateNavVisibility);
 
 // Tijdelijke testtoegang via invite-link (?deepInvite=...) vóór het renderen
-checkLocalTestInviteFromUrl();
 renderProtocols();
 applyPreset(activePreset);
 initMobileNav();

@@ -1,3 +1,5 @@
+-- LET OP: de rustcode-onderdelen in dit bestand zijn vervallen (zie remove-rustcodes.sql).
+-- Voer dit bestand niet opnieuw uit zonder die delen te verwijderen.
 -- =====================================================================
 -- Restavia — drie toegangslagen: free < deep < premium (Plus)
 -- Voer dit uit in de Supabase SQL Editor (na plus.sql en content-tiers.sql).

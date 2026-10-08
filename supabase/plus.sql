@@ -1,3 +1,5 @@
+-- LET OP: de rustcode-onderdelen in dit bestand zijn vervallen (zie remove-rustcodes.sql).
+-- Voer dit bestand niet opnieuw uit zonder die delen te verwijderen.
 -- =====================================================================
 -- Restavia Plus — entitlements, rustcodes, betalingen, proefperiode
 -- Voer dit uit in de Supabase SQL Editor (na schema.sql en access-codes.sql).
