@@ -16,7 +16,9 @@
 <meta name="background_color" content="#ffffff">
 <link rel="apple-touch-icon" href="icon-512.png?v=2">
 <title>Restavia — BREATHE. FEEL. FLOW.</title>
-<link rel="icon" href="icon-192.png?v=2" type="image/png">
+<link rel="icon" href="favicon.ico?v=3" sizes="any">
+<link rel="icon" href="favicon-32.png?v=3" type="image/png" sizes="32x32">
+<link rel="icon" href="favicon-48.png?v=3" type="image/png" sizes="48x48">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -1525,10 +1527,11 @@ canvas {
     padding: 16px 10px;
   }
   .stage-logo {
-    width: 55px;
-    height: 55px;
-    top: 16px;
-    left: 16px;
+    width: 60px;
+    height: 60px;
+    top: 8px;
+    left: auto;
+    right: 12px;
   }
   .breath-visual {
     width: min(95%, 480px);
@@ -1860,7 +1863,7 @@ canvas {
           <summary><span class="profile-item-icon">&#9993;&#65039;</span><span>Contact</span><span class="profile-item-arrow">&#8250;</span></summary>
           <div class="profile-item-body" id="contactBody" style="font-size:.86rem">
             <p style="font-weight:800;color:var(--deep);margin:0 0 6px">Contact</p>
-            <p style="margin:0;line-height:1.7">Restavia<br>Een initiatief van Domein Stam</p>
+            <p style="margin:0;line-height:1.7">Restavia<br>Een initiatief van Domein Stam<br>Staverdenseweg 94<br>8075 AS Elspeet</p>
             <p style="margin:10px 0 0;line-height:1.7;opacity:.7">© 2026 Restavia (Domein Stam). Alle rechten voorbehouden.</p>
           </div>
         </details>
@@ -1903,7 +1906,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.4.3</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.4.6</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -5908,7 +5911,7 @@ function openMyPaymentReceipt() {
       <h1>Betaalbewijs</h1>
       <p class="muted">Nummer <b>${nr}</b> · ${datum} · Mollie-referentie ${esc(pay.provider_payment_id || "—")}</p>
       <div class="kop">
-        <div><b>Restavia</b><br>een initiatief van Domein Stam<!-- TODO: KvK-nummer/adres Domein Stam aanvullen --></div>
+        <div><b>Restavia</b><br>een initiatief van Domein Stam<br>Staverdenseweg 94, 8075 AS Elspeet<!-- TODO: KvK-nummer Domein Stam aanvullen --></div>
         <div><b>Klant</b><br>${klantHtml}</div>
       </div>
       <table><thead><tr><th>Omschrijving</th><th style="text-align:right">Bedrag</th></tr></thead>

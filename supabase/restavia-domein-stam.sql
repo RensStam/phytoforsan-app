@@ -11,6 +11,8 @@ set value = E'Contact
 
 Restavia
 Een initiatief van Domein Stam
+Staverdenseweg 94
+8075 AS Elspeet
 
 © 2026 Restavia (Domein Stam). Alle rechten voorbehouden.'
 where key = 'contact_text';

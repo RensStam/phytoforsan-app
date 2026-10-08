@@ -12,12 +12,13 @@ copy /Y manifest.json deploy\manifest.json
 copy /Y restavia-logo.png deploy\restavia-logo.png
 copy /Y restavia-wordmark.png deploy\restavia-wordmark.png
 copy /Y restavia-logo-full.png deploy\restavia-logo-full.png
+copy /Y favicon*.* deploy\
 if exist deploy\admin.html del /Q deploy\admin.html
 if not exist deploy\js mkdir deploy\js
 xcopy /Y /I /Q js\*.js deploy\js\ >nul
 
 echo Wijzigingen naar GitHub sturen...
-git add -A index.html sw.js backend.html js manifest.json restavia-logo.png restavia-wordmark.png restavia-logo-full.png icon.svg icon-192.png icon-512.png icon-maskable-512.png deploy\index.html deploy\sw.js deploy\backend.html deploy\js deploy\manifest.json deploy\restavia-logo.png deploy\restavia-wordmark.png deploy\restavia-logo-full.png deploy\icon.svg deploy\icon-192.png deploy\icon-512.png deploy\icon-maskable-512.png supabase
+git add -A index.html sw.js backend.html js manifest.json restavia-logo.png restavia-wordmark.png restavia-logo-full.png favicon.ico favicon-16.png favicon-32.png favicon-48.png favicon-180.png icon.svg icon-192.png icon-512.png icon-maskable-512.png deploy\index.html deploy\sw.js deploy\backend.html deploy\js deploy\manifest.json deploy\restavia-logo.png deploy\restavia-wordmark.png deploy\restavia-logo-full.png deploy\icon.svg deploy\icon-192.png deploy\icon-512.png deploy\icon-maskable-512.png supabase
 git commit -m "deploy update"
 git push origin master:main
 
