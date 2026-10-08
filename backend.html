@@ -63,7 +63,7 @@
 <header>
   <h1>Restavia · Beheer</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.12</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.13</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1479,7 +1479,7 @@ function openPaymentReceipt(p, prof) {
 <h1>Betaalbewijs</h1>
 <p class="muted">Nummer <b>${nr}</b> · ${datum} · Mollie-referentie ${esc(p.provider_payment_id || "—")} · status ${esc(p.status)}</p>
 <div class="kop">
-  <div><b>Restavia</b><br><!-- TODO juridische eigenaar Restavia: bedrijfsgegevens invullen --></div>
+  <div><b>Restavia</b><br>een initiatief van Domein Stam<!-- TODO: KvK-nummer/adres Domein Stam aanvullen --></div>
   <div><b>Klant</b><br>${klantHtml}</div>
 </div>
 <table><thead><tr><th>Omschrijving</th><th style="text-align:right">Bedrag</th></tr></thead>
@@ -1709,16 +1709,18 @@ Alleen adem, klank en aandacht.
 Deze app is ontstaan vanuit de wens om rust, adem en klank op een eenvoudige manier toegankelijk te maken.
 
 Restavia
-BREATHE. FEEL. FLOW.`,
+BREATHE. FEEL. FLOW.
+
+Restavia is een initiatief van Domein Stam.`,
     privacy_text:
 "Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat en worden er geen persoonsgegevens opgeslagen. Om de app te kunnen verbeteren registreert de app wel anoniem welke sessies worden gedaan (protocol, duur en tijdstip), gekoppeld aan een willekeurig apparaatnummer dat niets over jou zegt en niet tot jou te herleiden is. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen advertentie-trackers gebruikt.",
     contact_text:
 `Contact
 
 Restavia
-Contactgegevens volgen binnenkort.
+Een initiatief van Domein Stam
 
-© 2026 Restavia. Alle rechten voorbehouden.`,
+© 2026 Restavia (Domein Stam). Alle rechten voorbehouden.`,
     faq_text:
 `Hoe installeer ik de app?
 Open het menu in je browser en kies "App installeren" of "Toevoegen aan startscherm".
