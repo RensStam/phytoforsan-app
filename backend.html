@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <style>
-  :root { --deep:#002f2d; --green:#69b626; --line:rgba(18,55,52,.14); --muted:#5f7470; --page:#f3f6f2; }
+  :root { --deep:#31566F; --green:#4F7EAB; --line:rgba(79,126,168,.22); --muted:#31566F; --page:#FAFAF7; --ink:#243E4A; --sky:#A7CBEA; --mint:#BFDCC9; --aqua:#E6F3F7; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--deep); background:var(--page); }
   header { background:var(--deep); color:#fff; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
@@ -35,18 +35,18 @@
   th.actions, td.actions { text-align:right; white-space:nowrap; }
   .row-actions { display:inline-flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; }
   th { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
-  .pill { font-size:.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(18,55,52,.08); }
-  .pill.published { background:rgba(105,182,38,.18); color:#3f6b1f; }
+  .pill { font-size:.68rem; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(49,86,111,.08); }
+  .pill.published { background:rgba(79,126,168,.18); color:#3f6b1f; }
   .pill.draft { background:rgba(212,155,63,.18); color:#8a5a00; }
   .pill.archived,.pill.hidden { background:rgba(192,57,43,.12); color:#c0392b; }
   .msg { padding:10px 12px; border-radius:10px; font-size:.84rem; margin:10px 0; }
-  .msg.ok { background:rgba(105,182,38,.14); color:#3f6b1f; }
+  .msg.ok { background:rgba(79,126,168,.14); color:#3f6b1f; }
   .msg.err { background:rgba(192,57,43,.1); color:#c0392b; }
   .muted { color:var(--muted); font-size:.8rem; }
   .phase-row { border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; }
   .hidden { display:none !important; }
   .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
-  tr.cat-head td { background:rgba(18,55,52,.05); font-weight:900; color:var(--deep); font-size:.74rem; text-transform:uppercase; letter-spacing:.06em; padding:8px 10px; }
+  tr.cat-head td { background:rgba(49,86,111,.05); font-weight:900; color:var(--deep); font-size:.74rem; text-transform:uppercase; letter-spacing:.06em; padding:8px 10px; }
   .reorder { display:inline-flex; flex-direction:column; gap:3px; }
   .reorder button { padding:2px 7px; font-size:.72rem; line-height:1; }
   .reorder button:disabled { opacity:.35; cursor:default; }
@@ -59,7 +59,7 @@
 <header>
   <h1>Restavia · Beheer</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.8</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.9</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>

@@ -2,7 +2,7 @@
 <html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#FAFAF7">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -18,21 +18,41 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --page: #FAFAF7;
-  --ink: #1E3247;
-  --muted: #5E7286;
-  --line: #D3E4EE;
-  --soft: #E6F3F7;
-  --panel: rgba(255,255,255,.88);
-  --deep: #4F7EAB;
-  --green: #8FC5A1;
+  --restavia-blue: #4F7EAB;
+  --restavia-sky: #A7CBEA;
+  --restavia-mint: #BFDCC9;
+  --restavia-aqua: #E6F3F7;
+  --restavia-warm-white: #FAFAF7;
+  --restavia-green: #8FC5A1;
+  --restavia-dark-blue: #31566F;
+  --restavia-text: #243E4A;
+  --app-background: var(--restavia-warm-white);
+  --surface-background: #FFFFFF;
+  --surface-soft: var(--restavia-aqua);
+  --text-primary: var(--restavia-text);
+  --text-secondary: var(--restavia-dark-blue);
+  --button-primary: var(--restavia-dark-blue);
+  --button-primary-text: #FFFFFF;
+  --accent-primary: var(--restavia-blue);
+  --accent-soft: var(--restavia-sky);
+  /* bestaande variabelen gekoppeld aan het palet */
+  --page: var(--app-background);
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --line: rgba(79,126,168,.22);
+  --soft: var(--surface-soft);
+  --panel: rgba(255,255,255,.9);
+  --deep: var(--restavia-dark-blue);
+  --green: var(--restavia-blue);
   --amber: #d49b3f;
-  --coral: #A7CBEA;
+  --coral: var(--restavia-sky);
   --shadow: 0 18px 50px rgba(79,126,168,.12);
   --radius: 8px;
 }
 
 * { box-sizing: border-box; }
+:focus-visible { outline: 2px solid var(--restavia-blue); outline-offset: 2px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
 
 html, body {
   overflow-x: hidden;
@@ -300,9 +320,9 @@ button { cursor: pointer; }
 .rhythm-btn.save-btn:hover { background: var(--deep); color: #fff; }
 
 .rhythm-btn.saved {
-  background: var(--green);
-  color: #fff;
-  border-color: var(--green);
+  background: var(--restavia-mint);
+  color: var(--restavia-text);
+  border-color: var(--restavia-green);
 }
 
 .meditation-duration-btns {
@@ -724,7 +744,7 @@ select:focus, input[type="number"]:focus {
   box-shadow: 0 4px 14px rgba(79,126,168,.06);
 }
 .phase-banner b {
-  color: var(--amber);
+  color: var(--restavia-blue);
   font-weight: 900;
   letter-spacing: .06em;
 }
@@ -868,7 +888,7 @@ select:focus, input[type="number"]:focus {
 .stage-progress-bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--green), var(--amber));
+  background: linear-gradient(90deg, var(--restavia-sky), var(--restavia-blue));
   transition: width 120ms linear;
   border-radius: 999px;
 }
@@ -1165,7 +1185,7 @@ canvas {
   display: block;
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--green), var(--amber));
+  background: linear-gradient(90deg, var(--restavia-sky), var(--restavia-blue));
   transition: width 120ms linear;
   border-radius: 999px;
 }
@@ -1579,7 +1599,7 @@ canvas {
     transition: color .15s;
   }
   .mobile-nav-btn svg { opacity: .55; transition: opacity .15s; }
-  .mobile-nav-btn.active { color: var(--deep); }
+  .mobile-nav-btn.active { color: var(--deep); background: var(--restavia-sky); border-radius: 12px; }
   .mobile-nav-btn.active svg { opacity: 1; }
 
   /* Secties tonen/verbergen per tab */
@@ -1844,7 +1864,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.2.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.2.1</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png" style="width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply">
         </div>
@@ -2143,7 +2163,7 @@ canvas {
 <!-- Melding: nieuwe versie beschikbaar (compact pilletje, boven de mobiele navigatie) -->
 <div id="updateBanner" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:100000;align-items:center;gap:10px;background:#4F7EAB;color:#fff;border-radius:999px;padding:5px 5px 5px 14px;box-shadow:0 8px 20px rgba(0,0,0,.2);font-size:.78rem;white-space:nowrap;max-width:94vw">
   <span>Nieuwe versie</span>
-  <button id="updateReloadBtn" type="button" style="background:#8FC5A1;color:#4F7EAB;border:none;border-radius:999px;padding:6px 13px;font-weight:800;font-size:.76rem;cursor:pointer;white-space:nowrap">Herladen</button>
+  <button id="updateReloadBtn" type="button" style="background:#BFDCC9;color:#243E4A;border:none;border-radius:999px;padding:6px 13px;font-weight:800;font-size:.76rem;cursor:pointer;white-space:nowrap">Herladen</button>
 </div>
 
 <!-- Aanmoediging na een sessie (alleen voor gasten) -->
@@ -4958,9 +4978,9 @@ function draw(time) {
   const pause = guide.phase.key === "pause";
   const restPhase = hold || pause;
   const night = !!presets[activePreset]?.night;
-  // Adem-/uitademkleur van de cirkel: groen overdag, blauwer bij nacht/avond
-  const breathColor = night ? "74,110,170" : "98,135,77";
-  const phaseColor = hum ? "212,155,63" : exhale ? breathColor : inhale ? breathColor : hold ? (night ? "90,120,185" : "105,182,38") : "0,47,45";
+  // Adem-/uitademkleur van de cirkel: blauw/groen overdag, blauwer bij nacht/avond
+  const breathColor = night ? "74,110,170" : "79,126,168";
+  const phaseColor = hum ? "212,155,63" : exhale ? breathColor : inhale ? breathColor : hold ? (night ? "90,120,185" : "143,197,161") : "49,86,111";
   const minRadius = 150;
   const maxRadius = 254;
   const radius = lerp(168, 236, guide.breath);
@@ -4970,13 +4990,13 @@ function draw(time) {
 
   const bg = ctx.createRadialGradient(cx, cy, minRadius * 0.35, cx, cy, maxRadius + 118);
   bg.addColorStop(0, "rgba(255,255,255,.78)");
-  bg.addColorStop(0.55, night ? "rgba(210,221,240,.24)" : "rgba(220,232,211,.22)");
+  bg.addColorStop(0.55, night ? "rgba(210,221,240,.24)" : "rgba(191,220,201,.24)");
   bg.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
 
   [
-    { radius: radius + 10, width: 40, color: hum ? "rgba(212,155,63,.13)" : (night ? "rgba(150,170,205,.18)" : "rgba(168,190,162,.18)") },
+    { radius: radius + 10, width: 40, color: hum ? "rgba(212,155,63,.13)" : (night ? "rgba(150,170,205,.18)" : "rgba(167,203,234,.22)") },
     { radius: radius + 54, width: 36, color: "rgba(255,255,255,.54)" },
     { radius: radius + 88, width: 18, color: "rgba(255,255,255,.46)" }
   ].forEach(ring => {
