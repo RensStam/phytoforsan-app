@@ -906,21 +906,19 @@ select:focus, input[type="number"]:focus {
   width: 130px;
   height: 130px;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 42%, rgba(105,182,38,.14), rgba(18,55,52,.06));
-  border: 2px solid rgba(18,55,52,.14);
+  background: radial-gradient(circle at 50% 45%, #FAFAF7 55%, #E6F3F7);
+  border: 2px solid #A7CBEA;
   animation: openingBreath 4.5s ease-in-out infinite;
 }
 @keyframes openingBreath {
   0%, 100% { transform: scale(.9); }
   50% { transform: scale(1.08); }
 }
-/* Alleen het blaadje/schildje: het linkerdeel van het logo uitsnijden */
+/* Restavia-icoon (witte achtergrond wegmengen) */
 .opening-leaf {
-  width: 56px;
-  height: 60px;
-  object-fit: cover;
-  object-position: left center;
-  opacity: .95;
+  width: 104px;
+  height: auto;
+  mix-blend-mode: multiply;
 }
 @media (prefers-reduced-motion: reduce) {
   .opening-circle { animation: none; }
@@ -969,12 +967,11 @@ select:focus, input[type="number"]:focus {
   width: 130px;
   height: 130px;
   overflow: hidden;
-  opacity: .1;
+  opacity: .18;
   pointer-events: none;
   z-index: 0;
   top: 30px;
   left: 80px;
-  transform: rotate(-15deg);
 }
 
 .breath-stage::after {
@@ -1847,9 +1844,9 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.8</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.9</span>
         <div class="stage-logo">
-          <span aria-hidden="true" style="font-family:Georgia,serif;font-size:1.05rem;letter-spacing:.06em;color:var(--deep);opacity:.75;display:block">Restavia</span>
+          <img aria-hidden="true" alt="" src="restavia-logo.png" style="width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply">
         </div>
 
         <!-- Naam + duur bovenaan -->
@@ -2128,10 +2125,11 @@ canvas {
 
 </main>
 
-<!-- Openingsmoment: ademende cirkel met het blaadje (tik = overslaan) -->
+<!-- Openingsmoment: ademende cirkel met het Restavia-icoon (tik = overslaan) -->
 <div id="openingOverlay" aria-hidden="true">
   <div class="opening-inner" id="openingInner">
-    <div class="opening-circle" style="flex-direction:column;display:flex;align-items:center;justify-content:center;text-align:center"><span style="font-family:Georgia,serif;font-size:1.9rem;letter-spacing:.04em;color:var(--deep)">Restavia</span><span style="font-size:.78rem;letter-spacing:.12em;opacity:.7;margin-top:6px;color:var(--deep)">Breathe. Feel. Flow.</span></div>
+    <div class="opening-circle"><img class="opening-leaf" src="restavia-logo.png" alt="Restavia"></div>
+    <div style="text-align:center;margin-top:18px;color:#4F7EAB"><div style="font-family:Georgia,serif;font-size:1.7rem;letter-spacing:.14em">RESTAVIA</div><div style="font-size:.75rem;letter-spacing:.22em;opacity:.8;margin-top:4px">BREATHE. FEEL. FLOW.</div></div>
   </div>
 </div>
 
@@ -6848,7 +6846,7 @@ initAppAuth();
 // gebouwd — onbruikbaar voor een TWA-build.)
 
 // ── Openingsmoment ──
-// Ademende cirkel met het blaadje — zonder tekst.
+// Ademende cirkel met het Restavia-icoon — zonder tekst.
 // Tik = overslaan. Beheer via het backend (app_settings):
 //   opening_enabled ("0" = uit)
 // De aan/uit-stand wordt lokaal gecachet zodat hij bij de VOLGENDE start direct

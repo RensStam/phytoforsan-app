@@ -9,12 +9,13 @@ copy /Y index.html deploy\index.html
 copy /Y sw.js deploy\sw.js
 copy /Y backend.html deploy\backend.html
 copy /Y manifest.json deploy\manifest.json
+copy /Y restavia-logo.png deployestavia-logo.png
 if exist deploy\admin.html del /Q deploy\admin.html
 if not exist deploy\js mkdir deploy\js
 xcopy /Y /I /Q js\*.js deploy\js\ >nul
 
 echo Wijzigingen naar GitHub sturen...
-git add -A index.html sw.js backend.html js manifest.json icon.svg icon-192.png icon-512.png icon-maskable-512.png deploy\index.html deploy\sw.js deploy\backend.html deploy\js deploy\manifest.json deploy\icon.svg deploy\icon-192.png deploy\icon-512.png deploy\icon-maskable-512.png supabase
+git add -A index.html sw.js backend.html js manifest.json restavia-logo.png icon.svg icon-192.png icon-512.png icon-maskable-512.png deploy\index.html deploy\sw.js deploy\backend.html deploy\js deploy\manifest.json deployestavia-logo.png deploy\icon.svg deploy\icon-192.png deploy\icon-512.png deploy\icon-maskable-512.png supabase
 git commit -m "deploy update"
 git push origin master:main
 
