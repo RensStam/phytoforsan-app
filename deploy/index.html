@@ -18,17 +18,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --page: #f8fbfa;
-  --ink: #142423;
-  --muted: #617371;
-  --line: #d8e5e1;
-  --soft: #edf5f2;
+  --page: #FAFAF7;
+  --ink: #1E3247;
+  --muted: #5E7286;
+  --line: #D3E4EE;
+  --soft: #E6F3F7;
   --panel: rgba(255,255,255,.88);
-  --deep: #002f2d;
-  --green: #69b626;
+  --deep: #4F7EAB;
+  --green: #8FC5A1;
   --amber: #d49b3f;
-  --coral: #f28c19;
-  --shadow: 0 18px 50px rgba(18,55,52,.12);
+  --coral: #A7CBEA;
+  --shadow: 0 18px 50px rgba(79,126,168,.12);
   --radius: 8px;
 }
 
@@ -45,8 +45,8 @@ body {
   font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
   color: var(--ink);
   background:
-    linear-gradient(135deg, rgba(105,182,38,.12), transparent 34%),
-    linear-gradient(235deg, rgba(242,140,25,.13), transparent 30%),
+    linear-gradient(135deg, rgba(143,197,161,.12), transparent 34%),
+    linear-gradient(235deg, rgba(167,203,234,.13), transparent 30%),
     linear-gradient(180deg, #fff, var(--page));
 }
 
@@ -141,12 +141,12 @@ button { cursor: pointer; }
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: rgba(18,55,52,.55);
+  color: rgba(79,126,168,.55);
   margin: 12px 0 6px 2px;
 }
 .lib-subgroup-label:first-child { margin-top: 2px; }
 .phase-overview-wrap { margin-top: 14px; }
-.phase-overview-title { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: rgba(18,55,52,.55); margin: 0 0 10px; text-align: center; }
+.phase-overview-title { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: rgba(79,126,168,.55); margin: 0 0 10px; text-align: center; }
 .phase-overview-block { margin-bottom: 12px; }
 .phase-overview-phase { font-size: .76rem; font-weight: 800; color: var(--deep); margin: 0 0 5px; text-align: center; }
 .phase-overview-block .phase-strip { border-radius: 10px; overflow: hidden; border: 1px solid rgba(216,229,225,.7); }
@@ -173,18 +173,18 @@ button { cursor: pointer; }
   gap: 10px;
   text-align: left;
   color: var(--ink);
-  box-shadow: 0 4px 16px rgba(18,55,52,.08);
+  box-shadow: 0 4px 16px rgba(79,126,168,.08);
   transition: transform 120ms ease, box-shadow 120ms ease;
   cursor: pointer;
 }
 
 .protocol-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(18,55,52,.13);
+  box-shadow: 0 8px 24px rgba(79,126,168,.13);
 }
 
 .protocol-card.active {
-  box-shadow: 0 0 0 2.5px rgba(47,143,131,.65), 0 6px 20px rgba(18,55,52,.1);
+  box-shadow: 0 0 0 2.5px rgba(47,143,131,.65), 0 6px 20px rgba(79,126,168,.1);
 }
 
 .card-thumb {
@@ -314,12 +314,12 @@ button { cursor: pointer; }
 
 .med-note {
   font-size: .8rem;
-  color: rgba(18,55,52,.6);
+  color: rgba(79,126,168,.6);
   margin: 2px 0 10px;
 }
 
 .med-dur-btn {
-  border: 1.5px solid rgba(18,55,52,.22);
+  border: 1.5px solid rgba(79,126,168,.22);
   border-radius: 999px;
   background: #fff;
   color: var(--deep);
@@ -376,25 +376,25 @@ button { cursor: pointer; }
 }
 .home-greeting { font-size: 1.35rem; font-weight: 900; color: var(--deep); margin: 0 0 4px; padding-right: 44px; }
 .home-leaf { font-size: 1.1rem; }
-.home-question { font-size: .92rem; font-weight: 700; color: rgba(18,55,52,.75); margin: 14px 0 10px; }
+.home-question { font-size: .92rem; font-weight: 700; color: rgba(79,126,168,.75); margin: 14px 0 10px; }
 .mood-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
-.mood-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1 1 28%; min-width: 92px; background: #fff; border: 1.5px solid rgba(18,55,52,.12); border-radius: 14px; padding: 12px 8px; font-size: .78rem; font-weight: 800; color: var(--deep); cursor: pointer; transition: border-color 120ms, background 120ms; }
+.mood-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1 1 28%; min-width: 92px; background: #fff; border: 1.5px solid rgba(79,126,168,.12); border-radius: 14px; padding: 12px 8px; font-size: .78rem; font-weight: 800; color: var(--deep); cursor: pointer; transition: border-color 120ms, background 120ms; }
 .mood-btn .mood-icon { font-size: 1.35rem; }
-.mood-btn.mood-active { border-color: var(--deep); background: rgba(18,55,52,.06); }
+.mood-btn.mood-active { border-color: var(--deep); background: rgba(79,126,168,.06); }
 .home-reco-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .home-all-btn { background: none; border: none; color: var(--deep); font-size: .78rem; font-weight: 800; cursor: pointer; text-decoration: underline; padding: 4px; }
 
 /* Profiel */
 .home-panel { position: relative; }
 .home-gear { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--deep); cursor: pointer; padding: 6px; opacity: .75; }
-.profile-card { display: flex; align-items: center; gap: 16px; background: rgba(18,55,52,.05); border-radius: 16px; padding: 18px; margin-top: 34px; }
-.profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(18,55,52,.12); flex-shrink: 0; }
+.profile-card { display: flex; align-items: center; gap: 16px; background: rgba(79,126,168,.05); border-radius: 16px; padding: 18px; margin-top: 34px; }
+.profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(79,126,168,.12); flex-shrink: 0; }
 .profile-info { display: flex; flex-direction: column; gap: 2px; }
 .profile-info strong { font-size: 1.1rem; font-weight: 900; color: var(--deep); }
-.profile-info span { font-size: .78rem; color: rgba(18,55,52,.6); }
-.profile-edit-btn { display: block; margin: 12px auto 0; background: #fff; border: 1.5px solid rgba(18,55,52,.22); border-radius: 999px; padding: 8px 22px; font-size: .82rem; font-weight: 800; color: var(--deep); cursor: pointer; }
+.profile-info span { font-size: .78rem; color: rgba(79,126,168,.6); }
+.profile-edit-btn { display: block; margin: 12px auto 0; background: #fff; border: 1.5px solid rgba(79,126,168,.22); border-radius: 999px; padding: 8px 22px; font-size: .82rem; font-weight: 800; color: var(--deep); cursor: pointer; }
 .profile-list { display: grid; gap: 8px; }
-.profile-item { display: flex; align-items: center; gap: 12px; background: rgba(18,55,52,.04); border: none; border-radius: 12px; padding: 13px 16px; font-size: .86rem; font-weight: 700; color: var(--deep); cursor: pointer; text-decoration: none; text-align: left; width: 100%; box-sizing: border-box; font-family: inherit; }
+.profile-item { display: flex; align-items: center; gap: 12px; background: rgba(79,126,168,.04); border: none; border-radius: 12px; padding: 13px 16px; font-size: .86rem; font-weight: 700; color: var(--deep); cursor: pointer; text-decoration: none; text-align: left; width: 100%; box-sizing: border-box; font-family: inherit; }
 .profile-item-icon { font-size: 1rem; width: 24px; text-align: center; }
 .profile-item-arrow { margin-left: auto; font-size: 1.1rem; opacity: .45; }
 .profile-item-value { margin-left: auto; font-size: .8rem; opacity: .6; font-weight: 600; }
@@ -402,7 +402,7 @@ button { cursor: pointer; }
 .profile-item-details { display: block; padding: 0; }
 .profile-item-details summary { display: flex; align-items: center; gap: 12px; padding: 13px 16px; cursor: pointer; list-style: none; }
 .profile-item-details summary::-webkit-details-marker { display: none; }
-.profile-item-body { padding: 0 16px 14px; font-size: .8rem; font-weight: 500; line-height: 1.55; color: rgba(18,55,52,.8); margin: 0; }
+.profile-item-body { padding: 0 16px 14px; font-size: .8rem; font-weight: 500; line-height: 1.55; color: rgba(79,126,168,.8); margin: 0; }
 .profile-item-body p { margin: 0 0 10px; }
 
 .progress-panel { padding: 22px; margin-top: 18px; }
@@ -416,14 +416,14 @@ button { cursor: pointer; }
 .progress-encourage { font-size: .78rem; margin: 12px 0 0; opacity: .85; }
 .progress-bars { display: flex; align-items: flex-end; gap: 10px; height: 90px; margin-top: 8px; }
 .progress-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
-.progress-bar-fill { width: 100%; max-width: 26px; border-radius: 6px; background: rgba(18,55,52,.78); min-height: 3px; }
-.progress-bar-col span { font-size: .68rem; font-weight: 700; color: rgba(18,55,52,.6); }
+.progress-bar-fill { width: 100%; max-width: 26px; border-radius: 6px; background: rgba(79,126,168,.78); min-height: 3px; }
+.progress-bar-col span { font-size: .68rem; font-weight: 700; color: rgba(79,126,168,.6); }
 .progress-streak { display: flex; align-items: center; gap: 10px; background: rgba(212,155,63,.12); border-radius: 12px; padding: 12px 16px; margin-top: 16px; font-size: .85rem; font-weight: 800; color: var(--deep); }
 .progress-streak-flame { font-size: 1.1rem; }
 .progress-favs { display: grid; gap: 8px; margin-top: 6px; }
-.progress-fav { display: flex; justify-content: space-between; align-items: center; background: rgba(18,55,52,.05); border-radius: 12px; padding: 11px 16px; font-size: .83rem; font-weight: 700; color: var(--deep); }
+.progress-fav { display: flex; justify-content: space-between; align-items: center; background: rgba(79,126,168,.05); border-radius: 12px; padding: 11px 16px; font-size: .83rem; font-weight: 700; color: var(--deep); }
 .progress-fav span:last-child { font-size: .73rem; opacity: .6; font-weight: 600; }
-.progress-empty { font-size: .85rem; color: rgba(18,55,52,.55); margin-top: 14px; }
+.progress-empty { font-size: .85rem; color: rgba(79,126,168,.55); margin-top: 14px; }
 
 .med-dur-btn.med-dur-active {
   background: var(--deep);
@@ -660,7 +660,7 @@ select:focus, input[type="number"]:focus {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at 78% 12%, rgba(105,182,38,.18), transparent 28%),
+    radial-gradient(circle at 78% 12%, rgba(143,197,161,.18), transparent 28%),
     radial-gradient(circle at 50% 46%, rgba(168,190,162,.34), rgba(255,255,255,.26) 48%, transparent 70%),
     linear-gradient(180deg, #eef4e9, #f8faf3 58%, #fff);
 }
@@ -713,7 +713,7 @@ select:focus, input[type="number"]:focus {
 .phase-banner.visible { display: flex; }
 .phase-banner span {
   background: rgba(255,255,255,.72);
-  border: 1px solid rgba(18,55,52,.10);
+  border: 1px solid rgba(79,126,168,.10);
   border-radius: 999px;
   padding: 5px 15px;
   font-size: .8rem;
@@ -721,7 +721,7 @@ select:focus, input[type="number"]:focus {
   letter-spacing: .01em;
   color: var(--deep);
   backdrop-filter: blur(4px);
-  box-shadow: 0 4px 14px rgba(18,55,52,.06);
+  box-shadow: 0 4px 14px rgba(79,126,168,.06);
 }
 .phase-banner b {
   color: var(--amber);
@@ -789,7 +789,7 @@ select:focus, input[type="number"]:focus {
   color: #fff;
   font-size: 1.2rem;
   font-family: Arial, sans-serif;
-  box-shadow: 0 8px 24px rgba(0,47,45,.28);
+  box-shadow: 0 8px 24px rgba(79,126,168,.28);
   transition: background 140ms, transform 100ms;
   border-radius: 50%;
 }
@@ -886,7 +886,7 @@ select:focus, input[type="number"]:focus {
   padding: 32px;
   text-align: center;
   background:
-    linear-gradient(135deg, rgba(105,182,38,.10), transparent 40%),
+    linear-gradient(135deg, rgba(143,197,161,.10), transparent 40%),
     linear-gradient(180deg, #fff, var(--page));
   transition: opacity 1s ease;
 }
@@ -1032,7 +1032,7 @@ canvas {
   border: 1px solid rgba(255,255,255,.66);
   box-shadow:
     inset 0 0 36px rgba(168,190,162,.16),
-    0 18px 52px rgba(18,55,52,.11);
+    0 18px 52px rgba(79,126,168,.11);
   transition: transform 140ms linear, background 450ms ease;
   transform: scale(var(--breath-scale, 1));
   will-change: transform;
@@ -1073,7 +1073,7 @@ canvas {
   border: 1px solid rgba(47,143,131,.34);
   border-radius: 999px;
   background: rgba(255,255,255,.82);
-  box-shadow: 0 12px 34px rgba(18,55,52,.08);
+  box-shadow: 0 12px 34px rgba(79,126,168,.08);
   padding: 8px 12px;
   text-align: center;
   opacity: 0;
@@ -1117,7 +1117,7 @@ canvas {
 }
 
 .sound-steps .sound-arrow {
-  color: rgba(0,47,45,.72);
+  color: rgba(79,126,168,.72);
   font-size: 1.05rem;
 }
 
@@ -1523,7 +1523,7 @@ canvas {
     height: 38px;
     border: none;
     border-radius: 50%;
-    background: rgba(18,55,52,.06);
+    background: rgba(79,126,168,.06);
     color: var(--deep);
     cursor: pointer;
     opacity: .7;
@@ -1592,7 +1592,7 @@ canvas {
   .mobile-preset-header {
     margin-bottom: 16px;
     padding-bottom: 14px;
-    border-bottom: 1px solid rgba(18,55,52,.1);
+    border-bottom: 1px solid rgba(79,126,168,.1);
   }
   .mobile-preset-title {
     font-size: 1.25rem;
@@ -1611,7 +1611,7 @@ canvas {
   .mobile-preset-desc {
     font-size: .85rem;
     line-height: 1.5;
-    color: rgba(18,55,52,.8);
+    color: rgba(79,126,168,.8);
     margin: 0;
   }
 }
@@ -1640,13 +1640,13 @@ canvas {
 .deep-gate-card { background: #fff; border-radius: 18px; max-width: 480px; width: 100%; padding: 26px 22px; box-shadow: 0 24px 60px rgba(0,0,0,.22); margin: 16px 0; }
 .deep-gate-eyebrow { font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--deep); margin: 0 0 12px; }
 .deep-gate-intro { font-size: .85rem; line-height: 1.55; color: #333; margin: 0 0 12px; }
-.deep-gate-block { border-top: 1px solid rgba(18,55,52,.1); padding-top: 16px; margin-top: 16px; }
+.deep-gate-block { border-top: 1px solid rgba(79,126,168,.1); padding-top: 16px; margin-top: 16px; }
 .deep-gate-h { font-size: .92rem; font-weight: 900; color: var(--deep); margin: 0 0 10px; }
-.deep-gate-note { font-size: .76rem; color: rgba(18,55,52,.6); margin: 0 0 10px; }
+.deep-gate-note { font-size: .76rem; color: rgba(79,126,168,.6); margin: 0 0 10px; }
 .deep-gate-safety { margin: 0 0 12px; font-size: .8rem; }
 .deep-gate-safety summary { cursor: pointer; font-weight: 800; color: var(--deep); }
 .deep-gate-safety p { font-size: .8rem; line-height: 1.5; color: #444; margin: 8px 0 0; }
-.deep-gate-input { width: 100%; box-sizing: border-box; border: 1.5px solid rgba(18,55,52,.22); border-radius: 12px; padding: 11px 14px; font-size: .9rem; font-family: inherit; margin-bottom: 10px; }
+.deep-gate-input { width: 100%; box-sizing: border-box; border: 1.5px solid rgba(79,126,168,.22); border-radius: 12px; padding: 11px 14px; font-size: .9rem; font-family: inherit; margin-bottom: 10px; }
 .deep-gate-check { display: flex; gap: 10px; align-items: flex-start; font-size: .82rem; line-height: 1.45; color: #333; margin-bottom: 10px; cursor: pointer; }
 .deep-gate-check input { margin-top: 3px; flex-shrink: 0; }
 .deep-gate-secondary { width: 100%; background: transparent; color: #555; border: 1.5px solid #d5d5d5; border-radius: 999px; padding: 11px 20px; font-size: .85rem; font-weight: 600; cursor: pointer; box-shadow: none; }
@@ -1656,7 +1656,7 @@ canvas {
 /* Links in profielteksten duidelijk klikbaar */
 .profile-item-body a { color: var(--deep); text-decoration: underline; }
 .deep-gate-msg { font-size: .82rem; line-height: 1.5; border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; }
-.deep-gate-msg.ok { background: rgba(18,55,52,.08); color: var(--deep); }
+.deep-gate-msg.ok { background: rgba(79,126,168,.08); color: var(--deep); }
 .deep-gate-msg.warn { background: rgba(212,155,63,.14); color: #8a5a00; }
 .deep-gate-msg.err { background: rgba(192,57,43,.1); color: #c0392b; }
 </style>
@@ -1723,7 +1723,7 @@ canvas {
       <button class="profile-edit-btn" id="profileEditBtn">Profiel bewerken</button>
 
       <!-- Guest-stimulans: aanmoediging om in te loggen -->
-      <div id="loginStimulus" class="profile-item profile-item-static" style="display:none;flex-direction:column;align-items:flex-start;gap:8px;background:rgba(105,182,38,.10);margin-top:16px">
+      <div id="loginStimulus" class="profile-item profile-item-static" style="display:none;flex-direction:column;align-items:flex-start;gap:8px;background:rgba(143,197,161,.10);margin-top:16px">
         <strong style="font-size:.95rem">Bewaar je voortgang</strong>
         <span style="font-size:.85rem;opacity:.8">Maak gratis een account aan — dan blijven je sessies, voortgang en voorkeuren bewaard en volgen ze mee op al je apparaten.</span>
         <button class="profile-edit-btn" id="stimulusLoginBtn" style="margin-top:4px">Account aanmaken / inloggen</button>
@@ -1758,7 +1758,7 @@ canvas {
               <input class="deep-gate-input" id="pfCountry" type="text" placeholder="Land">
               <button class="profile-edit-btn" id="pfSave" type="button" style="margin-top:8px">Sluiten</button>
               <p class="deep-gate-msg" id="pfMsg" style="display:none"></p>
-              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:14px;border-top:1px solid rgba(18,55,52,.12);padding-top:12px">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:14px;border-top:1px solid rgba(79,126,168,.12);padding-top:12px">
                 <button id="profileLogoutBtn" style="display:none;background:none;border:none;color:var(--muted);font-size:.8rem;font-weight:700;text-decoration:underline;cursor:pointer;padding:6px 10px">Uitloggen</button>
                 <button id="profileDeleteBtn" style="display:none;background:none;border:none;color:#c0392b;font-size:.78rem;font-weight:600;text-decoration:underline;cursor:pointer;padding:4px 10px">Account verwijderen</button>
               </div>
@@ -1823,7 +1823,7 @@ canvas {
     <aside class="surface rail">
       <div class="lib-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span class="lib-title">Bibliotheek</span>
-        <button id="accountBtn" type="button" style="background:transparent;border:1.5px solid rgba(18,55,52,.18);color:#123734;border-radius:999px;padding:5px 12px;font-size:.74rem;font-weight:800;cursor:pointer;white-space:nowrap">Inloggen</button>
+        <button id="accountBtn" type="button" style="background:transparent;border:1.5px solid rgba(79,126,168,.18);color:#3E6A93;border-radius:999px;padding:5px 12px;font-size:.74rem;font-weight:800;cursor:pointer;white-space:nowrap">Inloggen</button>
       </div>
       <div class="lib-category-label">Ademhaling</div>
       <div class="lib-list" id="breathingList"></div>
@@ -1844,7 +1844,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.1.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.2.0</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png" style="width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply">
         </div>
@@ -2141,15 +2141,15 @@ canvas {
 </div>
 
 <!-- Melding: nieuwe versie beschikbaar (compact pilletje, boven de mobiele navigatie) -->
-<div id="updateBanner" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:100000;align-items:center;gap:10px;background:#002f2d;color:#fff;border-radius:999px;padding:5px 5px 5px 14px;box-shadow:0 8px 20px rgba(0,0,0,.2);font-size:.78rem;white-space:nowrap;max-width:94vw">
+<div id="updateBanner" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:100000;align-items:center;gap:10px;background:#4F7EAB;color:#fff;border-radius:999px;padding:5px 5px 5px 14px;box-shadow:0 8px 20px rgba(0,0,0,.2);font-size:.78rem;white-space:nowrap;max-width:94vw">
   <span>Nieuwe versie</span>
-  <button id="updateReloadBtn" type="button" style="background:#69b626;color:#002f2d;border:none;border-radius:999px;padding:6px 13px;font-weight:800;font-size:.76rem;cursor:pointer;white-space:nowrap">Herladen</button>
+  <button id="updateReloadBtn" type="button" style="background:#8FC5A1;color:#4F7EAB;border:none;border-radius:999px;padding:6px 13px;font-weight:800;font-size:.76rem;cursor:pointer;white-space:nowrap">Herladen</button>
 </div>
 
 <!-- Aanmoediging na een sessie (alleen voor gasten) -->
-<div id="postSessionCta" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99990;width:min(420px,92vw);background:#fff;border:1px solid rgba(18,55,52,.14);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.18);padding:14px 16px">
+<div id="postSessionCta" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:99990;width:min(420px,92vw);background:#fff;border:1px solid rgba(79,126,168,.14);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.18);padding:14px 16px">
   <button id="postSessionCtaClose" aria-label="Sluiten" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:1.1rem;color:#999;cursor:pointer">&times;</button>
-  <strong style="display:block;font-size:.92rem;color:#002f2d">Mooi gedaan! 🌿</strong>
+  <strong style="display:block;font-size:.92rem;color:#4F7EAB">Mooi gedaan! 🌿</strong>
   <span style="display:block;font-size:.83rem;color:#444;margin:4px 0 10px">Maak een gratis account om je voortgang te bewaren en op al je apparaten terug te zien.</span>
   <button id="postSessionCtaBtn" class="primary-session-button" type="button" style="width:100%">Account aanmaken / inloggen</button>
 </div>
@@ -2170,7 +2170,7 @@ canvas {
         <button class="primary-session-button" id="authLoginBtn" type="button" style="flex:1">Inloggen</button>
         <button class="deep-gate-secondary" id="authRegisterBtn" type="button" style="flex:1;margin:0">Registreren</button>
       </div>
-      <button type="button" id="authForgotBtn" style="background:none;border:none;color:rgba(18,55,52,.65);font-size:.78rem;font-weight:700;text-decoration:underline;cursor:pointer;margin-top:10px;padding:0">Wachtwoord vergeten?</button>
+      <button type="button" id="authForgotBtn" style="background:none;border:none;color:rgba(79,126,168,.65);font-size:.78rem;font-weight:700;text-decoration:underline;cursor:pointer;margin-top:10px;padding:0">Wachtwoord vergeten?</button>
       <div id="pwForgotRow" style="display:none;margin-top:10px">
         <p class="deep-gate-note">Vul het e-mailadres van je account in; we sturen je een link om een nieuw wachtwoord in te stellen.</p>
         <input class="deep-gate-input" id="forgotEmailInput" type="email" placeholder="E-mailadres" autocomplete="off">
@@ -2222,7 +2222,7 @@ canvas {
   <div style="background:#fff;border-radius:18px;max-width:480px;width:100%;padding:28px 24px;box-shadow:0 24px 60px rgba(0,0,0,.22);margin-top:16px">
     <div id="warningModalBody"></div>
     <div style="display:flex;gap:10px;flex-direction:column">
-      <button id="activeBreathConfirmBtn" style="background:#123734;color:#fff;border:none;border-radius:12px;padding:13px 20px;font-size:.9rem;font-weight:800;cursor:pointer">Ik begrijp dit en wil doorgaan</button>
+      <button id="activeBreathConfirmBtn" style="background:#3E6A93;color:#fff;border:none;border-radius:12px;padding:13px 20px;font-size:.9rem;font-weight:800;cursor:pointer">Ik begrijp dit en wil doorgaan</button>
       <button id="activeBreathCancelBtn" style="background:transparent;color:#555;border:1.5px solid #ccc;border-radius:12px;padding:11px 20px;font-size:.85rem;font-weight:700;cursor:pointer">Annuleren</button>
     </div>
   </div>
@@ -2402,14 +2402,14 @@ function requireDeepAccess(preset) {
 
 const warningContent = {
   activeBreathTest: `
-    <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Actieve Ademtest</h2>
+    <h2 style="font-size:1.1rem;font-weight:900;color:#4F7EAB;margin:0 0 14px">Actieve Ademtest</h2>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze oefening is intensiever dan de gewone ademhalingssessies.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij:</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, of wanneer je snel paniek, flauwvallen of dissociatie ervaart.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Doe deze oefening <strong>zittend of liggend</strong>. Niet tijdens autorijden, fietsen, werken met machines of in water.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 18px"><strong>Stop direct</strong> bij duizeligheid, sterke tintelingen, druk op de borst, paniek, misselijkheid of een gevoel van controleverlies.</p>
     <p style="font-size:.75rem;color:#888;margin:0 0 22px">Deze sessie is alleen bedoeld als korte interne test en is geen volledige holotropische ademhalingssessie.</p>`,
   holotropicBreathTest: `
-    <h2 style="font-size:1.1rem;font-weight:900;color:#002f2d;margin:0 0 14px">Holotropische Ademtest</h2>
+    <h2 style="font-size:1.1rem;font-weight:900;color:#4F7EAB;margin:0 0 14px">Holotropische Ademtest</h2>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Deze sessie is intensiever dan de gewone ademhalingssessies.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px"><strong>Gebruik deze oefening niet bij</strong> zwangerschap, epilepsie, ernstige hart- of vaatproblemen, ongecontroleerde hoge bloeddruk, glaucoom, netvliesproblemen, recente operatie, ernstige psychiatrische instabiliteit, psychosegevoeligheid, ernstige paniekklachten of wanneer je snel flauwvalt of dissocieert.</p>
     <p style="font-size:.83rem;line-height:1.6;color:#333;margin:0 0 14px">Doe deze oefening alleen <strong>liggend of zittend</strong> op een veilige plek. Niet tijdens autorijden, fietsen, werken met machines, zwemmen of baden.</p>
@@ -3005,7 +3005,7 @@ function renderMedMusicChips() {
     const btn = document.createElement("button");
     btn.type = "button";
     const on = (v.label === activeLabel);
-    btn.style.cssText = "padding:8px 16px;border-radius:999px;border:1.5px solid rgba(18,55,52,.18);background:#fff;color:var(--deep);font-weight:800;font-size:.82rem;cursor:pointer;transition:background .12s,color .12s";
+    btn.style.cssText = "padding:8px 16px;border-radius:999px;border:1.5px solid rgba(79,126,168,.18);background:#fff;color:var(--deep);font-weight:800;font-size:.82rem;cursor:pointer;transition:background .12s,color .12s";
     if (on) btn.style.cssText += ";background:var(--deep);color:#fff;border-color:var(--deep)";
     btn.textContent = v.label || `Variant ${i + 1}`;
     btn.addEventListener("click", () => {
@@ -4927,7 +4927,7 @@ function drawSoundRoute(ctx, cx, cy, radius, protocol, phase, within) {
 
     ctx.beginPath();
     ctx.arc(x, y, active ? 15 : 11, 0, totalAngle);
-    ctx.fillStyle = active ? "rgba(212,155,63,.98)" : "rgba(105,182,38,.42)";
+    ctx.fillStyle = active ? "rgba(212,155,63,.98)" : "rgba(143,197,161,.42)";
     ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.88)";
     ctx.lineWidth = 4;
@@ -4936,7 +4936,7 @@ function drawSoundRoute(ctx, cx, cy, radius, protocol, phase, within) {
     ctx.font = "900 20px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = active ? "#fff" : "#002f2d";
+    ctx.fillStyle = active ? "#fff" : "#4F7EAB";
     ctx.fillText(step, x, y + 1);
   });
 }
@@ -5055,7 +5055,7 @@ function draw(time) {
 
   ctx.beginPath();
   ctx.arc(cx, cy, radius * 0.36, 0, Math.PI * 2);
-  ctx.fillStyle = hold ? "rgba(105,182,38,.16)" : "rgba(255,255,255,.32)";
+  ctx.fillStyle = hold ? "rgba(143,197,161,.16)" : "rgba(255,255,255,.32)";
   ctx.fill();
 }
 
@@ -5849,13 +5849,13 @@ function openMyPaymentReceipt() {
   if (!w) { setGateMsg("plusMsg", "Sta pop-ups toe om je betaalbewijs te openen.", "err"); return; }
   w.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Betaalbewijs Restavia Plus</title>
 <style>
-  body{font-family:system-ui,-apple-system,sans-serif;color:#123734;max-width:640px;margin:40px auto;padding:0 20px}
+  body{font-family:system-ui,-apple-system,sans-serif;color:#3E6A93;max-width:640px;margin:40px auto;padding:0 20px}
   .bon{margin-bottom:40px}
   h1{font-size:1.3rem;margin-bottom:4px}
   table{width:100%;border-collapse:collapse;margin-top:16px}
   td,th{padding:8px 10px;border-bottom:1px solid #dde8e4;text-align:left}
   th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:#5a6f6b}
-  .tot td{font-weight:800;border-top:2px solid #123734}
+  .tot td{font-weight:800;border-top:2px solid #3E6A93}
   .kop{display:flex;justify-content:space-between;gap:24px;margin-top:18px}
   .kop div{font-size:.9rem;line-height:1.6}
   .muted{color:#5a6f6b;font-size:.82rem}
@@ -5863,7 +5863,7 @@ function openMyPaymentReceipt() {
 </style></head><body>
 ${pays.map(blok).join("")}
 <p class="muted">Vragen over je betaling? Neem contact met ons op via de app.</p>
-<button onclick="print()" style="margin-top:10px;padding:10px 18px;border-radius:999px;border:1px solid #123734;background:#123734;color:#fff;font-weight:700;cursor:pointer">Afdrukken / opslaan als PDF</button>
+<button onclick="print()" style="margin-top:10px;padding:10px 18px;border-radius:999px;border:1px solid #3E6A93;background:#3E6A93;color:#fff;font-weight:700;cursor:pointer">Afdrukken / opslaan als PDF</button>
 </body></html>`);
   w.document.close();
 }
