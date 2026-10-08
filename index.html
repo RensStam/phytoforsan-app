@@ -69,7 +69,7 @@ body {
   font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
   color: var(--ink);
   background:
-    linear-gradient(135deg, rgba(143,197,161,.12), transparent 34%),
+    linear-gradient(135deg, rgba(191,220,201,.35), transparent 38%),
     linear-gradient(235deg, rgba(167,203,234,.13), transparent 30%),
     linear-gradient(180deg, #fff, var(--page));
 }
@@ -208,7 +208,7 @@ button { cursor: pointer; }
 }
 
 .protocol-card.active {
-  box-shadow: 0 0 0 2.5px rgba(47,143,131,.65), 0 6px 20px rgba(79,126,168,.1);
+  box-shadow: 0 0 0 2.5px var(--restavia-green), 0 6px 20px rgba(79,126,168,.1);
 }
 
 .card-thumb {
@@ -404,7 +404,8 @@ button { cursor: pointer; }
 .mood-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
 .mood-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1 1 28%; min-width: 92px; background: #fff; border: 1.5px solid rgba(79,126,168,.12); border-radius: 14px; padding: 12px 8px; font-size: .78rem; font-weight: 800; color: var(--deep); cursor: pointer; transition: border-color 120ms, background 120ms; }
 .mood-btn .mood-icon { font-size: 1.35rem; }
-.mood-btn.mood-active { border-color: var(--deep); background: rgba(79,126,168,.06); }
+.mood-btn.mood-active { border-color: var(--restavia-green); background: rgba(191,220,201,.45); }
+.mood-btn:hover { border-color: var(--restavia-mint); }
 .home-reco-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .home-all-btn { background: none; border: none; color: var(--deep); font-size: .78rem; font-weight: 800; cursor: pointer; text-decoration: underline; padding: 4px; }
 
@@ -442,7 +443,7 @@ button { cursor: pointer; }
 .progress-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
 .progress-bar-fill { width: 100%; max-width: 26px; border-radius: 6px; background: rgba(79,126,168,.78); min-height: 3px; }
 .progress-bar-col span { font-size: .68rem; font-weight: 700; color: rgba(79,126,168,.6); }
-.progress-streak { display: flex; align-items: center; gap: 10px; background: rgba(212,155,63,.12); border-radius: 12px; padding: 12px 16px; margin-top: 16px; font-size: .85rem; font-weight: 800; color: var(--deep); }
+.progress-streak { display: flex; align-items: center; gap: 10px; background: var(--restavia-mint); border-radius: 12px; padding: 12px 16px; margin-top: 16px; font-size: .85rem; font-weight: 800; color: var(--deep); }
 .progress-streak-flame { font-size: 1.1rem; }
 .progress-favs { display: grid; gap: 8px; margin-top: 6px; }
 .progress-fav { display: flex; justify-content: space-between; align-items: center; background: rgba(79,126,168,.05); border-radius: 12px; padding: 11px 16px; font-size: .83rem; font-weight: 700; color: var(--deep); }
@@ -892,7 +893,7 @@ select:focus, input[type="number"]:focus {
 .stage-progress-bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--restavia-sky), var(--restavia-blue));
+  background: linear-gradient(90deg, var(--restavia-mint), var(--restavia-green));
   transition: width 120ms linear;
   border-radius: 999px;
 }
@@ -1188,7 +1189,7 @@ canvas {
   display: block;
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--restavia-sky), var(--restavia-blue));
+  background: linear-gradient(90deg, var(--restavia-mint), var(--restavia-green));
   transition: width 120ms linear;
   border-radius: 999px;
 }
@@ -1328,7 +1329,7 @@ canvas {
 }
 
 .switch input:checked + .switch-track {
-  background: var(--deep);
+  background: var(--restavia-green);
 }
 
 .switch input:checked + .switch-track::after {
@@ -1353,7 +1354,7 @@ canvas {
   justify-content: flex-start;
 }
 
-.toggle input { accent-color: var(--green); }
+.toggle input { accent-color: var(--restavia-green); }
 
 .engine-panel {
   border: none;
@@ -1679,7 +1680,7 @@ canvas {
 /* Links in profielteksten duidelijk klikbaar */
 .profile-item-body a { color: var(--deep); text-decoration: underline; }
 .deep-gate-msg { font-size: .82rem; line-height: 1.5; border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; }
-.deep-gate-msg.ok { background: rgba(79,126,168,.08); color: var(--deep); }
+.deep-gate-msg.ok { background: var(--restavia-mint); color: var(--restavia-text); }
 .deep-gate-msg.warn { background: rgba(212,155,63,.14); color: #8a5a00; }
 .deep-gate-msg.err { background: rgba(192,57,43,.1); color: #c0392b; }
 </style>
@@ -1867,7 +1868,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.2.6</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.2.7</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -4983,7 +4984,7 @@ function draw(time) {
   const night = !!presets[activePreset]?.night;
   // Adem-/uitademkleur van de cirkel: blauw/groen overdag, blauwer bij nacht/avond
   const breathColor = night ? "74,110,170" : "79,126,168";
-  const phaseColor = hum ? "212,155,63" : exhale ? breathColor : inhale ? breathColor : hold ? (night ? "90,120,185" : "143,197,161") : "49,86,111";
+  const phaseColor = hum ? "212,155,63" : exhale ? (night ? breathColor : "143,197,161") : inhale ? breathColor : hold ? (night ? "90,120,185" : "191,220,201") : "49,86,111";
   const minRadius = 150;
   const maxRadius = 254;
   const radius = lerp(168, 236, guide.breath);
