@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — opbouwschema per protocol kunnen vergrendelen
+-- Restavia — opbouwschema per protocol kunnen vergrendelen
 -- Voer dit uit in de Supabase SQL Editor. Opnieuw uitvoeren is veilig.
 --
 -- Staat 'lock_schema' op true, dan kan de gebruiker het ademritme/opbouwschema

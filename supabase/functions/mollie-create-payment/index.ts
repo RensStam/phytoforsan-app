@@ -1,5 +1,5 @@
 // =====================================================================
-// PhytoForsan Relax Plus — Mollie betaling aanmaken (Supabase Edge Function)
+// Restavia Plus — Mollie betaling aanmaken (Supabase Edge Function)
 //
 // Aanroep: vanuit de app, ingelogd (Authorization: Bearer <user-jwt>).
 // Maakt een Mollie-betaling aan voor 1 jaar Plus en geeft de checkout-URL
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     headers: { Authorization: `Bearer ${mollieKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       amount: { currency: "EUR", value: amountValue },
-      description: "PhytoForsan Relax Plus — 1 jaar toegang",
+      description: "Restavia Plus — 1 jaar toegang",
       redirectUrl: `${appUrl}/?plus=return`,
       webhookUrl: `${Deno.env.get("SUPABASE_URL")}/functions/v1/mollie-webhook`,
       metadata: { user_id: user.id, product_type: "relax_plus_year" },

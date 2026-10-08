@@ -1,5 +1,5 @@
 // =====================================================================
-// PhytoForsan Relax — melding "je hebt al een account" (Supabase Edge Function)
+// Restavia — melding "je hebt al een account" (Supabase Edge Function)
 //
 // Aanroep: vanuit de app na een registratiepoging (Authorization: Bearer <anon-key>).
 // Zelf checkt deze functie (met de service-role) of het e-mailadres al een
@@ -73,15 +73,15 @@ async function sendExistingAccountMail(email: string) {
   });
 
   await client.send({
-    from: Deno.env.get("SMTP_FROM") || "PhytoForsan Relax <noreply@phytoforsan.nl>",
+    from: Deno.env.get("SMTP_FROM") || "Restavia <noreply@phytoforsan.nl>",
     to: email,
-    subject: "Je hebt al een account bij PhytoForsan Relax",
+    subject: "Je hebt al een account bij Restavia",
     content: "auto",
     html: `
       <p>Er is zojuist geprobeerd een nieuw account aan te maken met dit e-mailadres,
-      maar je hebt al een account bij <strong>PhytoForsan Relax</strong>.</p>
+      maar je hebt al een account bij <strong>Restavia</strong>.</p>
       <p>Wachtwoord vergeten? Ga naar
-      <a href="https://app.phytoforsan.nl">app.phytoforsan.nl</a> en klik op
+      <a href="${Deno.env.get("APP_URL") || "https://app.phytoforsan.nl"}">Restavia</a> en klik op
       "Wachtwoord vergeten?".</p>
       <p>Heb jij dit zelf niet aangevraagd, dan kun je deze e-mail gewoon negeren.</p>
     `,

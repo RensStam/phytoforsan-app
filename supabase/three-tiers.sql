@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — drie toegangslagen: free < deep < premium (Plus)
+-- Restavia — drie toegangslagen: free < deep < premium (Plus)
 -- Voer dit uit in de Supabase SQL Editor (na plus.sql en content-tiers.sql).
 -- Opnieuw uitvoeren is veilig (idempotent).
 --

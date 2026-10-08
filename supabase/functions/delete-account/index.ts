@@ -1,5 +1,5 @@
 // =====================================================================
-// PhytoForsan — account verwijderen (Supabase Edge Function)
+// Restavia — account verwijderen (Supabase Edge Function)
 //
 // Aanroep: vanuit de app, ingelogd (Authorization: Bearer <user-jwt>).
 // Verwijdert het account van de INGELOGDE gebruiker en al zijn persoons-

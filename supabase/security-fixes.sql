@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — beveiligingsfixes (audit 2026-07-12)
+-- Restavia — beveiligingsfixes (audit 2026-07-12)
 -- Voer dit uit in de Supabase SQL Editor. Opnieuw uitvoeren is veilig.
 -- =====================================================================
 

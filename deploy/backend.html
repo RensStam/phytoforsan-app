@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PhytoForsan — Backend</title>
+<title>Restavia — Beheer</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <style>
@@ -57,9 +57,9 @@
 </head>
 <body>
 <header>
-  <h1>PhytoForsan · Backend</h1>
+  <h1>Restavia · Beheer</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.7</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.8</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -141,7 +141,7 @@ function mockSeed() {
   const db = Object.fromEntries(TABLES.map(t=>[t,[]]));
   db.categories = cats; db.protocols = [p]; db.protocol_phases = phases;
   db.app_settings = [
-    {key:"app_name", value:"PhytoForsan Relax", updated_at:now()},
+    {key:"app_name", value:"Restavia", updated_at:now()},
     {key:"default_closing_title", value:"AFGEROND", updated_at:now()},
     {key:"default_closing_text", value:"Neem de tijd om de ervaring een plek te geven.", updated_at:now()},
     {key:"default_audio_volume", value:"0.35", updated_at:now()}
@@ -1450,7 +1450,7 @@ function openPaymentReceipt(p, prof) {
   const fmtE = (n) => "€ " + n.toFixed(2).replace(".", ",");
   const datum = p.created_at ? new Date(p.created_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }) : "—";
   const nr = "PF-" + String(p.created_at || "").slice(0, 10).replace(/-/g, "") + "-" + String(p.provider_payment_id || p.id).replace(/^tr_/, "").slice(0, 6).toUpperCase();
-  const product = p.product_type === "relax_plus_year" ? "PhytoForsan Relax Plus — 1 jaar toegang" : (p.product_type || "—");
+  const product = p.product_type === "relax_plus_year" ? "Restavia Plus — 1 jaar toegang" : (p.product_type || "—");
   const klantHtml = prof ? [
     [prof.first_name, prof.last_name].filter(Boolean).join(" ") || null,
     [prof.street, prof.house_number].filter(Boolean).join(" ") || null,
@@ -1475,7 +1475,7 @@ function openPaymentReceipt(p, prof) {
 <h1>Betaalbewijs</h1>
 <p class="muted">Nummer <b>${nr}</b> · ${datum} · Mollie-referentie ${esc(p.provider_payment_id || "—")} · status ${esc(p.status)}</p>
 <div class="kop">
-  <div><b>PhytoForsan.nl</b><br>Staverdenseweg 94<br>8075 AS Elspeet<br>KVK 92370802 · BTW NL004949180B47</div>
+  <div><b>Restavia</b><br><!-- TODO juridische eigenaar Restavia: bedrijfsgegevens invullen --></div>
   <div><b>Klant</b><br>${klantHtml}</div>
 </div>
 <table><thead><tr><th>Omschrijving</th><th style="text-align:right">Bedrag</th></tr></thead>
@@ -1484,7 +1484,7 @@ function openPaymentReceipt(p, prof) {
   <tr><td>BTW 21%</td><td style="text-align:right">${fmtE(btw)}</td></tr>
   <tr class="tot"><td>Totaal (betaald via Mollie)</td><td style="text-align:right">${fmtE(bedrag)}</td></tr>
 </tbody></table>
-<p class="muted" style="margin-top:20px">Automatisch aangemaakt vanuit de PhytoForsan Relax App-administratie.</p>
+<p class="muted" style="margin-top:20px">Automatisch aangemaakt vanuit de Restavia-administratie.</p>
 <button onclick="print()" style="margin-top:14px;padding:10px 18px;border-radius:999px;border:1px solid #123734;background:#123734;color:#fff;font-weight:700;cursor:pointer">Afdrukken / opslaan als PDF</button>
 </body></html>`);
   w.document.close();
@@ -1647,7 +1647,7 @@ async function renderSettings() {
     maintenance_mode: "Onderhoudsmodus (true/false)",
     deep_access_enabled: "Verdieping ingeschakeld (true/false)",
     default_audio_enabled: "Achtergrondgeluid standaard aan (true/false)",
-    about_text: "Tekst: Over PhytoForsan Relax App",
+    about_text: "Tekst: Over Restavia",
     privacy_text: "Tekst: Privacy",
     contact_text: "Tekst: Contact- en bedrijfsgegevens",
     faq_text: "Tekst: Veelgestelde vragen",
@@ -1663,7 +1663,7 @@ async function renderSettings() {
   };
   // Huidige standaardteksten — worden voorgevuld zodat de velden niet leeg zijn.
   const DEFAULTS = {
-    app_name: "PhytoForsan Relax App",
+    app_name: "Restavia",
     default_closing_title: "AFGEROND",
     default_closing_text: "Neem de tijd om de ervaring een plek te geven.",
     default_audio_enabled: "false",
@@ -1704,20 +1704,17 @@ Alleen adem, klank en aandacht.
 
 Deze app is ontstaan vanuit de wens om rust, adem en klank op een eenvoudige manier toegankelijk te maken.
 
-PhytoForsan Relax App
-Een initiatief van Rens Stam voor PhytoForsan.nl.`,
+Restavia
+Breathe. Feel. Flow.`,
     privacy_text:
 "Zonder account blijven je gegevens (sessies, voortgang, voorkeuren) lokaal op je apparaat en worden er geen persoonsgegevens opgeslagen. Om de app te kunnen verbeteren registreert de app wel anoniem welke sessies worden gedaan (protocol, duur en tijdstip), gekoppeld aan een willekeurig apparaatnummer dat niets over jou zegt en niet tot jou te herleiden is. Maak je een account aan, dan worden je profielgegevens en voortgang veilig bewaard zodat ze meebewegen tussen je apparaten. Er worden geen advertentie-trackers gebruikt.",
     contact_text:
-`Contact- en bedrijfsgegevens
+`Contact
 
-PhytoForsan.nl
-Staverdenseweg 94
-8075 AS Elspeet
-E-mail: info@phytoforsan.nl
+Restavia
+Contactgegevens volgen binnenkort.
 
-KVK: 92370802
-BTW-id: NL004949180B47`,
+© 2026 Restavia. Alle rechten voorbehouden.`,
     faq_text:
 `Hoe installeer ik de app?
 Open het menu in je browser en kies "App installeren" of "Toevoegen aan startscherm".
@@ -1761,7 +1758,7 @@ Dagelijks. Begin met één korte sessie per dag en bouw rustig op.`
     <p class="muted">Elke sessie eindigt met een ontspanningsfase, daarna het eindbericht. Deze waarden gelden voor alle protocollen; per protocol kun je ze bij het fasebeheer overschrijven. Duur 0 = geen ontspanningsfase.</p>
     ${["default_closing_rest_seconds","default_relax_cue_word","default_relax_cue_sub"].map(fieldHtml).join("")}
     <h3 style="margin-top:18px">Openingsscherm</h3>
-    <p class="muted">Een ademende cirkel met het PhytoForsan-blaadje opent de app. Zet "tonen" op false om het openingsscherm uit te schakelen. Wijzigingen zijn zichtbaar vanaf de eerstvolgende keer dat de app opnieuw wordt geopend.</p>
+    <p class="muted">Een ademende cirkel met de naam Restavia opent de app. Zet "tonen" op false om het openingsscherm uit te schakelen. Wijzigingen zijn zichtbaar vanaf de eerstvolgende keer dat de app opnieuw wordt geopend.</p>
     ${["opening_enabled"].map(fieldHtml).join("")}
     <h3 style="margin-top:18px">Teksten op het profiel-/instellingenscherm</h3>
     <p class="muted">Laat een veld leeg om de standaardtekst van de app te gebruiken. Een lege regel begint een nieuwe alinea.<br>Opmaak: <b>**vet**</b>, <i>*schuin*</i>, en <code>[kleur=#e08c2a]gekleurde tekst[/kleur]</code>. E-mail en links worden automatisch klikbaar.</p>

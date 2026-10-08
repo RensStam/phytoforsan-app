@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan Relax — Supabase schema (fase 1)
+-- Restavia — Supabase schema (fase 1)
 -- Voer dit uit in de Supabase SQL editor van je test- en productieproject.
 -- Geen betaal-/Mollie-logica. Alleen anon key in de frontend; beveiliging via RLS.
 -- =====================================================================

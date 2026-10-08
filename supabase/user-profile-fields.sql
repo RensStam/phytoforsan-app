@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — uitgebreid gebruikersprofiel + privilege-beveiliging
+-- Restavia — uitgebreid gebruikersprofiel + privilege-beveiliging
 -- Voer dit uit in de Supabase SQL Editor.
 -- =====================================================================
 

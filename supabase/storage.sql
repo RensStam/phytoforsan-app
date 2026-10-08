@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — opslag-bucket voor media (audio + afbeeldingen)
+-- Restavia — opslag-bucket voor media (audio + afbeeldingen)
 -- Voer dit uit in de Supabase SQL Editor.
 -- Bestanden zijn publiek leesbaar (zodat de app ze kan afspelen/tonen);
 -- alleen admins mogen uploaden/wijzigen/verwijderen.

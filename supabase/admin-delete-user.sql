@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — gebruiker veilig kunnen verwijderen vanuit het backend
+-- Restavia — gebruiker veilig kunnen verwijderen vanuit het backend
 -- Voer dit uit in de Supabase SQL Editor.
 -- Verwijdert het account uit auth.users (profiel cascadet mee). Alleen admins
 -- mogen dit; de service-role key blijft uit de frontend.

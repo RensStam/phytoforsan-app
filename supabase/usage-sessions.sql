@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — Gastgebruik registreren (usage_sessions)
+-- Restavia — Gastgebruik registreren (usage_sessions)
 -- Voer dit uit in de Supabase SQL Editor.
 --
 -- De app registreert per afgeronde/afgebroken sessie (>= 1 minuut) van

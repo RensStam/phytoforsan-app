@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan Relax Plus — beheer: betalingen kunnen verwijderen
+-- Restavia Plus — beheer: betalingen kunnen verwijderen
 -- Voer dit uit in de Supabase SQL Editor (na plus.sql).
 -- Alleen admins mogen betaalrecords verwijderen (bv. testbetalingen).
 -- =====================================================================

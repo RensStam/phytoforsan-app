@@ -1,5 +1,5 @@
 // =====================================================================
-// PhytoForsan Relax Plus — Mollie webhook (Supabase Edge Function)
+// Restavia Plus — Mollie webhook (Supabase Edge Function)
 //
 // Mollie stuurt hier alleen een payment-id naartoe; we vertrouwen de
 // aanroep nooit blind maar halen de betaling zelf op bij Mollie.

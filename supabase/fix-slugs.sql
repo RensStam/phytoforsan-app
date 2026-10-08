@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — herstel technische slugs (titels blijven ongewijzigd)
+-- Restavia — herstel technische slugs (titels blijven ongewijzigd)
 -- Voer dit uit in de Supabase SQL Editor. Zet de slug terug naar de vaste ID
 -- die de app koppelt aan tegels, klank en beveiliging.
 -- Veilig: alleen de slug verandert; titel/teksten/fases blijven zoals ze zijn.

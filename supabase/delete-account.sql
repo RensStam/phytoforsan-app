@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — account verwijderen: factuur-snapshot behouden
+-- Restavia — account verwijderen: factuur-snapshot behouden
 -- Voer dit uit in de Supabase SQL Editor. Opnieuw uitvoeren is veilig.
 --
 -- Bij het verwijderen van een account worden alle persoonsgegevens gewist

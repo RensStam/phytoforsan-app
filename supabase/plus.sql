@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan Relax Plus — entitlements, rustcodes, betalingen, proefperiode
+-- Restavia Plus — entitlements, rustcodes, betalingen, proefperiode
 -- Voer dit uit in de Supabase SQL Editor (na schema.sql en access-codes.sql).
 --
 -- Centrale waarheid voor toegang: public.user_entitlements.

@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — Meditatietimer terugzetten in Supabase
+-- Restavia — Meditatietimer terugzetten in Supabase
 -- Voer dit uit in de Supabase SQL Editor.
 -- De slug 'meditationTimer' koppelt aan het ingebouwde meditatie-protocol
 -- (vrije timer zonder ademsturing). Geen fases nodig.

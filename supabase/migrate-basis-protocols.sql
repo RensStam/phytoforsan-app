@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — basis-ademprotocollen naar exacte cycli zetten
+-- Restavia — basis-ademprotocollen naar exacte cycli zetten
 -- Voer dit uit NA exact-protocols.sql. Opnieuw uitvoeren is veilig.
 --
 -- Zet per protocol het aantal ademcycli en de exacte fase-duur (= cycli ×

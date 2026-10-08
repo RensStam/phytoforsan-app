@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — meerdere muziekvarianten voor de meditatietimer
+-- Restavia — meerdere muziekvarianten voor de meditatietimer
 -- Voer dit uit in de Supabase SQL Editor. Opnieuw uitvoeren is veilig.
 --
 -- Een protocol kan nu meerdere achtergrond-varianten hebben (bv. "Ochtend",

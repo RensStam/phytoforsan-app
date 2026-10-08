@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — exacte, cyclus-gestuurde ademprotocollen
+-- Restavia — exacte, cyclus-gestuurde ademprotocollen
 -- Voer dit uit in de Supabase SQL Editor. Opnieuw uitvoeren is veilig.
 --
 -- Model: een ademfase krijgt een AANTAL CYCLI (breath_cycles). De exacte

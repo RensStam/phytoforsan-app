@@ -1,5 +1,5 @@
 // =====================================================================
-// PhytoForsan Relax — gedeelde configuratie (app + backend)
+// Restavia — gedeelde configuratie (app + backend)
 //
 // Vul hieronder je Supabase-gegevens in. DEZELFDE waarden gelden voor zowel
 // de lokale versie als de live (deploy) versie — daardoor lezen/schrijven beide

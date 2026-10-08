@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — ontspanningsfase (de afsluitende fase van een sessie)
+-- Restavia — ontspanningsfase (de afsluitende fase van een sessie)
 -- Voer dit uit in de Supabase SQL Editor. Opnieuw uitvoeren is veilig.
 --
 -- De afsluitende fase heet voortaan "ontspanningsfase" en toont een eigen

@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — protocolinhoud per toegangsniveau (RLS)
+-- Restavia — protocolinhoud per toegangsniveau (RLS)
 -- Voer dit uit in de Supabase SQL Editor (ná plus.sql).
 -- Opnieuw uitvoeren is veilig (idempotent).
 --

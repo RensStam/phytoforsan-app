@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — overvloei-tijd (crossfade) voor de meditatietimer-muziek
+-- Restavia — overvloei-tijd (crossfade) voor de meditatietimer-muziek
 -- Voer dit uit in de Supabase SQL Editor. Opnieuw uitvoeren is veilig.
 --
 -- Per achtergrondmuziek-koppeling instelbaar hoeveel seconden het einde van de

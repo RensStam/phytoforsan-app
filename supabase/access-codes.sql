@@ -1,5 +1,5 @@
 -- =====================================================================
--- PhytoForsan — toegangscodes (los van gebruikersaccounts)
+-- Restavia — toegangscodes (los van gebruikersaccounts)
 -- Voer dit uit in de Supabase SQL Editor.
 -- Een code ontgrendelt 'deep' (of 'premium') op het apparaat, zonder account.
 -- Codes zijn alleen voor admins zichtbaar; inwisselen gaat via een functie die

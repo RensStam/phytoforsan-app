@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "PhytoForsan Relax App",
-  "short_name": "PhytoForsan",
-  "description": "Adem, ontspan en hum — ademhaling, humming en meditatie van PhytoForsan.",
+  "name": "Restavia",
+  "short_name": "Restavia",
+  "description": "Ademhaling, meditatie, humming en klank voor rust, aandacht en een natuurlijk ritme.",
   "lang": "nl",
   "dir": "ltr",
   "start_url": "./",
