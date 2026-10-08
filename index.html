@@ -34,6 +34,7 @@
   --restavia-mint: #BFDCC9;
   --restavia-green: #8FC5A1;
   --restavia-success-bg: #EAF4ED;
+  --restavia-success-text: #5F9472;
   --restavia-border: rgba(79,126,171,.18);
   --restavia-border-soft: rgba(79,126,171,.12);
   --restavia-shadow: rgba(49,86,111,.10);
@@ -211,7 +212,7 @@ button { cursor: pointer; }
 }
 
 .protocol-card.active {
-  box-shadow: 0 0 0 2px var(--restavia-blue), 0 4px 16px rgba(49,86,111,.08);
+  box-shadow: 0 0 0 2px var(--restavia-green), 0 4px 16px rgba(49,86,111,.08);
 }
 
 .card-thumb {
@@ -407,7 +408,7 @@ button { cursor: pointer; }
 .mood-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
 .mood-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1 1 28%; min-width: 92px; background: #fff; border: 1.5px solid rgba(79,126,168,.12); border-radius: 14px; padding: 12px 8px; font-size: .78rem; font-weight: 800; color: var(--deep); cursor: pointer; transition: border-color 120ms, background 120ms; }
 .mood-btn .mood-icon { font-size: 1.35rem; }
-.mood-btn.mood-active { border-color: var(--restavia-blue); background: var(--restavia-aqua); }
+.mood-btn.mood-active { border-color: var(--restavia-green); background: linear-gradient(135deg, var(--restavia-aqua), var(--restavia-success-bg)); color: var(--restavia-text); }
 .mood-btn:hover { border-color: var(--restavia-sky); }
 .home-reco-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .home-all-btn { background: none; border: none; color: var(--deep); font-size: .78rem; font-weight: 800; cursor: pointer; text-decoration: underline; padding: 4px; }
@@ -444,9 +445,9 @@ button { cursor: pointer; }
 .progress-encourage { font-size: .78rem; margin: 12px 0 0; opacity: .85; }
 .progress-bars { display: flex; align-items: flex-end; gap: 10px; height: 90px; margin-top: 8px; }
 .progress-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
-.progress-bar-fill { width: 100%; max-width: 26px; border-radius: 6px; background: rgba(79,126,168,.78); min-height: 3px; }
+.progress-bar-fill { width: 100%; max-width: 26px; border-radius: 6px; background: var(--restavia-green); min-height: 3px; }
 .progress-bar-col span { font-size: .68rem; font-weight: 700; color: rgba(79,126,168,.6); }
-.progress-streak { display: flex; align-items: center; gap: 10px; background: var(--restavia-aqua); border-radius: 12px; padding: 12px 16px; margin-top: 16px; font-size: .85rem; font-weight: 800; color: var(--deep); }
+.progress-streak { display: flex; align-items: center; gap: 10px; background: var(--restavia-success-bg); border-left: 3px solid var(--restavia-green); border-radius: 12px; padding: 12px 16px; margin-top: 16px; font-size: .85rem; font-weight: 800; color: var(--deep); }
 .progress-streak-flame { font-size: 1.1rem; }
 .progress-favs { display: grid; gap: 8px; margin-top: 6px; }
 .progress-fav { display: flex; justify-content: space-between; align-items: center; background: rgba(79,126,168,.05); border-radius: 12px; padding: 11px 16px; font-size: .83rem; font-weight: 700; color: var(--deep); }
@@ -896,7 +897,7 @@ select:focus, input[type="number"]:focus {
 .stage-progress-bar span {
   display: block;
   height: 100%;
-  background: var(--restavia-blue);
+  background: linear-gradient(90deg, var(--restavia-blue), #7FB9D5 55%, var(--restavia-green));
   transition: width 120ms linear;
   border-radius: 999px;
 }
@@ -1198,7 +1199,7 @@ canvas {
   display: block;
   height: 100%;
   width: 0%;
-  background: var(--restavia-blue);
+  background: linear-gradient(90deg, var(--restavia-blue), #7FB9D5 55%, var(--restavia-green));
   transition: width 120ms linear;
   border-radius: 999px;
 }
@@ -1713,7 +1714,7 @@ canvas {
 /* Links in profielteksten duidelijk klikbaar */
 .profile-item-body a { color: var(--deep); text-decoration: underline; }
 .deep-gate-msg { font-size: .82rem; line-height: 1.5; border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; }
-.deep-gate-msg.ok { background: var(--restavia-success-bg); color: var(--restavia-text); border-left: 3px solid var(--restavia-green); }
+.deep-gate-msg.ok { background: var(--restavia-success-bg); color: var(--restavia-text); border-left: 3px solid var(--restavia-success-text); }
 .deep-gate-msg.warn { background: rgba(212,155,63,.14); color: #8a5a00; }
 .deep-gate-msg.err { background: rgba(192,57,43,.1); color: #c0392b; }
 </style>
@@ -1901,7 +1902,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.4.0</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.4.1</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -5032,7 +5033,7 @@ function draw(time) {
   const night = !!presets[activePreset]?.night;
   // Adem-/uitademkleur van de cirkel: blauw/groen overdag, blauwer bij nacht/avond
   const breathColor = night ? "74,110,170" : "79,126,168";
-  const phaseColor = hum ? "212,155,63" : exhale ? (night ? breathColor : "111,175,211") : inhale ? breathColor : hold ? (night ? "90,120,185" : "191,220,201") : "49,86,111";
+  const phaseColor = hum ? "212,155,63" : exhale ? (night ? breathColor : "127,185,213") : inhale ? breathColor : hold ? (night ? "90,120,185" : "143,197,161") : "49,86,111";
   const minRadius = 150;
   const maxRadius = 254;
   const radius = lerp(168, 236, guide.breath);
@@ -5042,13 +5043,13 @@ function draw(time) {
 
   const bg = ctx.createRadialGradient(cx, cy, minRadius * 0.35, cx, cy, maxRadius + 118);
   bg.addColorStop(0, "rgba(255,255,255,.78)");
-  bg.addColorStop(0.55, night ? "rgba(210,221,240,.24)" : "rgba(167,203,234,.24)");
+  bg.addColorStop(0.55, night ? "rgba(210,221,240,.24)" : "rgba(143,197,161,.16)");
   bg.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
 
   [
-    { radius: radius + 10, width: 40, color: hum ? "rgba(212,155,63,.13)" : (night ? "rgba(150,170,205,.18)" : "rgba(167,203,234,.22)") },
+    { radius: radius + 10, width: 40, color: hum ? "rgba(212,155,63,.13)" : (night ? "rgba(150,170,205,.18)" : "rgba(143,197,161,.20)") },
     { radius: radius + 54, width: 36, color: "rgba(255,255,255,.54)" },
     { radius: radius + 88, width: 18, color: "rgba(255,255,255,.46)" }
   ].forEach(ring => {
@@ -5127,7 +5128,7 @@ function draw(time) {
 
   ctx.beginPath();
   ctx.arc(cx, cy, radius * 0.36, 0, Math.PI * 2);
-  ctx.fillStyle = hold ? "rgba(191,220,201,.14)" : "rgba(255,255,255,.32)";
+  ctx.fillStyle = hold ? "rgba(143,197,161,.16)" : "rgba(255,255,255,.32)";
   ctx.fill();
 }
 
