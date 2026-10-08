@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Restavia">
-<meta name="description" content="Restavia — Breathe. Feel. Flow. Ademhaling, meditatie, humming en klank voor rust, aandacht en een natuurlijk ritme.">
+<meta name="description" content="Restavia — BREATHE. FEEL. FLOW. Ademhaling, meditatie, humming en klank voor rust, aandacht en een natuurlijk ritme.">
 <meta name="google-site-verification" content="aSF_iqqJYF_X1XaqLej0q33ya50G1SKWgDzTpHHQoGw">
 <meta name="background_color" content="#ffffff">
 <link rel="apple-touch-icon" href="icon-512.png?v=2">
@@ -562,7 +562,7 @@ select, input[type="number"] {
 }
 
 select:focus, input[type="number"]:focus {
-  box-shadow: 0 0 0 2px rgba(47,143,131,.3);
+  box-shadow: 0 0 0 2px rgba(79,126,168,.3);
 }
 
 .value-line {
@@ -775,7 +775,7 @@ select:focus, input[type="number"]:focus {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(47,143,131,.25);
+  background: rgba(79,126,168,.25);
   transition: background 300ms, transform 300ms;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -1106,7 +1106,7 @@ canvas {
   width: min(80%, 500px);
   margin: 8px auto 0;
   z-index: 3;
-  border: 1px solid rgba(47,143,131,.34);
+  border: 1px solid rgba(79,126,168,.34);
   border-radius: 999px;
   background: rgba(255,255,255,.82);
   box-shadow: 0 12px 34px rgba(79,126,168,.08);
@@ -1532,6 +1532,7 @@ canvas {
     top: 8px;
     left: auto;
     right: 12px;
+    transform: rotate(15deg);
   }
   .breath-visual {
     width: min(95%, 480px);
@@ -1703,6 +1704,7 @@ canvas {
 .deep-gate-intro { font-size: .85rem; line-height: 1.55; color: var(--restavia-text); margin: 0 0 12px; }
 .deep-gate-block { border-top: 1px solid rgba(79,126,168,.1); padding-top: 16px; margin-top: 16px; }
 .deep-gate-h { font-size: .92rem; font-weight: 900; color: var(--deep); margin: 0 0 10px; }
+.deep-gate-context { font-size: .84rem; line-height: 1.5; color: var(--restavia-text); background: var(--restavia-aqua); border-left: 3px solid var(--restavia-blue); border-radius: 10px; padding: 10px 12px; margin: 0 0 12px; }
 .deep-gate-note { font-size: .8rem; line-height: 1.5; color: #3F5A6B; margin: 0 0 10px; }
 .deep-gate-safety { margin: 0 0 12px; font-size: .8rem; }
 .deep-gate-safety summary { cursor: pointer; font-weight: 800; color: var(--deep); }
@@ -1847,7 +1849,7 @@ canvas {
             <p style="font-size:1rem;font-weight:800;color:var(--deep)">De weg naar binnen begint met een klank</p>
             <p>Nog voordat er woorden waren, was er adem.</p>
             <p>Nog voordat er gedachten waren, was er trilling.</p>
-            <p>Humming &amp; Resonantie nodigt je uit om terug te keren naar iets eenvoudigs: de ontmoeting tussen adem, klank en aandacht.</p>
+            <p>Humming en bewuste ademhaling nodigen je uit om terug te keren naar iets eenvoudigs: de ontmoeting tussen adem, klank en aandacht.</p>
             <p>Door zacht te neuri&euml;n ontstaat een subtiele trilling. Je voelt haar misschien in je borst, je keel, je hoofd of ergens dieper in je lichaam. Niet om iets te bereiken. Niet om iets op te lossen. Maar om te vertragen en te luisteren.</p>
             <p>Naar je adem.</p>
             <p>Naar de stilte onder je gedachten.</p>
@@ -1906,7 +1908,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.5.1</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.5.2</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -2223,7 +2225,8 @@ canvas {
 <div id="deepAccessOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:99999;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div class="deep-gate-card">
     <p class="deep-gate-eyebrow">Account &amp; toegang</p>
-    <p class="deep-gate-intro" id="accessStatusLine">Je gebruikt de app als gast (gratis sessies).</p>
+    <p class="deep-gate-intro" id="accessStatusLine">Je gebruikt Restavia als gast.</p>
+    <p class="deep-gate-context" id="gateContext" style="display:none"></p>
 
     <!-- Blok 1: Inloggen / registreren -->
     <div class="deep-gate-block">
@@ -3749,7 +3752,10 @@ function renderLibraryCard(id, item, experimental = false, locked = false) {
   const totalSec = getSessionTotalSeconds(item);
   // Vergrendelde cataloguskaart zonder bekende duur: toon het benodigde niveau
   const lockLabel = protocolTier(item) === "premium" ? "Plus" : "Verdieping";
-  const durationText = item.meditationMode ? "vrij" : (totalSec > 0 ? formatDuration(totalSec) : (meta.duration || (locked ? lockLabel : "")));
+  // meta.duration kan "5:30" zijn; omzetten naar dezelfde notatie als de rest ("6 min")
+  const mmss = String(meta.duration || "").match(/^(\d+):(\d{2})$/);
+  const knownDur = totalSec > 0 ? formatDuration(totalSec) : (mmss ? formatDuration(+mmss[1] * 60 + +mmss[2]) : (meta.duration || ""));
+  const durationText = item.meditationMode ? "vrij" : (locked ? lockLabel + (knownDur ? " · " + knownDur : "") : knownDur);
   const isActive = id === activePreset;
   const badge = "";
   // Verdieping zonder toegang: zichtbaar maar vergrendeld (slotje i.p.v. play)
@@ -5428,6 +5434,17 @@ function openDeepAccessGate(preset, tier) {
   if (!overlay) return;
   setGateMsg("authMsg", "", "");
   updateAccessUI();
+  // Vanaf een vergrendelde sessie: leg uit wat er nodig is om hem te openen
+  const ctx = document.getElementById("gateContext");
+  if (ctx) {
+    let t = "";
+    if (preset && preset.label) {
+      if (tier === "premium") t = `"${preset.label}" hoort bij Restavia Plus. ` + (appAuth.user ? "Activeer Plus om deze sessie te openen." : "Log in of maak een gratis account aan en activeer daarna Plus.");
+      else if (tier === "deep") t = `"${preset.label}" is een verdiepingssessie. Log in of maak gratis een account aan om deze te openen.`;
+    }
+    ctx.textContent = t;
+    ctx.style.display = t ? "" : "none";
+  }
   overlay.style.display = "flex";
 }
 function closeDeepAccessGate() {
@@ -5439,7 +5456,7 @@ function closeDeepAccessGate() {
 // admin / handmatig (Plus) en de adminrol. Rustcodes bestaan niet meer.
 function accessStatusText() {
   const fmtDatum = (iso) => iso ? new Date(iso).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" }) : "";
-  if (!appAuth.user) return "Je gebruikt Restavia als gast: de basisprotocollen zijn vrij toegankelijk. Met een gratis account krijg je er de verdiepingssessies bij.";
+  if (!appAuth.user) return "Je gebruikt Restavia als gast.";
   if (effectiveLevel() === "admin") return `Ingelogd als ${appAuth.user.email} — beheerder (volledige toegang).`;
   const acc = appAuth.access;
   if (acc && acc.level === "premium") {
@@ -5895,9 +5912,16 @@ document.getElementById("plusActivateBtn")?.addEventListener("click", async () =
     await refreshUserAccess();
     afterAccessChange();
     const acc = appAuth.access;
+    // Recente betaling (laatste uur) die de webhook al als betaald heeft verwerkt
+    const recentBetaald = (appAuth.payments || []).some(pay => Date.now() - new Date(pay.created_at).getTime() < 3600000);
     if (acc && acc.level === "premium" && acc.source === "mollie_payment") {
       openDeepAccessGate();
       setGateMsg("plusMsg", `Gelukt! Restavia Plus is actief tot ${new Date(acc.ends_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}.`, "ok");
+      return;
+    }
+    if (recentBetaald) {   // bv. beheerder: niveau blijft 'admin', maar de betaling is binnen
+      openDeepAccessGate();
+      setGateMsg("plusMsg", "Gelukt! Je betaling is ontvangen.", "ok");
       return;
     }
     if (pogingen === 1) {
@@ -6230,20 +6254,18 @@ function renderProfile() {
     let since = "";
     const created = appAuth.profile && appAuth.profile.created_at;
     if (created) { const d = new Date(created); since = ` · lid sinds ${months[d.getMonth()]} ${d.getFullYear()}`; }
-    const niveau = { free:"Gratis", deep:"Verdieping", premium:"Plus", admin:"Admin" }[effectiveLevel()] || effectiveLevel();
+    const niveau = { free:"Gratis", deep:"Gratis account", premium:(appAuth.access && appAuth.access.source === "trial") ? "Proefperiode" : "Restavia Plus", admin:"Beheerder" }[effectiveLevel()] || effectiveLevel();
     sinceEl.textContent = `${appAuth.user.email} · ${niveau}${since}`;
     // Toegangsstatus als eigen regel: "Plus is actief tot …" / proefperiode / basis
     const accessEl = document.getElementById("profileAccess");
     if (accessEl) { accessEl.textContent = accessStatusText(); accessEl.style.display = "block"; }
-    if (editBtn) { editBtn.textContent = "Account & toegangscode"; editBtn.style.display = ""; }
+    if (editBtn) { editBtn.textContent = "Account & toegang"; editBtn.style.display = ""; }
     if (logoutBtn) logoutBtn.style.display = "";
     if (deleteBtn) deleteBtn.style.display = "";
     if (block) { block.style.display = ""; fillProfileForm(appAuth.profile); }
     if (stimulus) stimulus.style.display = "none";
   } else {
-    const prof = getProfile();
-    const [y, m] = (prof.since || dateKey(new Date())).split("-");
-    sinceEl.textContent = `Lid sinds ${months[parseInt(m, 10) - 1]} ${y}`;
+    sinceEl.textContent = "Gast — je voortgang staat alleen op dit apparaat";
     const accessEl = document.getElementById("profileAccess");
     if (accessEl) accessEl.style.display = "none";
     if (editBtn) editBtn.style.display = "none";   // gast gebruikt de aanmoedig-knop
@@ -6296,11 +6318,11 @@ document.getElementById("profileDeleteBtn")?.addEventListener("click", async () 
     alert("Je account is verwijderd. Bedankt dat je de app hebt gebruikt.");
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = oldText; }
-    alert("Verwijderen is niet gelukt: " + (e?.message || e) + "\n\nProbeer het later opnieuw of neem contact op via de app.");
+    alert("Verwijderen is niet gelukt: " + (e?.message || e) + "\n\nProbeer het later opnieuw of mail naar restavia@domeinstam.nl.");
   }
 });
 
-// Profiel bewerken / account = inlog-/toegangscodescherm.
+// Profiel bewerken / account = account- en toegangsscherm.
 document.getElementById("profileEditBtn").addEventListener("click", () => {
   openDeepAccessGate(null, "deep");
 });
@@ -6384,7 +6406,6 @@ function updateNavVisibility() {
 
 window.addEventListener('resize', updateNavVisibility);
 
-// Tijdelijke testtoegang via invite-link (?deepInvite=...) vóór het renderen
 renderProtocols();
 applyPreset(activePreset);
 initMobileNav();
