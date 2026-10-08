@@ -995,17 +995,16 @@ select:focus, input[type="number"]:focus {
 }
 
 .stage-logo {
-  /* Groot Restavia-icoon als watermerk achter de ademcirkel */
   position: absolute;
-  width: min(92%, 640px);
-  aspect-ratio: 480 / 331;
-  height: auto;
-  opacity: .13;
+  width: 130px;
+  height: 130px;
+  overflow: hidden;
+  opacity: .18;
   pointer-events: none;
-  z-index: 1;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -54%);
+  z-index: 0;
+  top: 30px;
+  left: 36px;
+  transform: rotate(-15deg);
 }
 
 .breath-stage::after {
@@ -1525,7 +1524,10 @@ canvas {
     padding: 16px 10px;
   }
   .stage-logo {
-    width: 104%;
+    width: 55px;
+    height: 55px;
+    top: 16px;
+    left: 16px;
   }
   .breath-visual {
     width: min(95%, 480px);
@@ -1876,7 +1878,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.3.4</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.3.5</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
