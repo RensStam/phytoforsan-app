@@ -22,35 +22,38 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
+  /* Restavia-huisstijl: blauw dominant, mint/groen alleen als klein accent */
+  --restavia-bg: #FAFAF7;
+  --restavia-surface: #FFFFFF;
+  --restavia-text: #243E4A;
+  --restavia-text-secondary: #6F8490;
+  --restavia-dark-blue: #31566F;
   --restavia-blue: #4F7EAB;
   --restavia-sky: #A7CBEA;
-  --restavia-mint: #BFDCC9;
   --restavia-aqua: #E6F3F7;
-  --restavia-warm-white: #FAFAF7;
+  --restavia-mint: #BFDCC9;
   --restavia-green: #8FC5A1;
-  --restavia-dark-blue: #31566F;
-  --restavia-text: #243E4A;
-  --app-background: var(--restavia-warm-white);
-  --surface-background: #FFFFFF;
-  --surface-soft: var(--restavia-aqua);
-  --text-primary: var(--restavia-text);
-  --text-secondary: var(--restavia-dark-blue);
-  --button-primary: var(--restavia-dark-blue);
-  --button-primary-text: #FFFFFF;
-  --accent-primary: var(--restavia-blue);
-  --accent-soft: var(--restavia-sky);
+  --restavia-success-bg: #EAF4ED;
+  --restavia-border: rgba(79,126,171,.18);
+  --restavia-border-soft: rgba(79,126,171,.12);
+  --restavia-shadow: rgba(49,86,111,.10);
+  --restavia-primary: var(--restavia-dark-blue);
+  --restavia-primary-hover: #28495F;
+  --restavia-primary-soft: var(--restavia-aqua);
+  --restavia-success: var(--restavia-green);
+  --restavia-warm-white: var(--restavia-bg);
   /* bestaande variabelen gekoppeld aan het palet */
-  --page: var(--app-background);
-  --ink: var(--text-primary);
-  --muted: var(--text-secondary);
-  --line: rgba(79,126,168,.22);
-  --soft: var(--surface-soft);
-  --panel: rgba(255,255,255,.9);
+  --page: var(--restavia-bg);
+  --ink: var(--restavia-text);
+  --muted: var(--restavia-text-secondary);
+  --line: var(--restavia-border);
+  --soft: var(--restavia-aqua);
+  --panel: rgba(255,255,255,.92);
   --deep: var(--restavia-dark-blue);
   --green: var(--restavia-blue);
   --amber: #d49b3f;
   --coral: var(--restavia-sky);
-  --shadow: 0 18px 50px rgba(79,126,168,.12);
+  --shadow: 0 4px 16px rgba(49,86,111,.08);
   --radius: 8px;
 }
 
@@ -69,7 +72,7 @@ body {
   font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
   color: var(--ink);
   background:
-    linear-gradient(135deg, rgba(191,220,201,.35), transparent 38%),
+    linear-gradient(135deg, rgba(230,243,247,.9), transparent 40%),
     linear-gradient(235deg, rgba(167,203,234,.13), transparent 30%),
     linear-gradient(180deg, #fff, var(--page));
 }
@@ -208,7 +211,7 @@ button { cursor: pointer; }
 }
 
 .protocol-card.active {
-  box-shadow: 0 0 0 2.5px var(--restavia-green), 0 6px 20px rgba(79,126,168,.1);
+  box-shadow: 0 0 0 2px var(--restavia-blue), 0 4px 16px rgba(49,86,111,.08);
 }
 
 .card-thumb {
@@ -321,10 +324,10 @@ button { cursor: pointer; }
   transition: background 120ms, color 120ms, border-color 120ms;
 }
 
-.rhythm-btn.save-btn:hover { background: var(--deep); color: #fff; }
+.rhythm-btn.save-btn:hover { background: var(--restavia-primary-hover); color: #fff; }
 
 .rhythm-btn.saved {
-  background: var(--restavia-mint);
+  background: var(--restavia-success-bg);
   color: var(--restavia-text);
   border-color: var(--restavia-green);
 }
@@ -404,8 +407,8 @@ button { cursor: pointer; }
 .mood-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
 .mood-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1 1 28%; min-width: 92px; background: #fff; border: 1.5px solid rgba(79,126,168,.12); border-radius: 14px; padding: 12px 8px; font-size: .78rem; font-weight: 800; color: var(--deep); cursor: pointer; transition: border-color 120ms, background 120ms; }
 .mood-btn .mood-icon { font-size: 1.35rem; }
-.mood-btn.mood-active { border-color: var(--restavia-green); background: rgba(191,220,201,.45); }
-.mood-btn:hover { border-color: var(--restavia-mint); }
+.mood-btn.mood-active { border-color: var(--restavia-blue); background: var(--restavia-aqua); }
+.mood-btn:hover { border-color: var(--restavia-sky); }
 .home-reco-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .home-all-btn { background: none; border: none; color: var(--deep); font-size: .78rem; font-weight: 800; cursor: pointer; text-decoration: underline; padding: 4px; }
 
@@ -443,7 +446,7 @@ button { cursor: pointer; }
 .progress-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
 .progress-bar-fill { width: 100%; max-width: 26px; border-radius: 6px; background: rgba(79,126,168,.78); min-height: 3px; }
 .progress-bar-col span { font-size: .68rem; font-weight: 700; color: rgba(79,126,168,.6); }
-.progress-streak { display: flex; align-items: center; gap: 10px; background: var(--restavia-mint); border-radius: 12px; padding: 12px 16px; margin-top: 16px; font-size: .85rem; font-weight: 800; color: var(--deep); }
+.progress-streak { display: flex; align-items: center; gap: 10px; background: var(--restavia-aqua); border-radius: 12px; padding: 12px 16px; margin-top: 16px; font-size: .85rem; font-weight: 800; color: var(--deep); }
 .progress-streak-flame { font-size: 1.1rem; }
 .progress-favs { display: grid; gap: 8px; margin-top: 6px; }
 .progress-fav { display: flex; justify-content: space-between; align-items: center; background: rgba(79,126,168,.05); border-radius: 12px; padding: 11px 16px; font-size: .83rem; font-weight: 700; color: var(--deep); }
@@ -685,7 +688,7 @@ select:focus, input[type="number"]:focus {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at 78% 12%, rgba(143,197,161,.18), transparent 28%),
+    radial-gradient(circle at 78% 12%, rgba(167,203,234,.22), transparent 28%),
     radial-gradient(circle at 50% 46%, rgba(167,203,234,.34), rgba(255,255,255,.26) 48%, transparent 70%),
     linear-gradient(180deg, #E6F3F7, #FAFAF7 58%, #fff);
 }
@@ -893,7 +896,7 @@ select:focus, input[type="number"]:focus {
 .stage-progress-bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--restavia-mint), var(--restavia-green));
+  background: var(--restavia-blue);
   transition: width 120ms linear;
   border-radius: 999px;
 }
@@ -916,7 +919,7 @@ select:focus, input[type="number"]:focus {
   padding: 32px;
   text-align: center;
   background:
-    linear-gradient(135deg, rgba(143,197,161,.10), transparent 40%),
+    linear-gradient(135deg, rgba(167,203,234,.14), transparent 40%),
     linear-gradient(180deg, #fff, var(--page));
   transition: opacity 1s ease;
 }
@@ -1001,6 +1004,7 @@ select:focus, input[type="number"]:focus {
   z-index: 0;
   top: 30px;
   left: 80px;
+  transform: rotate(-15deg);
 }
 
 .breath-stage::after {
@@ -1194,7 +1198,7 @@ canvas {
   display: block;
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--restavia-mint), var(--restavia-green));
+  background: var(--restavia-blue);
   transition: width 120ms linear;
   border-radius: 999px;
 }
@@ -1269,7 +1273,7 @@ canvas {
   letter-spacing: .05em;
 }
 
-.btn.primary:hover { background: #004440; }
+.btn.primary:hover { background: var(--restavia-primary-hover); }
 
 .btn.warn {
   color: #88402f;
@@ -1334,7 +1338,7 @@ canvas {
 }
 
 .switch input:checked + .switch-track {
-  background: var(--restavia-green);
+  background: var(--restavia-blue);
 }
 
 .switch input:checked + .switch-track::after {
@@ -1359,7 +1363,7 @@ canvas {
   justify-content: flex-start;
 }
 
-.toggle input { accent-color: var(--restavia-green); }
+.toggle input { accent-color: var(--restavia-blue); }
 
 .engine-panel {
   border: none;
@@ -1607,8 +1611,9 @@ canvas {
     gap: 4px;
     transition: color .15s;
   }
-  .mobile-nav-btn svg { opacity: .55; transition: opacity .15s; }
-  .mobile-nav-btn.active { color: var(--deep); background: var(--restavia-sky); border-radius: 12px; }
+  .mobile-nav-btn svg { opacity: .7; transition: opacity .2s, color .2s; }
+  .mobile-nav-btn.active { color: var(--deep); background: var(--restavia-aqua); border-radius: 12px; }
+  .mobile-nav-btn.active svg { color: var(--restavia-blue); }
   .mobile-nav-btn.active svg { opacity: 1; }
 
   /* Secties tonen/verbergen per tab */
@@ -1685,7 +1690,7 @@ canvas {
 /* Links in profielteksten duidelijk klikbaar */
 .profile-item-body a { color: var(--deep); text-decoration: underline; }
 .deep-gate-msg { font-size: .82rem; line-height: 1.5; border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; }
-.deep-gate-msg.ok { background: var(--restavia-mint); color: var(--restavia-text); }
+.deep-gate-msg.ok { background: var(--restavia-success-bg); color: var(--restavia-text); border-left: 3px solid var(--restavia-green); }
 .deep-gate-msg.warn { background: rgba(212,155,63,.14); color: #8a5a00; }
 .deep-gate-msg.err { background: rgba(192,57,43,.1); color: #c0392b; }
 </style>
@@ -1752,7 +1757,7 @@ canvas {
       <button class="profile-edit-btn" id="profileEditBtn">Profiel bewerken</button>
 
       <!-- Guest-stimulans: aanmoediging om in te loggen -->
-      <div id="loginStimulus" class="profile-item profile-item-static" style="display:none;flex-direction:column;align-items:flex-start;gap:8px;background:rgba(143,197,161,.10);margin-top:16px">
+      <div id="loginStimulus" class="profile-item profile-item-static" style="display:none;flex-direction:column;align-items:flex-start;gap:8px;background:var(--restavia-aqua);margin-top:16px">
         <strong style="font-size:.95rem">Bewaar je voortgang</strong>
         <span style="font-size:.85rem;opacity:.8">Maak gratis een account aan — dan blijven je sessies, voortgang en voorkeuren bewaard en volgen ze mee op al je apparaten.</span>
         <button class="profile-edit-btn" id="stimulusLoginBtn" style="margin-top:4px">Account aanmaken / inloggen</button>
@@ -1873,7 +1878,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.2.9</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.3.1</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -2172,7 +2177,7 @@ canvas {
 <!-- Melding: nieuwe versie beschikbaar (compact pilletje, boven de mobiele navigatie) -->
 <div id="updateBanner" style="display:none;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:100000;align-items:center;gap:10px;background:#4F7EAB;color:#fff;border-radius:999px;padding:5px 5px 5px 14px;box-shadow:0 8px 20px rgba(0,0,0,.2);font-size:.78rem;white-space:nowrap;max-width:94vw">
   <span>Nieuwe versie</span>
-  <button id="updateReloadBtn" type="button" style="background:#BFDCC9;color:#243E4A;border:none;border-radius:999px;padding:6px 13px;font-weight:800;font-size:.76rem;cursor:pointer;white-space:nowrap">Herladen</button>
+  <button id="updateReloadBtn" type="button" style="background:#A7CBEA;color:#243E4A;border:none;border-radius:999px;padding:6px 13px;font-weight:800;font-size:.76rem;cursor:pointer;white-space:nowrap">Herladen</button>
 </div>
 
 <!-- Aanmoediging na een sessie (alleen voor gasten) -->
@@ -4956,7 +4961,7 @@ function drawSoundRoute(ctx, cx, cy, radius, protocol, phase, within) {
 
     ctx.beginPath();
     ctx.arc(x, y, active ? 15 : 11, 0, totalAngle);
-    ctx.fillStyle = active ? "rgba(212,155,63,.98)" : "rgba(143,197,161,.42)";
+    ctx.fillStyle = active ? "rgba(212,155,63,.98)" : "rgba(167,203,234,.55)";
     ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,.88)";
     ctx.lineWidth = 4;
@@ -4989,7 +4994,7 @@ function draw(time) {
   const night = !!presets[activePreset]?.night;
   // Adem-/uitademkleur van de cirkel: blauw/groen overdag, blauwer bij nacht/avond
   const breathColor = night ? "74,110,170" : "79,126,168";
-  const phaseColor = hum ? "212,155,63" : exhale ? (night ? breathColor : "143,197,161") : inhale ? breathColor : hold ? (night ? "90,120,185" : "191,220,201") : "49,86,111";
+  const phaseColor = hum ? "212,155,63" : exhale ? (night ? breathColor : "111,175,211") : inhale ? breathColor : hold ? (night ? "90,120,185" : "191,220,201") : "49,86,111";
   const minRadius = 150;
   const maxRadius = 254;
   const radius = lerp(168, 236, guide.breath);
@@ -4999,7 +5004,7 @@ function draw(time) {
 
   const bg = ctx.createRadialGradient(cx, cy, minRadius * 0.35, cx, cy, maxRadius + 118);
   bg.addColorStop(0, "rgba(255,255,255,.78)");
-  bg.addColorStop(0.55, night ? "rgba(210,221,240,.24)" : "rgba(191,220,201,.24)");
+  bg.addColorStop(0.55, night ? "rgba(210,221,240,.24)" : "rgba(167,203,234,.24)");
   bg.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
@@ -5084,7 +5089,7 @@ function draw(time) {
 
   ctx.beginPath();
   ctx.arc(cx, cy, radius * 0.36, 0, Math.PI * 2);
-  ctx.fillStyle = hold ? "rgba(143,197,161,.16)" : "rgba(255,255,255,.32)";
+  ctx.fillStyle = hold ? "rgba(191,220,201,.14)" : "rgba(255,255,255,.32)";
   ctx.fill();
 }
 
@@ -5883,11 +5888,11 @@ function openMyPaymentReceipt() {
   h1{font-size:1.3rem;margin-bottom:4px}
   table{width:100%;border-collapse:collapse;margin-top:16px}
   td,th{padding:8px 10px;border-bottom:1px solid #D3E4EE;text-align:left}
-  th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:#5a6f6b}
+  th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:#6F8490}
   .tot td{font-weight:800;border-top:2px solid #3E6A93}
   .kop{display:flex;justify-content:space-between;gap:24px;margin-top:18px}
   .kop div{font-size:.9rem;line-height:1.6}
-  .muted{color:#5a6f6b;font-size:.82rem}
+  .muted{color:#6F8490;font-size:.82rem}
   @media print{button{display:none}}
 </style></head><body>
 ${pays.map(blok).join("")}
