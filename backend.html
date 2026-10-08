@@ -63,7 +63,7 @@
 <header>
   <h1>Restavia · Beheer</h1>
   <div style="display:flex;align-items:center;gap:12px">
-    <span class="env-badge" id="backendVersion">backend v1.4.9</span>
+    <span class="env-badge" id="backendVersion">backend v1.4.10</span>
     <span class="env-badge" id="envBadge">env</span>
     <span class="who" id="whoami">niet ingelogd</span>
     <button class="btn secondary small" id="logoutBtn" style="display:none">Uitloggen</button>
@@ -1465,15 +1465,15 @@ function openPaymentReceipt(p, prof) {
   if (!w) { alert("Sta pop-ups toe om het betaalbewijs te openen."); return; }
   w.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Betaalbewijs ${nr}</title>
 <style>
-  body{font-family:system-ui,-apple-system,sans-serif;color:#123734;max-width:640px;margin:40px auto;padding:0 20px}
+  body{font-family:system-ui,-apple-system,sans-serif;color:#243E4A;max-width:640px;margin:40px auto;padding:0 20px}
   h1{font-size:1.3rem;margin-bottom:4px}
   table{width:100%;border-collapse:collapse;margin-top:16px}
-  td,th{padding:8px 10px;border-bottom:1px solid #dde8e4;text-align:left}
-  th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:#5a6f6b}
-  .tot td{font-weight:800;border-top:2px solid #123734}
+  td,th{padding:8px 10px;border-bottom:1px solid #D3E4EE;text-align:left}
+  th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:#31566F}
+  .tot td{font-weight:800;border-top:2px solid #243E4A}
   .kop{display:flex;justify-content:space-between;gap:24px;margin-top:18px}
   .kop div{font-size:.9rem;line-height:1.6}
-  .muted{color:#5a6f6b;font-size:.82rem}
+  .muted{color:#31566F;font-size:.82rem}
   @media print{button{display:none}}
 </style></head><body>
 <h1>Betaalbewijs</h1>
@@ -1489,7 +1489,7 @@ function openPaymentReceipt(p, prof) {
   <tr class="tot"><td>Totaal (betaald via Mollie)</td><td style="text-align:right">${fmtE(bedrag)}</td></tr>
 </tbody></table>
 <p class="muted" style="margin-top:20px">Automatisch aangemaakt vanuit de Restavia-administratie.</p>
-<button onclick="print()" style="margin-top:14px;padding:10px 18px;border-radius:999px;border:1px solid #123734;background:#123734;color:#fff;font-weight:700;cursor:pointer">Afdrukken / opslaan als PDF</button>
+<button onclick="print()" style="margin-top:14px;padding:10px 18px;border-radius:999px;border:1px solid #243E4A;background:#243E4A;color:#fff;font-weight:700;cursor:pointer">Afdrukken / opslaan als PDF</button>
 </body></html>`);
   w.document.close();
 }
