@@ -20,8 +20,8 @@ where key = 'contact_text' and value ilike '%phyto%';
 update public.app_settings
 set value =
   replace(replace(replace(replace(replace(value,
-    E'PhytoForsan Relax App\nEen initiatief van Rens Stam voor PhytoForsan.nl.', E'Restavia\nBreathe. Feel. Flow.'),
-    E'PhytoForsan Relax App\r\nEen initiatief van Rens Stam voor PhytoForsan.nl.', E'Restavia\r\nBreathe. Feel. Flow.'),
+    E'PhytoForsan Relax App\nEen initiatief van Rens Stam voor PhytoForsan.nl.', E'Restavia\nBREATHE. FEEL. FLOW.'),
+    E'PhytoForsan Relax App\r\nEen initiatief van Rens Stam voor PhytoForsan.nl.', E'Restavia\r\nBREATHE. FEEL. FLOW.'),
     'PhytoForsan Relax Plus', 'Restavia Plus'),
     'PhytoForsan Relax App', 'Restavia'),
     'PhytoForsan Relax', 'Restavia')

@@ -15,11 +15,11 @@
 <meta name="google-site-verification" content="aSF_iqqJYF_X1XaqLej0q33ya50G1SKWgDzTpHHQoGw">
 <meta name="background_color" content="#ffffff">
 <link rel="apple-touch-icon" href="icon-512.png?v=2">
-<title>Restavia — Breathe. Feel. Flow.</title>
+<title>Restavia — BREATHE. FEEL. FLOW.</title>
 <link rel="icon" href="icon-192.png?v=2" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --restavia-blue: #4F7EAB;
@@ -899,6 +899,10 @@ select:focus, input[type="number"]:focus {
 }
 
 /* ── Openingsmoment ── */
+/* Restavia-merkweergave (live-tekstbenadering; officieel woordmerk-bestand heeft voorrang zodra beschikbaar) */
+.brand-lockup { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; margin-top: 18px; }
+.brand-wordmark { font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif; font-size: clamp(3rem, 12vw, 4.2rem); font-weight: 400; line-height: .95; letter-spacing: .005em; color: #31566F; }
+.brand-tagline { font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif; font-size: clamp(.78rem, 3vw, 1rem); font-weight: 400; line-height: 1; letter-spacing: .22em; margin-right: -.22em; color: #4F7EAB; text-transform: uppercase; white-space: nowrap; }
 #openingOverlay {
   position: fixed;
   inset: 0;
@@ -1737,7 +1741,7 @@ canvas {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
       </button>
       <div class="profile-card">
-        <div class="profile-avatar"><span style="font-family:Georgia,serif;font-size:1.6rem;font-weight:600;color:var(--deep)">R</span></div>
+        <div class="profile-avatar"><span style="font-family:'Cormorant Garamond',Georgia,serif;font-size:1.9rem;font-weight:400;color:#31566F">R</span></div>
         <div class="profile-info">
           <strong id="profileName">Welkom</strong>
           <span id="profileSince"></span>
@@ -1818,7 +1822,7 @@ canvas {
             <p>Deze app begeleidt je met ademhaling, humming, tonen en resonantie-oefeningen. De eenvoudige sessies helpen je om rustiger te worden, je lichaam beter te voelen en stap voor stap naar binnen te keren. Wie zich verder wil verdiepen, vindt daarnaast verdiepende sessies voor gevorderden.</p>
             <p style="margin:14px 0 0">Geen prestatiedruk.<br>Geen ingewikkelde theorie.<br>Geen afleiding.<br>Alleen adem, klank en aandacht.</p>
             <p style="margin-top:14px">Deze app is ontstaan vanuit de wens om rust, adem en klank op een eenvoudige manier toegankelijk te maken.</p>
-            <p><strong>Restavia</strong><br>Breathe. Feel. Flow.</p>
+            <p><strong>Restavia</strong><br>BREATHE. FEEL. FLOW.</p>
           </div>
         </details>
         <details class="profile-item profile-item-details">
@@ -1868,7 +1872,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.2.7</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.2.8</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -1939,7 +1943,7 @@ canvas {
 
       <div class="practice-head">
         <div>
-          <p class="section-title">Restavia · Breathe. Feel. Flow.</p>
+          <p class="section-title">Restavia · BREATHE. FEEL. FLOW.</p>
           <h1 id="practiceTitle">MAEN</h1>
           <p id="practiceIntro">Het oorspronkelijke ritme voor een klankafdaling met MAEN.</p>
         </div>
@@ -2153,7 +2157,7 @@ canvas {
 <div id="openingOverlay" aria-hidden="true">
   <div class="opening-inner" id="openingInner">
     <div class="opening-circle"><img class="opening-leaf" src="restavia-logo.png?v=2" alt="Restavia"></div>
-    <div style="text-align:center;margin-top:18px;color:#4F7EAB"><div style="font-family:Georgia,serif;font-size:1.7rem;letter-spacing:.14em">RESTAVIA</div><div style="font-size:.75rem;letter-spacing:.22em;opacity:.8;margin-top:4px">BREATHE. FEEL. FLOW.</div></div>
+    <div class="brand-lockup"><div class="brand-wordmark">Restavia</div><div class="brand-tagline">BREATHE. FEEL. FLOW.</div></div>
   </div>
 </div>
 
