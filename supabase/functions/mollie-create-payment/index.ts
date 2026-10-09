@@ -7,7 +7,7 @@
 //
 // Vereiste secrets (Supabase → Edge Functions → Secrets):
 //   MOLLIE_API_KEY   test_xxx of live_xxx
-//   APP_URL          bv. https://rensstam.github.io/phytoforsan-app/deploy/
+//   APP_URL          bv. https://restavia.web.app/
 //   PLUS_PRICE_EUR   optioneel, standaard 29.95
 // SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY worden automatisch meegegeven.
 // =====================================================================

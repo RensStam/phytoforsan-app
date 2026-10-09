@@ -28,7 +28,7 @@
   --restavia-bg: #FAFAF7;
   --restavia-surface: #FFFFFF;
   --restavia-text: #243E4A;
-  --restavia-text-secondary: #6F8490;
+  --restavia-text-secondary: #5F7482;
   --restavia-dark-blue: #31566F;
   --restavia-blue: #4F7EAB;
   --restavia-sky: #A7CBEA;
@@ -171,12 +171,12 @@ button { cursor: pointer; }
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: rgba(79,126,168,.55);
+  color: var(--restavia-text-secondary);
   margin: 12px 0 6px 2px;
 }
 .lib-subgroup-label:first-child { margin-top: 2px; }
 .phase-overview-wrap { margin-top: 14px; }
-.phase-overview-title { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: rgba(79,126,168,.55); margin: 0 0 10px; text-align: center; }
+.phase-overview-title { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--restavia-text-secondary); margin: 0 0 10px; text-align: center; }
 .phase-overview-block { margin-bottom: 12px; }
 .phase-overview-phase { font-size: .76rem; font-weight: 800; color: var(--deep); margin: 0 0 5px; text-align: center; }
 .phase-overview-block .phase-strip { border-radius: 10px; overflow: hidden; border: 1px solid rgba(211,228,238,.7); }
@@ -344,7 +344,7 @@ button { cursor: pointer; }
 
 .med-note {
   font-size: .8rem;
-  color: rgba(79,126,168,.6);
+  color: var(--restavia-text-secondary);
   margin: 2px 0 10px;
 }
 
@@ -406,7 +406,7 @@ button { cursor: pointer; }
 }
 .home-greeting { font-size: 1.35rem; font-weight: 900; color: var(--deep); margin: 0 0 4px; padding-right: 44px; }
 .home-leaf { font-size: 1.1rem; }
-.home-question { font-size: .92rem; font-weight: 700; color: rgba(79,126,168,.75); margin: 14px 0 10px; }
+.home-question { font-size: .92rem; font-weight: 700; color: var(--restavia-text-secondary); margin: 14px 0 10px; }
 .mood-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
 .mood-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1 1 28%; min-width: 92px; background: #fff; border: 1.5px solid rgba(79,126,168,.12); border-radius: 14px; padding: 12px 8px; font-size: .78rem; font-weight: 800; color: var(--deep); cursor: pointer; transition: border-color 120ms, background 120ms; }
 .mood-btn .mood-icon { font-size: 1.35rem; }
@@ -422,7 +422,7 @@ button { cursor: pointer; }
 .profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(79,126,168,.12); flex-shrink: 0; }
 .profile-info { display: flex; flex-direction: column; gap: 2px; }
 .profile-info strong { font-size: 1.1rem; font-weight: 900; color: var(--deep); }
-.profile-info span { font-size: .78rem; color: rgba(79,126,168,.6); }
+.profile-info span { font-size: .78rem; color: var(--restavia-text-secondary); }
 .profile-edit-btn { display: block; margin: 12px auto 0; background: #fff; border: 1.5px solid rgba(79,126,168,.22); border-radius: 999px; padding: 8px 22px; font-size: .82rem; font-weight: 800; color: var(--deep); cursor: pointer; }
 .profile-list { display: grid; gap: 8px; }
 .profile-item { display: flex; align-items: center; gap: 12px; background: rgba(79,126,168,.04); border: none; border-radius: 12px; padding: 13px 16px; font-size: .86rem; font-weight: 700; color: var(--deep); cursor: pointer; text-decoration: none; text-align: left; width: 100%; box-sizing: border-box; font-family: inherit; }
@@ -448,13 +448,13 @@ button { cursor: pointer; }
 .progress-bars { display: flex; align-items: flex-end; gap: 10px; height: 90px; margin-top: 8px; }
 .progress-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
 .progress-bar-fill { width: 100%; max-width: 26px; border-radius: 6px; background: var(--restavia-green); min-height: 3px; }
-.progress-bar-col span { font-size: .68rem; font-weight: 700; color: rgba(79,126,168,.6); }
+.progress-bar-col span { font-size: .68rem; font-weight: 700; color: var(--restavia-text-secondary); }
 .progress-streak { display: flex; align-items: center; gap: 10px; background: var(--restavia-success-bg); border-left: 3px solid var(--restavia-green); border-radius: 12px; padding: 12px 16px; margin-top: 16px; font-size: .85rem; font-weight: 800; color: var(--deep); }
 .progress-streak-flame { font-size: 1.1rem; }
 .progress-favs { display: grid; gap: 8px; margin-top: 6px; }
 .progress-fav { display: flex; justify-content: space-between; align-items: center; background: rgba(79,126,168,.05); border-radius: 12px; padding: 11px 16px; font-size: .83rem; font-weight: 700; color: var(--deep); }
 .progress-fav span:last-child { font-size: .73rem; opacity: .6; font-weight: 600; }
-.progress-empty { font-size: .85rem; color: rgba(79,126,168,.55); margin-top: 14px; }
+.progress-empty { font-size: .85rem; color: var(--restavia-text-secondary); margin-top: 14px; }
 
 .med-dur-btn.med-dur-active {
   background: var(--deep);
@@ -1153,7 +1153,7 @@ canvas {
 }
 
 .sound-steps .sound-arrow {
-  color: rgba(79,126,168,.72);
+  color: var(--restavia-text-secondary);
   font-size: 1.05rem;
 }
 
@@ -1908,7 +1908,7 @@ canvas {
         <button class="stage-back" id="immersiveBack" type="button" aria-label="Terug">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.5.2</span>
+        <span style="position:absolute;bottom:8px;right:12px;font-size:0.65em;opacity:0.35;pointer-events:none;z-index:2">v4.5.3</span>
         <div class="stage-logo">
           <img aria-hidden="true" alt="" src="restavia-logo.png?v=2" style="width:100%;height:100%;object-fit:contain">
         </div>
@@ -2150,9 +2150,9 @@ canvas {
     <div class="progress-week-card">
       <p class="progress-week-label">Deze week</p>
       <div class="progress-week-stats">
-        <div class="progress-stat"><strong id="progSessions">0</strong><span>sessies</span></div>
-        <div class="progress-stat"><strong id="progMinutes">0</strong><span>minuten</span></div>
-        <div class="progress-stat"><strong id="progDays">0</strong><span>dagen</span></div>
+        <div class="progress-stat"><strong id="progSessions">0</strong><span id="progSessionsLbl">sessies</span></div>
+        <div class="progress-stat"><strong id="progMinutes">0</strong><span id="progMinutesLbl">minuten</span></div>
+        <div class="progress-stat"><strong id="progDays">0</strong><span id="progDaysLbl">dagen</span></div>
       </div>
       <p class="progress-encourage" id="progEncourage"></p>
     </div>
@@ -5518,6 +5518,13 @@ function afterAccessChange() {
   }, 200);
 }
 
+// Na uitloggen of verwijderen: niets van het vorige account in het geheugen of formulier laten staan.
+function resetAuthState() {
+  appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null;
+  appAuth.entitlements = []; appAuth.payments = []; appAuth.profile = null;
+  try { fillProfileForm({}); } catch {}
+}
+
 // Auth-initialisatie: bestaande sessie ophalen en op wijzigingen reageren.
 async function initAppAuth() {
   if (!appSb) { updateAccessUI(); return; }
@@ -5528,7 +5535,7 @@ async function initAppAuth() {
       // Herstel-link uit de wachtwoord-vergeten-mail: nieuw wachtwoord vragen
       if (_e === "PASSWORD_RECOVERY") showPasswordResetBlock();
       if (sess?.user) loadAppProfile(sess.user);
-      else { appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = []; afterAccessChange(); }
+      else { resetAuthState(); afterAccessChange(); }
     });
   } catch (e) { console.info("Restavia: auth-init", e); }
   // Het PASSWORD_RECOVERY-event kan al gevuurd zijn vóórdat we hierboven
@@ -5764,7 +5771,7 @@ function notifyIfExistingAccount(email) {
 
 document.getElementById("authLogoutBtn")?.addEventListener("click", async () => {
   if (appSb) { try { await appSb.auth.signOut(); } catch {} }
-  appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = [];
+  resetAuthState();
   clearBackendSnapshot();   // offline-kopie kan verdiepings-/Plus-protocollen bevatten
   afterAccessChange();
   setGateMsg("authMsg", "Uitgelogd.", "ok");
@@ -6102,6 +6109,9 @@ function renderProgress() {
   document.getElementById("progSessions").textContent = week.length;
   document.getElementById("progMinutes").textContent = weekMinutes;
   document.getElementById("progDays").textContent = weekDays;
+  document.getElementById("progSessionsLbl").textContent = week.length === 1 ? "sessie" : "sessies";
+  document.getElementById("progMinutesLbl").textContent = weekMinutes === 1 ? "minuut" : "minuten";
+  document.getElementById("progDaysLbl").textContent = weekDays === 1 ? "dag" : "dagen";
 
   const enc = document.getElementById("progEncourage");
   if (!week.length)        enc.textContent = "Maak ruimte voor een rustig moment.";
@@ -6290,7 +6300,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.b
 
 document.getElementById("profileLogoutBtn")?.addEventListener("click", async () => {
   if (appSb) { try { await appSb.auth.signOut(); } catch {} }
-  appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = [];
+  resetAuthState();
   clearBackendSnapshot();   // offline-kopie kan verdiepings-/Plus-protocollen bevatten
   afterAccessChange();
 });
@@ -6312,7 +6322,7 @@ document.getElementById("profileDeleteBtn")?.addEventListener("click", async () 
     const { data, error } = await appSb.functions.invoke("delete-account", { body: {} });
     if (error || !data?.ok) throw new Error(error?.message || (data && data.error) || "verwijderen mislukt");
     try { await appSb.auth.signOut(); } catch {}
-    appAuth.user = null; appAuth.accessLevel = "free"; appAuth.access = null; appAuth.entitlements = [];
+    resetAuthState();
     clearBackendSnapshot();
     afterAccessChange();
     alert("Je account is verwijderd. Bedankt dat je de app hebt gebruikt.");

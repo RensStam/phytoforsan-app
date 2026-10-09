@@ -73,7 +73,7 @@ async function sendExistingAccountMail(email: string) {
   });
 
   await client.send({
-    from: Deno.env.get("SMTP_FROM") || "Restavia <noreply@phytoforsan.nl>",
+    from: Deno.env.get("SMTP_FROM") || "Restavia <restavia@domeinstam.nl>",
     to: email,
     subject: "Je hebt al een account bij Restavia",
     content: "auto",
@@ -81,7 +81,7 @@ async function sendExistingAccountMail(email: string) {
       <p>Er is zojuist geprobeerd een nieuw account aan te maken met dit e-mailadres,
       maar je hebt al een account bij <strong>Restavia</strong>.</p>
       <p>Wachtwoord vergeten? Ga naar
-      <a href="${Deno.env.get("APP_URL") || "https://app.phytoforsan.nl"}">Restavia</a> en klik op
+      <a href="${Deno.env.get("APP_URL") || "https://restavia.web.app"}">Restavia</a> en klik op
       "Wachtwoord vergeten?".</p>
       <p>Heb jij dit zelf niet aangevraagd, dan kun je deze e-mail gewoon negeren.</p>
     `,
